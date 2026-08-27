@@ -77,3 +77,19 @@ curl --request POST \
   --header 'content-type: application/json' \
   --data '{"wholesaleAccount":"1500008152"}'
 ```
+
+---
+
+## 4. Documentación de Bloqueo S2-04 (`credit/getPlazos`)
+
+**Estatus:** 🔒 BLOQUEADO (Dependencia de SAP SD40).
+
+### Resumen del Problema
+1. Inicialmente se pensó que el catálogo maestro de condiciones de crédito (`CondicionesCredVtaLinea`) podría leerse íntegramente desde **SIGMAVI**.
+2. Sin embargo, la lógica legado (Intelisis LAN) cruza `VTASCCondicionesCredVtaLinea` (que sí está en SIGMAVI) con la tabla `Condicion` (la cual contiene el campo `DiasVencimiento`).
+3. Se nos informó que la tabla `Condicion` ya no existe en el nuevo ecosistema SQL/SIGMAVI y fue trasladada hacia SAP a través del wrapper **OData SD40**.
+4. Dado que el wrapper SD40 no cuenta con documentación técnica, endpoints, ni mapeo de entidades en el repositorio, **no es posible avanzar** con el cruce de datos híbrido (SIGMAVI + SAP).
+
+### Próximos Pasos
+- Queda en espera de que el equipo de SAP (Dev 1 / Dev 4) libere la documentación y el endpoint de SD40.
+- Una vez liberado, se desarrollará el cliente HTTP en `ServicioSAP` para consumir SD40 y se cruzará en memoria (LINQ) con los datos de SIGMAVI.
