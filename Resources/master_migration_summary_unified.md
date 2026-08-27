@@ -82,6 +82,8 @@ flowchart TD
 4. **Puentes DMZ a SAP (`PostSAP` Mandatorio):** La conexión entre la DMZ de Magento y el ServicioSAP se realiza usando el puente `curl.PostSAP(...)`. Todos los endpoints destino en ServicioSAP reciben peticiones en `[HttpPost]`.
 5. **Exclusión Estricta de CrediLana:** Todo flujo exclusivo de la plataforma "CrediLana" queda fuera del alcance de la migración a SAP S/4HANA.
 
+6. **Consistencia de Mandante (sap-client):** Todas las llamadas OData a S/4HANA deben utilizar el mandante estándar de QA (`sap-client=110`). Si bien en la documentación técnica RSG se realizaron pruebas usando el mandante `050`, la implementación en código debe forzar estrictamente `110` para garantizar la conexión al entorno homologado.
+
 ---
 
 ## 🔄 Matriz de Impacto y Reutilización de APIs SAP (Relación RSG vs Código C#)
@@ -434,9 +436,7 @@ Para garantizar un alto rendimiento en producción (*evitando Thread Pool Starva
 
 Durante la auditoría del código C#, se detectaron los siguientes *gaps* que requieren refactorización urgente antes del paso a producción:
 
-1. **Endpoint `GetSucursalInfo` Fantasma:** La matriz RSG (`dm07_sucursales.md`) documentaba el uso de este endpoint, pero actualmente la llamada a `ZAPI_SUCURSALES_SRV` está incrustada (hardcodeada) dentro de `OrderMethods.cs` (línea ~1043). **Acción:** Extraer la lógica y exponerla como API.
-2. **Inconsistencia de Mandante (`sap-client`):** El código asume globalmente el mandante `110` (QA), pero la consulta de sucursales en `OrderMethods.cs` quema en código el valor `sap-client=050`. **Acción:** Unificar el consumo de constantes de entorno.
-3. **Business Partner Dummy:** En `OrderMethods.cs`, la variable constante `GuestCashPartnerNumber` tiene asignado el BP de prueba `1500003857`. **Acción:** Reemplazar por el número de BP genérico definitivo entregado por SAP.
+1. **Business Partner Dummy:** En `OrderMethods.cs`, la variable constante `GuestCashPartnerNumber` tiene asignado el BP de prueba `1500003857`. **Acción:** Reemplazar por el número de BP genérico definitivo entregado por SAP.
 
 ---
 
