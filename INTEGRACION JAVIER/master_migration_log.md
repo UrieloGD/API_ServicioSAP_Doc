@@ -55,7 +55,7 @@ A continuación, la lista de tareas (check-list) que seguiremos paso a paso. Cad
 **Estatus:** ✅ FINALIZADO Y PROBADO EXITOSAMENTE.
 
 ### Resumen de Cambios Generados
-1. **Doble validación Regex (DMZ):** Se ajustó la expresión regular en el `WholesaleCustomerController` de la DMZ para que permita tanto las cuentas "legacy" de Intelisis que inician con `C` (`CXXXXXXXX`), como las cuentas numéricas nativas de SAP S/4HANA (ej. `1500008152`).
+1. **Validación Estricta Regex (DMZ):** Se ajustó la expresión regular en el `WholesaleCustomerController` de la DMZ para que permita **exclusivamente** las cuentas numéricas nativas de SAP S/4HANA (ej. `1500008152` de 8 a 10 dígitos), eliminando el soporte para las cuentas "legacy" de Intelisis que iniciaban con `C`.
 2. **Arquitectura REST Puente:** El DMZ transforma el `GET` tradicional de Magento en un `POST` con cuerpo JSON y lo reenvía asíncronamente mediante `curl.PostSAP` hacia el backend.
 3. **Manejo Seguro de Errores (SAP):** El método `GetWholesaleCustomerNameAsync` maneja correctamente el caso de 404 (cliente no encontrado en SAP) atrapando la excepción y retornando un literal `"null"`, el cual la DMZ intercepta para lanzar un `400 Bad Request` limpio (`Customer not found.`), protegiendo la orquestación e impidiendo bloqueos del hilo.
 
