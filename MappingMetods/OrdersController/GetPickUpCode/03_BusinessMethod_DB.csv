@@ -1,0 +1,2 @@
+BaseDeDatos,Servidor,Controlador,Endpoint,Metodo,NombreTabla,Stored Procedures,Accion,Campos Principales,Nombre TablaSAP,API SAP
+IntelisisTmp,MAVICUBOS.grupomavi.com,OrdersController,POST /order/GetPickUpCode,CodigoRecogerSucursal.GetPickUpCode,TrWDM0285_CteRecoge,N/A (Inline SQL),Select,"idEcommerce (= @idEcommerce, parametrizado VarChar), ClaveVenta (proyectado como PickupCode) -- WITH(NOLOCK), SIN TOP y SIN ORDER BY sobre tabla con duplicados posibles, sin CommandTimeout explicito (30s default) -- SIN EQUIVALENTE SAP IDENTIFICADO",,

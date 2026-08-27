@@ -1,0 +1,108 @@
+﻿Controlador,Endpoint,Verbo,DataOrigin,Destino,MigrationStatus,TablasSIGMAVI,TotalTablasODS,EsNuestro
+CreditController,credit/getSms,POST,ANDROID (TcAAEA00030_EnvioMensajes),ANDROID,Planed Dev 1,,0,Si
+CreditController,credit/validateSms,POST,SAP (BP05) + ANDROID,ANDROID,In Progress,,1,Mixto
+CreditController,credit/codigoPromocion,POST,EXT (SuccessFactors / Sigmavi),SIGMAVI,Not Migrated,VTASCVentaCupon,5,Si
+CreditController,credit/codigoRecomendado,POST,INTELISIS (BP05),INTELISIS,In Progress,,0,Mixto
+CreditController,credit/getPlazos,GET,SAP (SD40 ) + SIGMAVI (CondicionesCredVtaLinea),SIGMAVI,To Plan,VTASCCondicionesCredVtaLinea,2,Mixto
+CreditController,credit/getCreditAccount/{pAccount},GET,INTELISIS,INTELISIS,To Plan,,1,Mixto
+CreditController,credit/GetUnificationWalletStatus,POST,INTELISIS,INTELISIS,Not Migrated,,1,Mixto
+CreditController,credit/CheckAccountsPreUnification,POST,INTELISIS + (BP05),INTELISIS,Not Migrated,,0,Mixto
+CreditController,credit/SetUnificationWalletData,POST,INTELISIS,INTELISIS,Not Migrated,,7,Mixto
+CreditController,credit/SolicitudMercancia,POST,ANDROID,ANDROID,Planed Dev 1,,0,Si
+CreditController,credit/guardardocumento,POST,EXT (Hazten document store),EXTERNO,Planed Dev 1,,0,Si
+CreditController,credit/SaveHaztenTransaction,POST,EXT (Hazten),EXTERNO,Out of scope,,0,No
+CreditController,credit/CreditoWeb_FormDatos,POST,ANDROID,ANDROID,Planed Dev 1,,0,Si
+CreditController,credit/CreditoWeb_SaveFirstData,POST,ANDROID,ANDROID,Planed Dev 1,,0,Si
+CreditController,credit/CreditoWeb_SaveData,POST,ANDROID,ANDROID,Planed Dev 1,,0,Si
+CreditController,credit/CreditoWeb_SaveData_Articulos,POST,ANDROID,ANDROID,Planed Dev 1,,0,Si
+CreditController,credit/CreditoWeb_Informacion,POST,ANDROID,ANDROID,Planed Dev 1,,0,Si
+CreditController,credit/CreditoWeb_Solicitud,POST,ANDROID,ANDROID,Planed Dev 1,,0,Si
+CreditController,credit/CreditoWeb_SolicitudPrimerGuardado,POST,ANDROID,ANDROID,Planed Dev 1,,0,Si
+CreditController,credit/CreditoWeb_Seguro,POST,ANDROID,ANDROID,Planed Dev 1,,0,Si
+CreditController,credit/GetCreditAmounts,POST,ANDROID,ANDROID,Planed Dev 1,,0,Si
+CreditController,credit/Validar_Lada,POST,ANDROID,ANDROID,Deprecated,,0,No
+CreditController,credit/codigoRecomendadoWithUen,POST,INTELISIS,INTELISIS,Out of scope,,0,No
+CreditController,credit/SaveImagesProductosMx,POST,EXT,EXTERNO,Planed Dev 1,,0,Si
+CreditController,credit/GetPhoneValidatedClientSecretName,POST,ANDROID,ANDROID,Planed Dev 1,,0,Si
+CreditController,credit/SendSmsNewNumber,POST,ANDROID,ANDROID,Planed Dev 1,,0,Si
+CustomersController,customer/setCustomerList,POST,SIGMAVI + SAP,SIGMAVI,Not Migrated,VTASCListaBlanca; VTASCListaNegra,3,Mixto
+CustomersController,customer/getCustomerList,GET,SIGMAVI + SAP,SIGMAVI,Not Migrated,VTASCListaBlanca; VTASCListaNegra,2,Mixto
+CustomersController,customer/deleteCustomerList,POST,INTELISIS,INTELISIS,Not Migrated,VTASCListaBlanca,1,Mixto
+CustomersController,customer/cashCustomerReport,POST,OTRO,OTRO,Planed Dev 1,,0,Si
+CustomerServiceController,customerService/obtenerTipoGarantia,POST,SIGMAVI,SIGMAVI,Not Migrated,VTASCProveedorActivoGarantia,2,Si
+CustomerServiceController,customerService/unirCuenta,POST,SAP (BP05 ? ZID_MAGENTO),MAGENTO,In Progress,,1,Mixto
+CustomerServiceController,customerService/bitacoraAtencionClientes,POST,ANDROID (Sigmavi),SIGMAVI,Planed Dev 1,,0,Si
+CustomerServiceController,customerService/validarCoberturaPorCP,POST,INTELISIS,INTELISIS,Not Migrated,,1,Mixto
+CustomerServiceController,customerService/obtenerVentanaConfirmacion,POST,INTELISIS + (BP05) + (SD36),INTELISIS,Not Migrated,,0,Mixto
+CustomerServiceController,customerService/obtenerCreditos,POST,INTELISIS,INTELISIS,Not Migrated,,5,Mixto
+CustomerServiceController,customerService/obtenerQuejas,POST,ANDROID,ANDROID,Planed Dev 1,,0,Si
+CustomerServiceController,customerService/ObtenerEstatusEmbarque,POST,INTELISIS,INTELISIS,Not Migrated,,3,Mixto
+CustomerServiceController,customerService/LoginClienteCredito,POST,INTELISIS,INTELISIS,Out of scope,,0,No
+CustomerServiceController,customerService/LoginClienteCreditoFechaN,POST,INTELISIS,INTELISIS,Out of scope,,0,No
+CustomerServiceController,customerService/GetSTPAccount,POST,EXT (STP),EXTERNO,Not Migrated,,1,Si
+CustomerServiceController,customerService/GetSalesChannelsSTP,POST,EXT (STP),EXTERNO,Not Migrated,,1,Si
+CustomerServiceController,customerService/ValidateSTPAccount,GET,EXT (STP),EXTERNO,To Plan,,2,Si
+CustomerServiceController,customerService/bbvaKeyNeko,POST,EXT (BBVA),EXTERNO,Deprecated,,1,No
+CustomerServiceController,customerService/bbvaKeyAdvanced,POST,EXT (BBVA),EXTERNO,Planed Dev 1,,0,Si
+CustomerServiceController,customerService/GetEmpleadoByNomina,POST,INTELISIS (payroll),INTELISIS,Out of scope,,0,No
+CustomerServiceController,customerService/ActualizarCamposConfigurables,POST,Unknown,OTRO,Planed Dev 1,,0,Si
+CustomerServiceController,customerService/InsertarDesdeTablerateNativo,POST,Unknown,OTRO,Planed Dev 1,,0,Si
+CustomerServiceController,customerService/InsertarDesdeTablerateCustom,POST,Unknown,OTRO,Planed Dev 1,,0,Si
+LoginController,login/authenticate,POST,(local JWT),OTRO,Planed Dev 1,,0,Si
+MagentoController,magento/attributes,GET,MAGENTO,MAGENTO,Planed Dev 1,,0,Si
+MagentoController,magento/general/attributes,GET,MAGENTO,MAGENTO,Planed Dev 1,,0,Si
+MagentoController,magento/attributeSets,GET,MAGENTO,MAGENTO,Planed Dev 1,,0,Si
+MagentoController,magento/attributeSetChildren/{id},GET,MAGENTO,MAGENTO,Planed Dev 1,,0,Si
+MagentoController,magento/categories,GET,MAGENTO,MAGENTO,Planed Dev 1,,0,Si
+MagentoController,magento/children/{page}/{size}/{store},GET,MAGENTO,MAGENTO,Planed Dev 1,,0,Si
+MagentoController,magento/noImagenProduct/{store},GET,MAGENTO,MAGENTO,Planed Dev 1,,0,Si
+MagentoController,magento/productWithWebsites/{page}/{size},GET,MAGENTO,MAGENTO,Planed Dev 1,,0,Si
+MagentoController,magento/getOrderId/{incrementId},GET,MAGENTO,MAGENTO,Planed Dev 1,,0,Si
+MagentoController,magento/deletePromociones,GET,MAGENTO,MAGENTO,Planed Dev 1,,0,Si
+MagentoController,magento/deleteReservations,GET,MAGENTO,MAGENTO,Planed Dev 1,,0,Si
+MagentoController,magento/getCuenta,POST,MAGENTO,MAGENTO,Planed Dev 1,,0,Si
+MagentoController,magento/setCuenta,POST,MAGENTO,MAGENTO,Planed Dev 1,,0,Si
+OrdersController,order/updateCreditOrderId,POST,Unknown,OTRO,Planed Dev 1,,0,Si
+OrdersController,order/estimated-delivery/{ecommerceId},GET,INTELISIS (INVDPaqueteriaGuia),INTELISIS,Not Migrated,,3,Mixto
+OrdersController,order/GetPickUpCode,POST,INTELISIS (TrWDM0285_CteRecoge),INTELISIS,Not Migrated,,0,Mixto
+OrdersController,order/ManagePaynetOrders,POST,SQLITE / INTELISIS (spAfectar),SQLITE,Planed Dev 1,,0,Mixto
+OrdersController,order/InsertPaymentData,POST,SQLITE (CXCCMensajeWebHookOpenPay),SQLITE,Planed Dev 1,,0,Si
+OrdersController,order/getGuide,POST,SQLITE,SQLITE,Planed Dev 1,,0,Si
+OrdersController,order/authorizationResult,POST,MAGENTO,MAGENTO,Planed Dev 1,,0,Si
+OrdersController,order/setOrderStatus,POST,MAGENTO,MAGENTO,Planed Dev 1,,0,Si
+OrdersController,order/getOrderInfo/{incrementId},GET,MAGENTO,MAGENTO,Planed Dev 1,,0,Si
+OrdersController,order/jsonOrders/{incrementId},GET,MAGENTO,MAGENTO,Planed Dev 1,,0,Si
+OrdersController,order/setCAccount,POST,MAGENTO,MAGENTO,Planed Dev 1,,0,Si
+OrdersController,order/sendStorePickupEmail,POST,MAGENTO,MAGENTO,Planed Dev 1,,0,Si
+OrdersController,order/getprueba,GET,,SIN-DEFINIR,Planed Dev 1,,0,Si
+ProductsController,product/updateProduct/{store},POST,MAGENTO,MAGENTO,Planed Dev 1,,0,Si
+ProductsController,product/updateConfigurableProduct/{store},POST,MAGENTO,MAGENTO,Planed Dev 1,,0,Si
+ProductsController,product/updateConfigurableProductLink/{sku},POST,MAGENTO,MAGENTO,Planed Dev 1,,0,Si
+ProductsController,product/updateStock,POST,MAGENTO,MAGENTO,Planed Dev 1,,0,Si
+ProductsController,product/getStockByStore,POST,MAGENTO,MAGENTO,Planed Dev 1,,0,Si
+ProductsController,product/updatePrice,POST,MAGENTO,MAGENTO,Planed Dev 1,,0,Si
+ProductsController,product/uploadImage,POST,MAGENTO,MAGENTO,Planed Dev 1,,0,Si
+ProductsController,product/uploadImagesToMagento,POST,MAGENTO,MAGENTO,Planed Dev 1,,0,Si
+RecommenderController,recommender/setRecommenderList,POST,INTELISIS,INTELISIS,Not Migrated,,3,Mixto
+RecommenderController,recommender/getRecommender,POST,INTELISIS,INTELISIS,Not Migrated,,1,Mixto
+RecommenderController,recommender/setCodes,POST,INTELISIS,INTELISIS,Not Migrated,,3,Mixto
+StatusController,status/getStatus,POST,INTELISIS,INTELISIS,Planed Dev 1,,0,Mixto
+WalletCustomerController,customer/wallet/getCuentaC/{ordenCompra},GET,INTELISIS,INTELISIS,Not Migrated,,0,Mixto
+WholesaleCustomerController,company/negotiable-quote/create,POST,INTELISIS,INTELISIS,Not Migrated,,3,Mixto
+CustomersController (LAN-only),customer/getCuenta,POST,MAGENTO (rest/V1/mavi-cuenta/getCuenta),MAGENTO,Planed Dev 1,,0,Si
+CustomersController (LAN-only),customer/setCuenta,POST,MAGENTO (rest/V1/mavi-cuenta/setCuenta),MAGENTO,Planed Dev 1,,0,Si
+CreditController (LAN-only),credit/SaveCredilanaInfo,POST,INTELISIS (CredyPrestamoMethods),INTELISIS,Out of scope,,0,No
+OrdersController (LAN-only),order/createStorepickupCode/{idEcommerce}/{idOrder},POST,INTELISIS (CodigoRecogerSucursal / TrWDM0285_CteRecoge),INTELISIS,Out of scope,,0,No
+OrdersController (LAN-only),order/generateNewStorepickupCode/{idEcommerce},GET,INTELISIS (CodigoRecogerSucursal),INTELISIS,Out of scope,,0,No
+OrdersController (LAN-only),order/getOrderId/{idEcommerce},POST,INTELISIS (OrderMethods) + outbound Curl,INTELISIS,Out of scope,,0,No
+OrdersController (LAN-only),order/getOrderInfoAndSet/{incrementId},GET,MAGENTO,MAGENTO,Out of scope,,0,No
+OrdersController (LAN-only),order/checkOpenpay,POST,SQLITE / INTELISIS (OpenpayMethods),SQLITE,Planed Dev 2,,0,Mixto
+ProductsController (LAN-only),product/updateProduct,POST,INTELISIS,INTELISIS,Planed Dev 2,,0,Mixto
+ProductsController (LAN-only),product/updateProductJsonOnly,POST,INTELISIS,INTELISIS,Planed Dev 2,,0,Mixto
+ProductsController (LAN-only),product/updatePrice,POST,INTELISIS,INTELISIS,Planed Dev 2,,0,Mixto
+ProductsController (LAN-only),product/updateConfigurableProduct,POST,INTELISIS,INTELISIS,Planed Dev 2,,0,Mixto
+ProductsController (LAN-only),product/updateStockMavi,POST,INTELISIS,INTELISIS,Planed Dev 2,,0,Mixto
+ProductsController (LAN-only),product/updateStock,POST,INTELISIS,INTELISIS,Planed Dev 2,,0,Mixto
+ProductsController (LAN-only),product/getStockByStore,POST,INTELISIS,INTELISIS,Out of scope,,0,No
+ProductsController (LAN-only),product/existenciasAlmacenArt,POST,INTELISIS,INTELISIS,Planed Dev 2,,0,Mixto
+ProductsController (LAN-only),product/obtenerImagen,POST,INTELISIS,INTELISIS,Out of scope,,0,No

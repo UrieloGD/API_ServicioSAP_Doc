@@ -1,0 +1,3 @@
+BaseDeDatos,Servidor,Controlador,Endpoint,Metodo,NombreTabla,Stored Procedures,Accion,Campos Principales,Nombre TablaSAP,API SAP
+Intelisis,MAVICUBOS.grupomavi.com,CreditController,POST /credit/CheckAccountsPreUnification,CreditMethods.AccountType,Cte,N/A (Inline SQL),Select,"Cliente (filtrado por Cte.Cliente = @Account; SELECT * con JOIN a CteEnviarA) -- invocado 2 veces: ClienteContado y ClienteCredito",,
+Intelisis,MAVICUBOS.grupomavi.com,CreditController,POST /credit/CheckAccountsPreUnification,CreditMethods.AccountType,CteEnviarA,N/A (Inline SQL),Select,"Cliente, ID (IN 3,76 si uen=1 / IN 7 si uen=2), Categoria = @Categorie ('CREDITO MENUDEO')",,

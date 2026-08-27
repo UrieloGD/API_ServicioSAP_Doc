@@ -1,0 +1,35 @@
+# Mapeo del Método: `POST /customerService/UpdateStatusPaymentNeko` — Capa LAN (Controller)
+
+**Archivo:** `APIMagento/WebApiMagento/Controllers/CustomerServiceController.cs`
+**Método:** `UpdateStatusPaymentNeko(UpdateStatusPaymentNekoRequest request)` — Líneas 128–132
+**Capa:** LAN (Nexo)
+**Rol en el flujo:** Dispatcher minimalista. Sin validación de null. Delega directamente al método de negocio.
+
+---
+
+## Flujo de Ejecución
+
+1. Recibe el `POST` reenviado desde DMZ.
+2. Llama directamente a `CustomerServiceMethods.UpdateStatusPaymentNeko(request)`.
+3. Envuelve el string devuelto en `Ok(...)` y lo retorna a DMZ.
+4. **Sin validación de null** en este controlador.
+
+## Interacciones con Base de Datos
+
+**Ninguna directa.**
+
+Ver tablas globales en: [[../_GLOBAL_CustomerServiceController_DB.csv]]
+
+## Métodos que llama
+
+| Método | Clase | Descripción |
+|---|---|---|
+| `UpdateStatusPaymentNeko(request)` | `CustomerServiceMethods` | Lógica de UPDATE en BD |
+
+## Response
+
+| Caso | HTTP Status | Cuerpo |
+|---|---|---|
+| Registros actualizados | 200 OK | `"Status has been updated."` |
+| Sin filas afectadas | 200 OK | `"Status could not be updated."` |
+| SqlException | 200 OK | `""` (vacío) |

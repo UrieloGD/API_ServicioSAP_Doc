@@ -1,0 +1,274 @@
+{
+  "main": {
+    "id": "160a9e3ceac0b7c7",
+    "type": "split",
+    "children": [
+      {
+        "id": "9add0881516c918b",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "db2cb510841a182a",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "_NUESTROS_ENDPOINTS/CHECKLIST_DEV3_NOSAP_NOINTELISIS.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "CHECKLIST_DEV3_NOSAP_NOINTELISIS"
+            }
+          },
+          {
+            "id": "47f96889e322c5bf",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "_NUESTROS_ENDPOINTS/CHECKLIST_DEV3_NOSAP_NOINTELISIS.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "CHECKLIST_DEV3_NOSAP_NOINTELISIS"
+            }
+          },
+          {
+            "id": "710d135193567694",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "_NUESTROS_ENDPOINTS/CHECKLIST_DEV3_NOSAP_NOINTELISIS.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "CHECKLIST_DEV3_NOSAP_NOINTELISIS"
+            }
+          },
+          {
+            "id": "cb9fcd7bb31b1e18",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "_NUESTROS_ENDPOINTS/ESTADO_PRUEBAS_Y_AVANCE.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "ESTADO_PRUEBAS_Y_AVANCE"
+            }
+          }
+        ],
+        "currentTab": 2
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "eb9dfd6877383df4",
+    "type": "split",
+    "children": [
+      {
+        "id": "45804d3f1aab66fb",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "a84c68dbe95fde88",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical",
+                "autoReveal": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-folder-closed",
+              "title": "Explorador de archivos"
+            }
+          },
+          {
+            "id": "2867d78acec06d8b",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "Buscar"
+            }
+          },
+          {
+            "id": "3ff2b22602de0177",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-bookmark",
+              "title": "Marcadores"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300
+  },
+  "right": {
+    "id": "3eb5bee487ac570f",
+    "type": "split",
+    "children": [
+      {
+        "id": "1710e082f9e3c03c",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "699c8fdc4a5e0c73",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "file": "_NUESTROS_ENDPOINTS/GANTT_~1.md",
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "Enlaces entrantes"
+            }
+          },
+          {
+            "id": "7bf23957e0253702",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "file": "_NUESTROS_ENDPOINTS/GANTT_~1.md",
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "Enlaces salientes"
+            }
+          },
+          {
+            "id": "de6fdd0cfd426742",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-tags",
+              "title": "Etiquetas"
+            }
+          },
+          {
+            "id": "0b9ac46bd7abc95e",
+            "type": "leaf",
+            "state": {
+              "type": "all-properties",
+              "state": {
+                "sortOrder": "frequency",
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-archive",
+              "title": "Todas las propiedades"
+            }
+          },
+          {
+            "id": "d599b0eaf9df1d20",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "file": "_NUESTROS_ENDPOINTS/GANTT_~1.md",
+                "followCursor": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-list",
+              "title": "Esquema"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:Abrir selector rápido": false,
+      "graph:Abrir vista gráfica": false,
+      "canvas:Crear nuevo lienzo": false,
+      "daily-notes:Abrir la nota de hoy": false,
+      "templates:Insertar plantilla": false,
+      "command-palette:Abrir paleta de comandos": false,
+      "bases:Crear nueva base": false
+    }
+  },
+  "active": "710d135193567694",
+  "lastOpenFiles": [
+    "_NUESTROS_ENDPOINTS/ESTADO_PRUEBAS_Y_AVANCE.md",
+    "_NUESTROS_ENDPOINTS/CHECKLIST_DEV3_NOSAP_NOINTELISIS.md",
+    "_NUESTROS_ENDPOINTS/Contratos/E-14_obtenerImagen.md",
+    "_NUESTROS_ENDPOINTS/Contratos/E-13_cashCustomerReport.md",
+    "_NUESTROS_ENDPOINTS/Contratos/E-12_setCuenta.md",
+    "_NUESTROS_ENDPOINTS/Contratos/E-11_getCuenta.md",
+    "CustomerServiceController/LoginClienteCreditoFechaN/03_BusinessMethod.md",
+    "CustomerServiceController/LoginClienteCreditoFechaN/01_DMZ_Controller.md",
+    "CustomerServiceController/LoginClienteCredito/03_BusinessMethod.md",
+    "CustomerServiceController/LoginClienteCredito/01_DMZ_Controller.md",
+    "CustomerServiceController/LoginClienteCreditoFechaN/04_Helper_Logger_CustomerService.md",
+    "CustomerServiceController/LoginClienteCreditoFechaN/03_BusinessMethod_DB.csv",
+    "CustomerServiceController/LoginClienteCreditoFechaN/02_LAN_Controller.md",
+    "CustomerServiceController/LoginClienteCreditoFechaN",
+    "CustomerServiceController/LoginClienteCredito/03_BusinessMethod_DB.csv",
+    "CustomerServiceController/LoginClienteCredito/02_LAN_Controller.md",
+    "CustomerServiceController/LoginClienteCredito",
+    "_NUESTROS_ENDPOINTS/Contratos/E-10_bbvaKeyAdvanced.md",
+    "_NUESTROS_ENDPOINTS/Contratos/E-09_obtenerQuejas.md",
+    "_NUESTROS_ENDPOINTS/CHECKLIST_DEV2_ENDPOINTS_SAP.md",
+    "_NUESTROS_ENDPOINTS/PLAN_MAESTRO_GANTT_POR_DEV.md",
+    "_NUESTROS_ENDPOINTS/_PLAN_MIGRACION_FECHAS.md",
+    "_NUESTROS_ENDPOINTS/CHECKLIST_MIGRACION_LAN_A_SAP.md",
+    "_NUESTROS_ENDPOINTS/CHECKLIST_DEV3_NOSAP_NOINTELISIS.md.tmp.10508.27c64ec25c5c",
+    "_NUESTROS_ENDPOINTS/ESTADO_PRUEBAS_Y_AVANCE.md.tmp.10508.6056489d6a91",
+    "_NUESTROS_ENDPOINTS/CHECKLIST_MIGRACION_LAN_A_SAP.md.tmp.10508.f3a734b207d8",
+    "_NUESTROS_ENDPOINTS/ESTADO_PRUEBAS_Y_AVANCE.md.tmp.10508.8892147cd1bc",
+    "_NUESTROS_ENDPOINTS/GANTT_~1.md",
+    "_NUESTROS_ENDPOINTS/_ALCANCE_MIGRACION_LAN_a_SAP.md",
+    "_NUESTROS_ENDPOINTS/_ESTADO_REAL_EN_SERVICIOSAP.md",
+    "_NUESTROS_ENDPOINTS/CHECKLIST_DEV1_WRAPPERS_SAP.md",
+    "_NUESTROS_ENDPOINTS/CHECKLIST_DEV2_ENDPOINTS_SAP 1.md",
+    "_NUESTROS_ENDPOINTS/_PLAN_MIGRACION_FECHAS.md.tmp.16532.ea19510c91c8",
+    "_NUESTROS_ENDPOINTS/_PLAN_MIGRACION_FECHAS.md.tmp.16532.f700d63db330",
+    "_NUESTROS_ENDPOINTS/CHECKLIST_DEV4_PAGOS.md",
+    "_NUESTROS_ENDPOINTS/Contratos/FLUJO_GETAPIKEY.md",
+    "Sin título.canvas"
+  ]
+}

@@ -1,0 +1,91 @@
+Controlador,Endpoint,MetodoHTTP,MetodoNegocio,Destinos,EsIntelisis,EnAlcance,Motivo,Mapeado,Evidencia
+CreditController,/credit/getSms,POST,CreditMethods.ProductosCredito_Nip,"ServicioAndroid, IntelisisTmp",Mixto,Si,"SMS en Android + validaciones en Intelisis",No,CreditMethods.cs:2134
+CreditController,/credit/validateSms,POST,CreditMethods.ProductosCredito_Clave,"ServicioAndroid, IntelisisTmp (linked server)",Mixto,Si,"SP SPVTASCodigoSeguridadeCommerce hace UPDATE a ERPMAVI.INTELISISTMP.dbo.Cte",Si,CreditMethods.cs:57
+CreditController,/credit/getClienteFactura/{cliente}/{factura},GET,FacturaMethods.getClienteFacturas,IntelisisTmp,Si,No,"100% Intelisis (sCadenaConexion)",No,FacturaMethods.cs:16
+CreditController,/credit/getClienteSaldo/{cliente},GET,FacturaMethods.getClienteSaldo,IntelisisTmp,Si,No,"100% Intelisis (sCadenaConexion)",No,FacturaMethods.cs:16
+CreditController,/credit/codigoPromocion,POST,CreditMethods.CodigoPromocion,IntelisisTmp,Si,No,"100% Intelisis (sCadenaConexion)",Si,CreditMethods.cs:397
+CreditController,/credit/CreditoWeb_FormDatos,POST,CreditMethods.CreditoWeb_FormDatos,"SQLite mavi_credilana_info, IntelisisTmp",Mixto,Si,"6 op resuelven en SQLite; el resto cae a SP_CREDITO_WEB_VALORES_FORM",No,CreditMethods.cs:681
+CreditController,/credit/CreditoWeb_SaveFirstData,POST,CreditMethods.CreditoWeb_SaveFirstData,"ServicioAndroid, IntelisisTmp (linked server)",Mixto,Si,"SP SpCREDISolicitudWebPrimerGuardado referencia Intelisis",No,CreditMethods.cs:510
+CreditController,/credit/CreditoWeb_SaveData_Articulos,POST,CreditMethods.CreditoWeb_SaveData_Articulos,"ServicioAndroid, IntelisisTmp",Mixto,Si,"Delega en Credit.Methods.CreditoWeb_SaveData + cte_prospecto",No,CreditMethods.cs:473
+CreditController,/credit/codigoRecomendado,POST,CreditMethods.codigoRecomendado,IntelisisTmp,Si,No,"100% Intelisis (sCadenaConexion)",No,CreditMethods.cs:1114
+CreditController,/credit/codigoRecomendadoWithUen,POST,CreditMethods.CodigoRecomendadoWithUen,IntelisisTmp,Si,No,"100% Intelisis (sCadenaConexion)",No,CreditMethods.cs:1159
+CreditController,/credit/SaveImagesProductosMx,POST,CreditMethods.SaveImagesProductosMx,"AdminDoc, Filesystem",No,Si,,No,CreditMethods.cs:998
+CreditController,/credit/CreditoWeb_Informacion,POST,CreditMethods.CreditoWeb_Informacion,"SQLite mavi_credilana_info, IntelisisTmp",Mixto,Si,"3 op en SQLite; 6 op caen a SPCREDICredilana",No,CreditMethods.cs:1204
+CreditController,/credit/GetCreditAmounts,POST,CredyPrestamoMethods.GetCredilanaInfo,SQLite mavi_credilana_info,No,Si,,No,CredyPrestamoMethods.cs:834
+CreditController,/credit/CreditoWeb_Solicitud,POST,CreditMethods.CreditoWeb_Solicitud,IntelisisTmp,Si,No,"100% Intelisis (sCadenaConexion)",No,CreditMethods.cs:1293
+CreditController,/credit/CreditoWeb_SolicitudPrimerGuardado,POST,CreditMethods.CreditoWeb_SolicitudPrimerGuardado,IntelisisTmp,Si,No,"100% Intelisis (sCadenaConexion)",No,CreditMethods.cs:1346
+CreditController,/credit/Validar_Lada,POST,CreditMethods.IsLadaValid,IntelisisTmp,Si,No,"100% Intelisis (sCadenaConexion)",No,CreditMethods.cs:1397
+CreditController,/credit/ExistRFCAndPhoneCte,POST,CreditMethods.ExistRFCAndPhoneCte,N/A (sin persistencia),No,Si,"Neutralizado: return incondicional en :1426 y :1496",Si,CreditMethods.cs:1426
+CreditController,/credit/CreditoWeb_Seguro,POST,CredyPrestamoMethods.CreditoWeb_Seguro,"IntelisisTmp, ServicioAndroid, API Liberador",Mixto,Si,"SPCREDICredilanaSeguroDeVida + ProcesoAsynCredilanaCte",No,CredyPrestamoMethods.cs:231
+CreditController,/credit/CreditoWeb_SaveData,POST,CredyPrestamoMethods.CreditoWeb_SaveData,"ServicioAndroid, IntelisisTmp (linked server)",Mixto,Si,"SP SP_CREDITO_WEB_DATOS referencia ERPMAVI.IntelisisTMP",No,CredyPrestamoMethods.cs:37
+CreditController,/credit/SaveHaztenTransaction,POST,CreditMethods.SaveHaztenTransaction,"SIGMAVI, ServicioAndroid, IntelisisTmp",Mixto,Si,"SaveCoordsInNewTable inserta en RM0855ACoordenadasProspecto",No,CreditMethods.cs:2443
+CreditController,/credit/getCreditAccount/{pAccount},GET,CreditMethods.GetCreditAccount,IntelisisTmp,Si,No,"100% Intelisis (sCadenaConexion)",Si,CreditMethods.cs:1558
+CreditController,/credit/SaveCredilanaInfo,POST,CredyPrestamoMethods.LoadCredilanaInfo,"SQLite mavi_credilana_info, IntelisisTmp",Mixto,Si,"Escribe SQLite pero lee FnVTASListaCredilanas de Intelisis",No,CredyPrestamoMethods.cs:302
+CreditController,/credit/MonederoSaldoCredito,POST,CreditMethods.MonederoSaldoCredito,IntelisisTmp,Si,No,"100% Intelisis (sCadenaConexion)",No,CreditMethods.cs:1601
+CreditController,/credit/GetUnificationWalletStatus,POST,CreditMethods.SelectUnificationWalletStatus,IntelisisTmp,Si,No,"100% Intelisis (sCadenaConexion)",Si,CreditMethods.cs:1646
+CreditController,/credit/CheckAccountsPreUnification,POST,CreditMethods.CheckAccountsPreUnification,IntelisisTmp,Si,No,"100% Intelisis (sCadenaConexion)",No,CreditMethods.cs:1721
+CreditController,/credit/SetUnificationWalletData,POST,CreditMethods.InsertUnificationWallet,IntelisisTmp,Si,No,"100% Intelisis (sCadenaConexion)",Si,CreditMethods.cs:1694
+CreditController,/credit/GetPhoneValidatedClientSecretName,POST,CreditMethods.GetPhoneValidatedClientSecretName,IntelisisTmp,Si,No,"100% Intelisis (sCadenaConexion)",No,CreditMethods.cs:1816
+CreditController,/credit/SendSmsNewNumber,POST,CreditMethods.SendSmsNewNumber,ServicioAndroid,No,Si,,No,CreditMethods.cs:1998
+CreditController,/credit/SolicitudMercancia,POST,CreditMethods.SolicitudMercancia,"ServicioAndroid, IntelisisTmp (linked server inline)",Mixto,Si,"SQL inline lee ERPMAVI.IntelisisTMP.dbo.Cte",No,CreditMethods.cs:656
+CreditController,/credit/getPlazos,GET,CreditMethods.GetPlazos,IntelisisTmp,Si,No,"100% Intelisis (sCadenaConexion)",Si,CreditMethods.cs:2553
+CreditController,/credit/guardardocumento,POST,CreditMethods.GuardarDocumento,AdminDoc,No,Si,,No,CreditMethods.cs:2665
+CustomerServiceController,/customerService/obtenerTipoGarantia,POST,CustomerServiceMethods.obtenerTipoGarantia,IntelisisTmp,Si,No,"100% Intelisis (sCadenaConexion)",Si,CustomerServiceMethods.cs:44
+CustomerServiceController,/customerService/obtenerVentanaConfirmacion,POST,CustomerServiceMethods.obtenerVentanaConfirmacion,IntelisisTmp,Si,No,"100% Intelisis (sCadenaConexion)",No,CustomerServiceMethods.cs:155
+CustomerServiceController,/customerService/unirCuenta,POST,CustomerServiceMethods.unirCuenta,IntelisisTmp,Si,No,"100% Intelisis (sCadenaConexion)",Si,CustomerServiceMethods.cs:223
+CustomerServiceController,/customerService/validarCliente,POST,CustomerServiceMethods.validarCliente,IntelisisTmp,Si,No,"100% Intelisis (sCadenaConexion)",Si,CustomerServiceMethods.cs:261
+CustomerServiceController,/customerService/nombreCliente,POST,CustomerServiceMethods.nombreCliente,IntelisisTmp,Si,No,"100% Intelisis (sCadenaConexion)",Si,CustomerServiceMethods.cs:319
+CustomerServiceController,/customerService/bitacoraAtencionClientes,POST,CustomerServiceMethods.bitacoraAtencionClientes,"ServicioAndroid, IntelisisTmp (linked server)",Mixto,Si,"SP SP_ACTES_REGISTRO escribe en ERPMAVI.IntelisisTMP.dbo.RM1138PendientesxValidar",No,CustomerServiceMethods.cs:442
+CustomerServiceController,/customerService/obtenerCreditos,POST,CustomerServiceMethods.obtenerCreditos,IntelisisTmp,Si,No,"100% Intelisis (sCadenaConexion)",Si,CustomerServiceMethods.cs:505
+CustomerServiceController,/customerService/obtenerQuejas,POST,CustomerServiceMethods.obtenerQuejas,ServicioAndroid,No,Si,,No,CustomerServiceMethods.cs:720
+CustomerServiceController,/customerService/GetAccountDebts,POST,CustomerServiceMethods.GetAccountDebts,IntelisisTmp,Si,No,"100% Intelisis (SP SPCXCCobrosClientesBBVA)",No,CustomerServiceMethods.cs:800
+CustomerServiceController,/customerService/ApplyPaymentNeko,POST,CustomerServiceMethods.ApplyPaymentNeko,IntelisisTmp,Si,No,"100% Intelisis (sCadenaConexion)",Si,CustomerServiceMethods.cs:861
+CustomerServiceController,/customerService/ApplyPaymentAdvanced,POST,CustomerServiceMethods.ApplyPaymentAdvanced,IntelisisTmp,Si,No,"100% Intelisis (sCadenaConexion)",Si,CustomerServiceMethods.cs:922
+CustomerServiceController,/customerService/UpdateStatusPaymentNeko,POST,CustomerServiceMethods.UpdateStatusPaymentNeko,IntelisisTmp,Si,No,"100% Intelisis (sCadenaConexion)",Si,CustomerServiceMethods.cs:973
+CustomerServiceController,/customerService/UpdateStatusPaymentAdvanced,POST,CustomerServiceMethods.UpdateStatusPaymentAdvanced,IntelisisTmp,Si,No,"100% Intelisis (sCadenaConexion)",Si,CustomerServiceMethods.cs:1025
+CustomerServiceController,/customerService/bbvaKeyNeko,GET,CustomerServiceMethods.GetBBVAKeyNeko,IntelisisTmp (master.dbo.dbacseguridad),Si,No,"100% Intelisis (sCadenaConexion)",Si,CustomerServiceMethods.cs:1090
+CustomerServiceController,/customerService/bbvaKeyAdvanced,GET,CustomerServiceMethods.GetBBVAKeyAdvanced,SOAP WSeCommerceMX,No,Si,,Si,CustomerServiceMethods.cs:1141
+CustomerServiceController,/customerService/LoginClienteCredito,POST,CustomerServiceMethods.LoginClienteCredito,IntelisisTmp,Si,No,"100% Intelisis (sCadenaConexion)",No,CustomerServiceMethods.cs:1223
+CustomerServiceController,/customerService/LoginClienteCreditoFechaN,POST,CustomerServiceMethods.LoginClienteCreditoFechaN,IntelisisTmp,Si,No,"100% Intelisis (sCadenaConexion)",No,CustomerServiceMethods.cs:1265
+CustomerServiceController,/customerService/GetSTPAccount,POST,CustomerServiceMethods.GetSTPAccount,IntelisisTmp,Si,No,"100% Intelisis (sCadenaConexion)",Si,CustomerServiceMethods.cs:1301
+CustomerServiceController,/customerService/GetSalesChannelsSTP,POST,CustomerServiceMethods.GetSalesChannelsSTP,IntelisisTmp,Si,No,"100% Intelisis (sCadenaConexion)",Si,CustomerServiceMethods.cs:1417
+CustomerServiceController,/customerService/ValidateSTPAccount,GET,CustomerServiceMethods.ValidateSTPAccount,IntelisisTmp,Si,No,"100% Intelisis (sCadenaConexion)",Si,CustomerServiceMethods.cs:1464
+CustomerServiceController,/customerService/validarCoberturaPorCP,POST,CustomerServiceMethods.ValidarCoberturaPorCP,IntelisisTmp,Si,No,"100% Intelisis (tabla CodigoPostal)",Si,CustomerServiceMethods.cs:1744
+CustomerServiceController,/customerService/ObtenerEstatusEmbarque,POST,CustomerServiceMethods.ObtenerEstatusEmbarque,IntelisisTmp,Si,No,"100% Intelisis (sCadenaConexion)",Si,CustomerServiceMethods.cs:1908
+CustomerServiceController,/customerService/GetEmpleadoByNomina,POST,CustomerServiceMethods.GetEmpleadoByNomina,IntelisisTmp,Si,No,"100% Intelisis (sCadenaConexion)",No,CustomerServiceMethods.cs:1957
+OrdersController,/order/ManagePaynetOrders,POST,OrderMethods.ManagePaynetOrders,IntelisisTmp,Si,No,"100% Intelisis (sCadenaConexion)",No,OrderMethods.cs:63
+OrdersController,/order/insertPaymentData,POST,OrderMethods.InsertPaymentData,IntelisisTmp,Si,No,"100% Intelisis (sCadenaConexion)",No,OrderMethods.cs:187
+OrdersController,/order/getIntelisisStatuses,POST,OrderMethods.GetIntelisisStatuses,IntelisisTmp,Si,No,"100% Intelisis (sCadenaConexion)",Si,OrderMethods.cs:298
+OrdersController,/order/getPosCancellations,POST,OrderMethods.GetPosCancellations,IntelisisTmp,Si,No,"100% Intelisis (sCadenaConexion)",No,OrderMethods.cs:240
+OrdersController,/order/setOrder,POST,OrderMethods.SetPedido,"IntelisisTmp, SQLite, ServicioAndroid, API Liberador",Mixto,Si,"Guias en SQLite + SMS en Android + callback a DMZ",No,OrderMethods.cs:458
+OrdersController,/order/getGuide,POST,OrderMethods.GetGuide,SQLite servicio_guias,No,Si,,No,OrderMethods.cs:738
+OrdersController,/order/cancelOrder,POST,ServiceOrderMethods.sendReporte,"IntelisisTmp, SQLite workstation",Mixto,Si,"generateWorkstation y clearWorkstation usan SQLite",No,ServiceOrderMethods.cs:820
+OrdersController,/order/returnOrder,POST,ServiceOrderMethods.sendReporte,"IntelisisTmp, SQLite workstation",Mixto,Si,"generateWorkstation y clearWorkstation usan SQLite",No,ServiceOrderMethods.cs:820
+OrdersController,/order/setOrderStatus,POST,Provider.CompraArtVirtual,"IntelisisTmp, Magento (via DMZ)",Mixto,Si,"CompraArtVirtual en Intelisis + Curl.Post a Magento",No,Order/Provider.cs:27
+OrdersController,/order/GetPickUpCode,POST,CodigoRecogerSucursal.GetPickUpCode,IntelisisTmp,Si,No,"100% Intelisis (sCadenaConexion)",No,StorePickup/CodigoRecogerSucursal.cs:60
+OrdersController,/order/createStorepickupCode/{idEcommerce}/{idOrder},POST,CodigoRecogerSucursal.crearPrimerCodigoRecogerSuc,"IntelisisTmp, Magento (via DMZ), SMTP",Mixto,Si,"Curl a DMZ + envio de correo",No,StorePickup/CodigoRecogerSucursal.cs:126
+OrdersController,/order/generateNewStorepickupCode/{idEcommerce},GET,CodigoRecogerSucursal.NuevoCodigoRecogerSucursal,"IntelisisTmp, Magento (via DMZ)",Mixto,Si,"Curl a DMZ para notificar",No,StorePickup/CodigoRecogerSucursal.cs:274
+OrdersController,/order/getOrderId/{idEcommerce},POST,OrderMethods.InsertDetPedido,"Magento (via DMZ), IntelisisTmp",Mixto,Si,"Curl.Get a Magento + INSERT en Intelisis",No,OrderMethods.cs:458
+OrdersController,/order/getOrderInfoAndSet/{incrementId},GET,Magento.getOrderInfoAndSet,"Magento (via DMZ), IntelisisTmp",Mixto,Si,"Curl.Get a Magento + SetPedido",No,Conn/Magento.cs:371
+OrdersController,/order/checkOpenpay,POST,OpenpayMethods.CheckStatus,"SQLite openpay_orders, API Openpay, IntelisisTmp",Mixto,Si,"GetFailedStatus lee tablastd de Intelisis",No,OpenpayMethods.cs:292
+OrdersController,/order/validateCredit,POST,OrderMethods.SetPedido,"IntelisisTmp, SQLite, ServicioAndroid",Mixto,Si,"Mismo flujo que setOrder",No,OrderMethods.cs:458
+OrdersController,/order/creditStatus/{idSolicitud},GET,OrderMethods.GetCreditStatus,IntelisisTmp,Si,No,"100% Intelisis (sCadenaConexion)",Si,OrderMethods.cs:1851
+OrdersController,/order/updateCreditOrderId,POST,OrderMethods.UpdateCreditOrderId,IntelisisTmp,Si,No,"100% Intelisis (sCadenaConexion)",No,OrderMethods.cs:1982
+OrdersController,/order/estimated-delivery/{ecommerceId},GET,EstimatedDeliveryMethods.GetEstimateDeliveryData,IntelisisTmp,Si,No,"100% Intelisis (sCadenaConexion)",Si,EstimatedDeliveryMethods.cs:30
+ProductsController,/product/updateProduct,POST,ProductMethods.exporta_art,"IntelisisTmp, SQLite, Magento (via DMZ), MySQL",Mixto,Si,"Orquestador completo de importacion de catalogo",No,ProductMethods.cs:1204
+ProductsController,/product/updateProductJsonOnly,POST,ProductMethods.BuildJsonAndSend,"SQLite, Magento (via DMZ)",No,Si,,No,ProductMethods.cs:1839
+ProductsController,/product/updatePrice,POST,ProductMethods.updatePrices,IntelisisTmp,Si,No,"100% Intelisis (sCadenaConexion)",No,ProductMethods.cs:484
+ProductsController,/product/updateConfigurableProduct,POST,ProductMethods.BuildJsonAndSendConfigurable,"SQLite, Magento (via DMZ)",No,Si,,No,ProductMethods.cs:1407
+ProductsController,/product/updateStockMavi,POST,ProductMethods.updateStockJson,"IntelisisTmp, Magento (via DMZ)",Mixto,Si,"SP SpVTASEcommerceExistencia + Curl a Magento",No,ProductMethods.cs:929
+ProductsController,/product/updateStock,POST,ProductMethods.updateStockJson,"IntelisisTmp, Magento (via DMZ)",Mixto,Si,"SP SpVTASEcommerceExistencia + deleteReservations",No,ProductMethods.cs:929
+ProductsController,/product/getStockByStore,POST,ProductMethods.getStockStore,IntelisisTmp,Si,No,"100% Intelisis (sCadenaConexion)",No,ProductMethods.cs:1005
+ProductsController,/product/existenciasAlmacenArt,POST,ActualizacionStock.GetCambiosExistencias,"IntelisisTmp, SQLite, Magento (via DMZ)",Mixto,Si,"SP en Intelisis + isInMagento en SQLite + Curl",No,ProductStock/ActualizacionStock.cs:45
+ProductsController,/product/obtenerImagen,POST,ProductImage.Methods.getImages,Filesystem/SMB,No,Si,,No,ProductImage/Methods.cs:395
+CustomersController,/customer/setCustomer,POST,CustomerMethods.ClientToIntelisis,IntelisisTmp,Si,No,"100% Intelisis (SP SP_eCommerceCtenuevo)",No,CustomerMethods.cs:97
+CustomersController,/customer/setCustomerList,POST,CustomerMethods.blackwhitelist,IntelisisTmp,Si,No,"100% Intelisis (SP SpVTASListaNBMagento)",Si,CustomerMethods.cs:128
+CustomersController,/customer/getCustomerList,POST,CustomerMethods.blackwhitelist,IntelisisTmp,Si,No,"100% Intelisis (SP SpVTASListaNBMagento)",Si,CustomerMethods.cs:128
+CustomersController,/customer/deleteCustomerList,POST,CustomerMethods.blackwhitelist,IntelisisTmp,Si,No,"100% Intelisis (SP SpVTASListaNBMagento)",Si,CustomerMethods.cs:128
+CustomersController,/customer/getCuenta,POST,Magento.getCuenta,Magento (via DMZ),No,Si,,No,Conn/Magento.cs:311
+CustomersController,/customer/setCuenta,POST,Magento.setCuenta,Magento (via DMZ),No,Si,,No,Conn/Magento.cs:321
+CustomersController,/customer/cashCustomerReport,POST,CustomerMethods.CreateCashReport,Filesystem/SMB,No,Si,,No,CustomerMethods.cs:214
+StatusController,/status/getStatus,GET,(inline),N/A (sin persistencia),No,Si,"Solo Ping ICMP a 172.16.202.2",No,StatusController.cs:20

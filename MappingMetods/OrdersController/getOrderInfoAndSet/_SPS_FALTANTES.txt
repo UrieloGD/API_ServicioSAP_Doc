@@ -1,0 +1,51 @@
+SP: SP_CREDITO_WEB_DATOS
+Invocado desde: Metodos/CreditMethods.cs:121  (CreditMethods.ProductosCreditoWeb_SaveData)
+Alcanzable desde este endpoint: si, solo cuando el pedido recuperado trae metodoPago = 'omnipro_pago_credito'
+                                (OrderMethods.SetPedido:605 -> CreditMethods.ProductosCreditoWeb_SaveData:94)
+Conexion: sCadenaConexionAndriod  -> mavicbosandroid.grupomavi.com / ServicioAndroid
+Nota: segun _EXCLUIDOS_Intelisis.md (seccion "Los que alcanzan Intelisis por linked server ERPMAVI"),
+      este SP cruza a Intelisis mediante linked server y toca CREDICCondicionArt, TablaStD y CteTel.
+      No verificable sin el fuente.
+Parametros detectados en C#:
+  @Id (SqlDbType.Int) <- constante 0
+  @Op (SqlDbType.VarChar) <- constante 'Insert'
+  @apellido_p (SqlDbType.VarChar) <- getClientInfo(cliente)[1]
+  @apellido_m (SqlDbType.VarChar) <- getClientInfo(cliente)[2]
+  @nombre (SqlDbType.VarChar) <- getClientInfo(cliente)[3]
+  @fecha_nacimiento (SqlDbType.VarChar) <- getClientInfo(cliente)[4]
+  @rfc (SqlDbType.VarChar) <- getClientInfo(cliente)[5]
+  @sexo (SqlDbType.VarChar) <- getClientInfo(cliente)[6]
+  @email (SqlDbType.VarChar) <- order.infoCliente['correo']
+  @direccion (SqlDbType.VarChar) <- ToArray(order)[14] = infoCliente['direccion']
+  @exterior (SqlDbType.VarChar) <- ToArray(order)[15] = infoCliente['numExt']
+  @interior (SqlDbType.VarChar) <- ToArray(order)[16] = infoCliente['numInt']
+  @entre_calles (SqlDbType.VarChar) <- infoCliente['entreCalles'] o getClientInfo(cliente)[10]
+  @codigo_postal (SqlDbType.VarChar) <- ToArray(order)[17] = infoCliente['codigoPostal']
+  @delegacion (SqlDbType.VarChar) <- ToArray(order)[18] = infoCliente['municipio']
+  @poblacion (SqlDbType.VarChar) <- ToArray(order)[18] = infoCliente['municipio']  (mismo valor que @delegacion)
+  @estado (SqlDbType.VarChar) <- ToArray(order)[20] = infoCliente['estado']
+  @colonia (SqlDbType.VarChar) <- ToArray(order)[19] = infoCliente['colonia']
+  @estado_civil (SqlDbType.VarChar) <- getClientInfo(cliente)[16]
+  @articulo (SqlDbType.VarChar) <- constante '' (cadena vacia)
+  @uen (SqlDbType.Int) <- 2 si storeId = 'viu', 1 en otro caso
+  @condicion (SqlDbType.VarChar) <- order.articulos[0]['condicion']
+  @cliente (SqlDbType.VarChar) <- getClientInfo(cliente)[0]
+  @utmSource (SqlDbType.VarChar) <- order.utmSource
+  @sucursal (SqlDbType.Int) <- constante 505 si uen = 2, 504 si uen = 1
+  @origen (SqlDbType.VarChar) <- infoCliente['origen'] o constante 'PRODUCTOS MX'
+  @idMagento (SqlDbType.VarChar) <- order.incrementId
+  @MetodoEnvio (SqlDbType.VarChar) <- ToArray(order)[31] = order.metodoEnvio
+  @lada_particular (SqlDbType.VarChar) <- lada extraida de infoCliente['telefono'] (2 digitos si 33/55/81, si no 3)
+  @telefono_particular (SqlDbType.VarChar) <- resto del telefono tras la lada
+  @lada_celular (SqlDbType.VarChar) <- mismo valor que @lada_particular
+  @telefono_celular (SqlDbType.VarChar) <- mismo valor que @telefono_particular
+  @sucursalDestino (SqlDbType.Int) <- order.sucursalDestino
+  @RedimirMonedero (SqlDbType.Money) <- order.RedimirMonedero
+  @ValidacionTelefono (SqlDbType.Bit) <- 1 si (!isValidated || !IsInTableStd(cliente)), si no 0
+  @OrigenIdMagento (SqlDbType.VarChar) <- infoCliente['OrigenIdMagento'] o ''
+  @LadaValidar (SqlDbType.VarChar) <- lada del numero validado por SMS (o del telefono del pedido)
+  @TelefonoValidar (SqlDbType.VarChar) <- numero validado por SMS (o del telefono del pedido)
+Retorno esperado (segun el C# que lee el reader): una sola columna leida por indice dr[0] -> IdSolicitud (int como string).
+  El C# hace 'if (dr.HasRows) while (dr.Read()) IdSolicitud = dr[0].ToString();' -- ningun nombre de columna se usa.
+Accion presunta: Mixta (Insert de la solicitud de credito con retorno del identificador generado; el parametro @Op = 'Insert' sugiere un SP multi-operacion)
+PENDIENTE: exportar definicion desde Intelisis y guardar como SPsOrden\SP_CREDITO_WEB_DATOS.sql

@@ -1,0 +1,8 @@
+﻿BaseDeDatos,Servidor,Controlador,Endpoint,Metodo,NombreTabla,Accion,Campos Principales,Nombre TablaSAP,API SAP
+Intelisis,MAVICUBOS.grupomavi.com,CreditController,POST /credit/SetUnificationWalletData,,Cte,Select,"SerieMonedero, SerieMonederoVIU, Cliente",,
+Intelisis,MAVICUBOS.grupomavi.com,CreditController,POST /credit/SetUnificationWalletData,,CteEnviarA,Select,"Cliente, ID, Categoria",,
+Intelisis,MAVICUBOS.grupomavi.com,CreditController,POST /credit/SetUnificationWalletData,,Venta,Select,"Saldo, Mov, MovID, Estatus, Situacion",,
+Intelisis,MAVICUBOS.grupomavi.com,CreditController,POST /credit/SetUnificationWalletData,,VentaD,Select,ID,,
+Intelisis,MAVICUBOS.grupomavi.com,CreditController,POST /credit/SetUnificationWalletData,,CXC,Select,"saldo, estatus, Mov, cliente",,
+Intelisis,MAVICUBOS.grupomavi.com,CreditController,POST /credit/SetUnificationWalletData,,cte,Select,"CRMCantidad, cliente",,
+Intelisis,MAVICUBOS.grupomavi.com,CreditController,POST /credit/SetUnificationWalletData,,CREDIHUnificacionMonedero,Insert,"IdEcommerce, ClienteCredito, ClienteContado, FechaRegistro",,

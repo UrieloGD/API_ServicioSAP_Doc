@@ -1,0 +1,2 @@
+﻿BaseDeDatos,Servidor,Controlador,Endpoint,Metodo,NombreTabla,Accion,Campos Principales,Nombre TablaSAP,API SAP
+Intelisis,MAVICUBOS.grupomavi.com,OrdersController,POST /order/getIntelisisStatuses,,venta,Select,"idEcommerce, Estatus, OrigenSucursal, Importe",,

@@ -1,0 +1,2 @@
+﻿BaseDeDatos,Servidor,Controlador,Endpoint,Metodo,NombreTabla,Accion,Campos Principales,Nombre TablaSAP,API SAP
+Intelisis,MAVICUBOS.grupomavi.com,validarCliente,,,Cte,Select,"PersonalNombres, PersonalApellidoPaterno, PersonalApellidoMaterno, Cliente, IDMagento",,

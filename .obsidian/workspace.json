@@ -1,0 +1,228 @@
+{
+  "main": {
+    "id": "2a64dc94a2774ffb",
+    "type": "split",
+    "children": [
+      {
+        "id": "0ac315f6fa79e57a",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "1f722957556c5532",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "MappingMetods/_ANALISIS_PREVIO/APIMagento-LAN-sin-Intelisis.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "APIMagento-LAN-sin-Intelisis"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "40bd1d28fbd5e367",
+    "type": "split",
+    "children": [
+      {
+        "id": "d11864123c02e72f",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "b222069cc0165fd7",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical",
+                "autoReveal": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-folder-closed",
+              "title": "Explorador de archivos"
+            }
+          },
+          {
+            "id": "a52e382fa4ff7eb9",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "Buscar"
+            }
+          },
+          {
+            "id": "5cb38a9ba0bc9dc1",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {},
+              "icon": "lucide-bookmark",
+              "title": "Marcadores"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300
+  },
+  "right": {
+    "id": "d00c0c7ace9b3495",
+    "type": "split",
+    "children": [
+      {
+        "id": "43d986c0f4c818a9",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "654b271be1a9b40c",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "file": "MappingMetods/_ANALISIS_PREVIO/APIMagento-LAN-sin-Intelisis.md",
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "Enlaces entrantes de APIMagento-LAN-sin-Intelisis"
+            }
+          },
+          {
+            "id": "99a13b3387a7a752",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "file": "MappingMetods/_ANALISIS_PREVIO/APIMagento-LAN-sin-Intelisis.md",
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "Enlaces salientes de APIMagento-LAN-sin-Intelisis"
+            }
+          },
+          {
+            "id": "f996c54b54400f06",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-tags",
+              "title": "Etiquetas"
+            }
+          },
+          {
+            "id": "e48a3be192d07427",
+            "type": "leaf",
+            "state": {
+              "type": "all-properties",
+              "state": {
+                "sortOrder": "frequency",
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-archive",
+              "title": "Todas las propiedades"
+            }
+          },
+          {
+            "id": "887e6098e8274a69",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "file": "MappingMetods/_ANALISIS_PREVIO/APIMagento-LAN-sin-Intelisis.md",
+                "followCursor": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-list",
+              "title": "Esquema de APIMagento-LAN-sin-Intelisis"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:Abrir selector rápido": false,
+      "graph:Abrir vista gráfica": false,
+      "canvas:Crear nuevo lienzo": false,
+      "daily-notes:Abrir la nota de hoy": false,
+      "templates:Insertar plantilla": false,
+      "command-palette:Abrir paleta de comandos": false,
+      "bases:Crear nueva base": false
+    }
+  },
+  "active": "1f722957556c5532",
+  "lastOpenFiles": [
+    "MappingMetods/_NUESTROS_ENDPOINTS/_CONTROL_MIGRACION.xlsx~RF1e8a581.TMP",
+    "MappingMetods/_NUESTROS_ENDPOINTS/lu11526626e.tmp",
+    "MappingMetods/_NUESTROS_ENDPOINTS/CHECKLIST_MIGRACION_LAN_A_SAP.md",
+    "SPsOrden/SpVTASListaNBMagento.sql",
+    "Resources/Estado de migracion Exportacion Art.md",
+    "Resources/Reporte_Estado_Migracion.md",
+    "MappingMetods/Sin título.base",
+    "MappingExportArt/update_csv.ps1",
+    "MappingMetods/2026-08-04.md",
+    "MappingMetods/Sin título.canvas",
+    "MappingMetods/_NUESTROS_ENDPOINTS/_CONTROL_MIGRACION.xlsx",
+    "MappingMetods/_NUESTROS_ENDPOINTS/lu17136nb0s.tmp",
+    "MappingExportArt/Analisis_Consolidado_Mapeo_Exportacion_Art.csv",
+    "MappingMetods/_NUESTROS_ENDPOINTS/lu17136nb0o.tmp",
+    "MappingMetods/_NUESTROS_ENDPOINTS/_ENDPOINTS_NoSAP.xlsx",
+    "MappingMetods/_NUESTROS_ENDPOINTS/lu17136nb0n.tmp",
+    "MappingMetods/_NUESTROS_ENDPOINTS/GANTT_~1.md",
+    "MappingMetods/_NUESTROS_ENDPOINTS/_PLAN_MIGRACION_FECHAS 1.md",
+    "MappingMetods/_EXCLUIDOS_Intelisis.md",
+    "MappingMetods/CustomerServiceController/nombreCliente/02_LAN_Controller.md",
+    "MappingMetods/CustomerServiceController/nombreCliente/01_DMZ_Controller.md",
+    "MappingMetods/OrdersController/getIntelisisStatuses/03_BusinessMethod.md",
+    "MappingMetods/_NUESTROS_ENDPOINTS/_ESTADO_REAL_EN_SERVICIOSAP.md",
+    "MappingMetods/_NUESTROS_ENDPOINTS/_PLAN_MIGRACION_FECHAS.md",
+    "MappingMetods/_NUESTROS_ENDPOINTS/_DECISIONES_ODS.md",
+    "MappingMetods/_NUESTROS_ENDPOINTS/_ALCANCE_MIGRACION_LAN_a_SAP.md",
+    "MappingMetods/_NUESTROS_ENDPOINTS/README.md",
+    "MappingMetods/_ANALISIS_PREVIO/_NUESTROS_ENDPOINTS/_DECISIONES_ODS.md",
+    "MappingMetods/_ANALISIS_PREVIO/_NUESTROS_ENDPOINTS/_ALCANCE_MIGRACION_LAN_a_SAP.md",
+    "MappingMetods/_ANALISIS_PREVIO/_NUESTROS_ENDPOINTS/README.md",
+    "MappingMetods/_ANALISIS_PREVIO/README.md",
+    "MappingMetods/_ANALISIS_PREVIO/LISTA-18-endpoints.md",
+    "MappingMetods/_ANALISIS_PREVIO/MAPEO-endpoints-flujo-y-responses.md",
+    "MappingMetods/_ANALISIS_PREVIO/BRIEFING-migracion-18-endpoints.md",
+    "MappingMetods/_ANALISIS_PREVIO/Plan-migracion-18-rutas-a-ServicioSAP.md",
+    "MappingMetods/_ANALISIS_PREVIO/Objetos-Intelisis-3-endpoints.md",
+    "MappingMetods/_ANALISIS_PREVIO/DMZ-Backlog-Migracion-SAP.md"
+  ]
+}

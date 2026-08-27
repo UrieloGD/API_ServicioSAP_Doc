@@ -1,0 +1,3 @@
+﻿BaseDeDatos,Servidor,Controlador,Endpoint,Metodo,NombreTabla,Accion,Campos Principales,Nombre TablaSAP,API SAP
+Intelisis,MAVICUBOS.grupomavi.com,ValidateSTPAccount,,,Cte,Select,"CuentaCLABESTP, Cliente",,
+Intelisis,MAVICUBOS.grupomavi.com,ValidateSTPAccount,,,dbo.FnVTASDesEncripta,Select,(Función Escalar SQL),,

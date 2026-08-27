@@ -1,0 +1,261 @@
+Proyecto,Tipo,Archivo_o_Controller,Metodo_o_Ruta,Verbo,Linea,Destino_Real,Categoria_Destino,Estado
+LAN,Endpoint,StatusController,status/getStatus,GET,12,Ping ICMP a 172.16.202.2 sin conexion SQL,Sin BD,Activo
+LAN,Endpoint,CustomersController,customer/getCuenta,POST,91,Curl hacia API DMZ,Magento REST,Activo
+LAN,Endpoint,CustomersController,customer/setCuenta,POST,100,Curl hacia API DMZ,Magento REST,Activo
+LAN,Endpoint,CustomersController,customer/cashCustomerReport,POST,109,Filesystem + share SMB 172.16.200.2,Filesystem/SMB,Activo
+LAN,Endpoint,OrdersController,order/getGuide,POST,165,SQLite servicio_guias,SQLite,Activo
+LAN,Endpoint,ProductsController,product/updateProductJsonOnly,POST,120,SQLite + Curl a DMZ,SQLite,Activo
+LAN,Endpoint,ProductsController,product/updateConfigurableProduct,POST,145,SQLite + Curl a DMZ,SQLite,Activo
+LAN,Endpoint,ProductsController,product/obtenerImagen,POST,216,Impersonacion Windows + copia SMB,Filesystem/SMB,Activo
+LAN,Endpoint,CreditController,credit/validateSms,POST,48,SP SPVTASCodigoSeguridadeCommerce -> ERPMAVI.IntelisisTMP.dbo.Cte + CteTel,Intelisis via linked server,RECLASIFICADO
+LAN,Endpoint,CreditController,credit/SendSmsNewNumber,POST,549,ServicioAndroid TcAAEA00030_EnvioMensajes,ServicioAndroid,Activo
+LAN,Endpoint,CreditController,credit/GetCreditAmounts,POST,315,SQLite mavi_credilana_info,SQLite,Activo
+LAN,Endpoint,CreditController,credit/SaveImagesProductosMx,POST,272,Filesystem + AdminDoc,AdminDoc,Activo
+LAN,Endpoint,CreditController,credit/guardardocumento,POST,592,AdminDoc MAVI_DOC_CTE,AdminDoc,Activo
+LAN,Endpoint,CreditController,credit/ExistRFCAndPhoneCte,POST,376,Ninguno - validacion neutralizada por return incondicional,Ninguno,Neutralizado
+LAN,Endpoint,CreditController,credit/CreditoWeb_FormDatos,POST,145,SQLite segun op - el fallback si va a Intelisis,SQLite,Parcial
+LAN,Endpoint,CreditController,credit/CreditoWeb_Informacion,POST,289,SQLite segun op - el fallback si va a Intelisis,SQLite,Parcial
+LAN,Endpoint,CustomerServiceController,customerService/obtenerQuejas,POST,87,ServicioAndroid actes_catalogo_queja,ServicioAndroid,Activo
+LAN,Endpoint,CustomerServiceController,customerService/bitacoraAtencionClientes,POST,69,SP SP_ACTES_REGISTRO -> ERPMAVI.IntelisisTMP.dbo.Personal + RM1138PendientesxValidar,Intelisis via linked server,RECLASIFICADO
+LAN,Endpoint,CustomerServiceController,customerService/bbvaKeyAdvanced,GET,159,SOAP externo WSeCommerceMX,HTTP externo,Activo
+LAN,Metodo,Controllers/ProspectoController.cs,EncriptarNombre,,152,Enmascarado de texto en memoria,Sin BD,Activo
+LAN,Metodo,Controllers/ProspectoController.cs,QuitarAcentos,,171,Normalizacion Unicode en memoria,Sin BD,Activo
+LAN,Metodo,Conn/Magento.cs,Magento (ctor),,17,Curl login DMZ,Magento REST,Activo
+LAN,Metodo,Conn/Magento.cs,getAttributes,,22,Curl + SQLite attribute_options,Magento REST,Activo
+LAN,Metodo,Conn/Magento.cs,getGeneralAttributes,,80,Curl + SQLite attributes,Magento REST,Activo
+LAN,Metodo,Conn/Magento.cs,getAttributeSets,,126,Curl + SQLite attribute_sets,Magento REST,Activo
+LAN,Metodo,Conn/Magento.cs,getCategories,,217,Curl + SQLite categories,Magento REST,Activo
+LAN,Metodo,Conn/Magento.cs,deleteChildren,,253,SQLite children,SQLite,Activo
+LAN,Metodo,Conn/Magento.cs,getChildren,,260,Curl + SQLite children,Magento REST,Activo
+LAN,Metodo,Conn/Magento.cs,deleteReservations,,285,Curl a DMZ,Magento REST,Activo
+LAN,Metodo,Conn/Magento.cs,getNoImageProduct,,290,Curl + SQLite no_imagen_product,Magento REST,Codigo muerto
+LAN,Metodo,Conn/Magento.cs,getCuenta,,309,Curl a DMZ,Magento REST,Activo
+LAN,Metodo,Conn/Magento.cs,setCuenta,,319,Curl a DMZ,Magento REST,Activo
+LAN,Metodo,Conn/Magento.cs,getProductWithWebsites,,329,Curl + SQLite product_in_stores,Magento REST,Activo
+LAN,Metodo,Conn/Magento.cs,deletePromociones,,356,Curl a DMZ,Magento REST,Activo
+LAN,Metodo,Conn/Magento.cs,SetCAccount,,413,Curl a DMZ,Magento REST,Activo
+LAN,Metodo,Metodos/CreditMethods.cs,ProductosCredito_Nip,,21,Orquestador sin BD propia,Sin BD,Activo
+LAN,Metodo,Metodos/CreditMethods.cs,ProductosCredito_Clave,,50,SP SPVTASCodigoSeguridadeCommerce -> ERPMAVI.IntelisisTMP.dbo.Cte + CteTel,Intelisis via linked server,RECLASIFICADO
+LAN,Metodo,Metodos/CreditMethods.cs,ProductosCredito_UpdateInfo,,264,SP SpCREDIDatosSolicitudCreditoArt NO EXISTE en el server MAVICBOSANDROID,Ninguno,Roto - falla en runtime
+LAN,Metodo,Metodos/CreditMethods.cs,getClienteMagento,,302,SP SpCREDIDatosSolicitudCreditoArt NO EXISTE en el server MAVICBOSANDROID,Ninguno,Roto - falla en runtime
+LAN,Metodo,Metodos/CreditMethods.cs,getClienteInfoSaldo,,338,SP SPVTASEstadoDeCuentaClienteWeb NO EXISTE en el server MAVICBOSANDROID,Ninguno,Roto - falla en runtime
+LAN,Metodo,Metodos/CreditMethods.cs,checkSaldo,,767,SP SpCREDIDatosSolicitudCreditoArt NO EXISTE en el server MAVICBOSANDROID,Ninguno,Roto - falla en runtime
+LAN,Metodo,Metodos/CreditMethods.cs,SolicitudMercancia,,610,ServicioAndroid,ServicioAndroid,Activo
+LAN,Metodo,Metodos/CreditMethods.cs,SendSmsNewNumber,,1992,ServicioAndroid TcAAEA00030_EnvioMensajes,ServicioAndroid,Activo
+LAN,Metodo,Metodos/CreditMethods.cs,GetIdRef,,2036,ServicioAndroid VTASDCodigoVerificacioneCommerce,ServicioAndroid,Activo
+LAN,Metodo,Metodos/CreditMethods.cs,InsertCodigoVerificacion,,2068,ServicioAndroid VTASDCodigoVerificacioneCommerce,ServicioAndroid,Activo
+LAN,Metodo,Metodos/CreditMethods.cs,InsertSendingSms,,2234,ServicioAndroid,ServicioAndroid,Activo
+LAN,Metodo,Metodos/CreditMethods.cs,GetSmsStatus,,2253,ServicioAndroid,ServicioAndroid,Activo
+LAN,Metodo,Metodos/CreditMethods.cs,GetVerificationCode,,2270,ServicioAndroid,ServicioAndroid,Activo
+LAN,Metodo,Metodos/CreditMethods.cs,SaveSelfieImageForCredit,,994,AdminDoc MAVI_DOC_CTE,AdminDoc,Activo
+LAN,Metodo,Metodos/CreditMethods.cs,GuardarDocumento,,2605,AdminDoc MAVI_DOC_CTE,AdminDoc,Activo
+LAN,Metodo,Metodos/CreditMethods.cs,SaveHaztenEtapaProcesamiento,,2460,SIGMAVI CREDIDEtapaProcesamiento,SIGMAVI,Activo
+LAN,Metodo,Metodos/CreditMethods.cs,SaveHaztenMetaData,,2490,Tabla CREDIDTransaccionMetaDato NO EXISTE en SIGMAVI,Ninguno,Roto - falla en runtime
+LAN,Metodo,Metodos/CreditMethods.cs,SaveImagesProductosMx,,971,Task.Run + filesystem,Filesystem/SMB,Activo
+LAN,Metodo,Metodos/CreditMethods.cs,SaveCompressedFile,,1017,Filesystem images/credit,Filesystem/SMB,Activo
+LAN,Metodo,Metodos/CreditMethods.cs,CompressBytesFromBase64Image,,1041,Procesamiento en memoria,Sin BD,Activo
+LAN,Metodo,Metodos/CreditMethods.cs,GetEncoder,,1078,Procesamiento en memoria,Sin BD,Activo
+LAN,Metodo,Metodos/CreditMethods.cs,VerificarConexionURL,,1091,HttpWebRequest,HTTP externo,Activo
+LAN,Metodo,Metodos/CreditMethods.cs,HidePhoneNumber,,1916,String en memoria,Sin BD,Activo
+LAN,Metodo,Metodos/CreditMethods.cs,HideNames,,1923,String en memoria,Sin BD,Activo
+LAN,Metodo,Metodos/CreditMethods.cs,GetQueryDelayedDays,,2582,Solo arma string SQL,Sin BD,Activo
+LAN,Metodo,Metodos/CreditMethods.cs,CURPValidation,,1423,Ninguno - return incondicional en linea 1426,Ninguno,Neutralizado
+LAN,Metodo,Metodos/CreditMethods.cs,RFCValidation,,1494,Ninguno - return incondicional en linea 1496,Ninguno,Neutralizado
+LAN,Metodo,Metodos/CreditMethods.cs,ExistRFCAndPhoneCte,,1414,Ninguno - delega en los dos anteriores,Ninguno,Neutralizado
+LAN,Metodo,Metodos/Credit/CredYPrestamo/CredyPrestamoMethods.cs,CreditoWeb_SaveData,,29,SP SP_CREDITO_WEB_DATOS -> ERPMAVI.IntelisisTMP.dbo.CREDICCondicionArt + TablaStD + CteTel,Intelisis via linked server,RECLASIFICADO
+LAN,Metodo,Metodos/Credit/CredYPrestamo/CredyPrestamoMethods.cs,UpdatePickUpAtBank,,578,ServicioAndroid CRED_SOLICITUD_WEB_DATOS_TEMP,ServicioAndroid,Activo
+LAN,Metodo,Metodos/Credit/CredYPrestamo/CredyPrestamoMethods.cs,SaveCredilanaInfo,,777,SQLite mavi_credilana_info,SQLite,Activo
+LAN,Metodo,Metodos/Credit/CredYPrestamo/CredyPrestamoMethods.cs,GetCredilanaInfo,,833,SQLite mavi_credilana_info,SQLite,Activo
+LAN,Metodo,Metodos/Credit/CredYPrestamo/CredyPrestamoMethods.cs,ExistFieldCredilanaInfo,,852,SQLite mavi_credilana_info,SQLite,Activo
+LAN,Metodo,Metodos/Credit/CredYPrestamo/CredyPrestamoMethods.cs,UpdateCredilanaInfo,,879,SQLite mavi_credilana_info,SQLite,Activo
+LAN,Metodo,Metodos/Credit/CredYPrestamo/CredyPrestamoMethods.cs,InsertCredilanaInfo,,896,SQLite mavi_credilana_info,SQLite,Activo
+LAN,Metodo,Metodos/Credit/CredYPrestamo/CredyPrestamoMethods.cs,RemoveTildes,,18,String en memoria,Sin BD,Activo
+LAN,Metodo,Metodos/Credit/CredYPrestamo/CredyPrestamoMethods.cs,GetCreditPlazos,,378,Calculo en memoria,Sin BD,Activo
+LAN,Metodo,Metodos/Credit/CredYPrestamo/CredyPrestamoMethods.cs,CalculatePrestamoPersonalInfo,,413,Calculo CAT/TASA en memoria,Sin BD,Activo
+LAN,Metodo,Metodos/Credit/CredYPrestamo/CredyPrestamoMethods.cs,CalculateCredilanaInfo,,501,Calculo CAT/TASA en memoria,Sin BD,Activo
+LAN,Metodo,Metodos/Credit/CredYPrestamo/CredyPrestamoMethods.cs,Truncate,,485,Calculo en memoria,Sin BD,Activo
+LAN,Metodo,Metodos/Credit/CredYPrestamo/CredyPrestamoMethods.cs,GetCreditAmountCteC,,543,Calculo en memoria,Sin BD,Activo
+LAN,Metodo,Metodos/Credit/Methods.cs,CreditoWeb_SaveData,,12,SP SP_CREDITO_WEB_DATOS -> ERPMAVI.IntelisisTMP.dbo.CREDICCondicionArt + TablaStD + CteTel,Intelisis via linked server,RECLASIFICADO
+LAN,Metodo,Metodos/OrderMethods.cs,SaveGuide,,715,SQLite servicio_guias,SQLite,Activo
+LAN,Metodo,Metodos/OrderMethods.cs,GetGuide,,736,SQLite servicio_guias,SQLite,Activo
+LAN,Metodo,Metodos/OrderMethods.cs,ObtenerNumeroTablaSms,,799,ServicioAndroid TcAAEA00030_EnvioMensajes,ServicioAndroid,Activo
+LAN,Metodo,Metodos/OrderMethods.cs,CallMagentoAuthorizationCallback,,1731,HttpClient hacia DMZ order/authorizationResult,Magento REST,Activo
+LAN,Metodo,Metodos/OrderMethods.cs,ToArray,,339,Mapeo en memoria,Sin BD,Activo
+LAN,Metodo,Metodos/OrderMethods.cs,ValidateOnlyNumbers,,441,Regex en memoria,Sin BD,Activo
+LAN,Metodo,Metodos/OrderMethods.cs,AgruparCantidadPorSKU,,485,Agrupacion en memoria,Sin BD,Activo
+LAN,Metodo,Metodos/OrderMethods.cs,totalArticulos,,928,Conteo en memoria,Sin BD,Activo
+LAN,Metodo,Metodos/OrderMethods.cs,separarDatos,,1061,String en memoria,Sin BD,Activo
+LAN,Metodo,Metodos/OrderMethods.cs,sntz,,1347,Regex en memoria,Sin BD,Activo
+LAN,Metodo,Metodos/OrderMethods.cs,CorreoErrorPrecio,,1299,Arma HTML - el envio esta comentado,Sin BD,Parcial
+LAN,Metodo,Metodos/ProductMethods.cs,ProductMethods (ctor),,30,Lee config-delta.json,Filesystem/SMB,Activo
+LAN,Metodo,Metodos/ProductMethods.cs,getParentAndAddTipo,,43,SQLite products,SQLite,Activo
+LAN,Metodo,Metodos/ProductMethods.cs,GetChildTag,,63,SQLite products + tags,SQLite,Activo
+LAN,Metodo,Metodos/ProductMethods.cs,createBackup,,93,Copia data.db a old-data.db,Filesystem/SMB,Activo
+LAN,Metodo,Metodos/ProductMethods.cs,runDelta,,116,Lanza python.exe main.py,Sin BD,Activo
+LAN,Metodo,Metodos/ProductMethods.cs,GetImages,,164,SQLite product_images,SQLite,Activo
+LAN,Metodo,Metodos/ProductMethods.cs,GetStores,,176,SQLite products,SQLite,Activo
+LAN,Metodo,Metodos/ProductMethods.cs,DeleteProducts,,191,SQLite products + product_history,SQLite,Activo
+LAN,Metodo,Metodos/ProductMethods.cs,GetAttributeSetId,,199,SQLite attribute_sets,SQLite,Activo
+LAN,Metodo,Metodos/ProductMethods.cs,GetCategoryId,,218,SQLite categories,SQLite,Activo
+LAN,Metodo,Metodos/ProductMethods.cs,ExistAttribute,,267,SQLite attributes,SQLite,Activo
+LAN,Metodo,Metodos/ProductMethods.cs,GetFiltrableColor,,280,SQLite,SQLite,Activo
+LAN,Metodo,Metodos/ProductMethods.cs,GetAttributeValueId,,312,SQLite attribute_options,SQLite,Activo
+LAN,Metodo,Metodos/ProductMethods.cs,GetAttributeId,,335,SQLite attributes,SQLite,Activo
+LAN,Metodo,Metodos/ProductMethods.cs,GetChild,,348,SQLite children,SQLite,Activo
+LAN,Metodo,Metodos/ProductMethods.cs,GetAndSavePrice,,361,SQLite,SQLite,Activo
+LAN,Metodo,Metodos/ProductMethods.cs,isInMagento,,385,SQLite product_in_stores,SQLite,Activo
+LAN,Metodo,Metodos/ProductMethods.cs,GetWarranty,,398,SQLite warranties,SQLite,Activo
+LAN,Metodo,Metodos/ProductMethods.cs,GetWebsites,,435,SQLite,SQLite,Activo
+LAN,Metodo,Metodos/ProductMethods.cs,IsMayoristaOrElite,,457,SQLite,SQLite,Activo
+LAN,Metodo,Metodos/ProductMethods.cs,DeleteWebsites,,471,SQLite,SQLite,Codigo muerto
+LAN,Metodo,Metodos/ProductMethods.cs,RoundAccordingPrice,,860,Calculo en memoria,Sin BD,Activo
+LAN,Metodo,Metodos/ProductMethods.cs,BuildJsonAndSendConfigurable,,1407,SQLite + Curl a DMZ,Magento REST,Activo
+LAN,Metodo,Metodos/ProductMethods.cs,BuildJsonAndSend,,1839,SQLite + Curl a DMZ,Magento REST,Activo
+LAN,Metodo,Metodos/ProductMethods.cs,BuildJsonAndSendWithImage,,2259,SQLite + Curl a DMZ,Magento REST,Activo
+LAN,Metodo,Metodos/ProductMethods.cs,uploadProductImages,,2369,SQLite + Curl a DMZ,Magento REST,Activo
+LAN,Metodo,Metodos/ProductMethods.cs,BuildCSV,,2499,SQLite + generacion de CSV,SQLite,Activo
+LAN,Metodo,Metodos/ProductMethods.cs,confiSlplit,,2920,String en memoria,Sin BD,Activo
+LAN,Metodo,Metodos/ProductImage/Methods.cs,GetImages,,23,SQLite + Curl + share MAVIWEB01,Filesystem/SMB,Codigo muerto
+LAN,Metodo,Metodos/ProductImage/Methods.cs,GetImagesBySku,,46,SQLite product_images,SQLite,Activo
+LAN,Metodo,Metodos/ProductImage/Methods.cs,searchAndUploadImage,,60,Curl a DMZ,Magento REST,Codigo muerto
+LAN,Metodo,Metodos/ProductImage/Methods.cs,uploadImagesToMagento,,79,SQLite + Curl + filesystem,Magento REST,Activo
+LAN,Metodo,Metodos/ProductImage/Methods.cs,assingImages,,177,Curl a DMZ,Magento REST,Codigo muerto
+LAN,Metodo,Metodos/ProductImage/Methods.cs,deleteImages,,199,SQLite product_images,SQLite,Activo
+LAN,Metodo,Metodos/ProductImage/Methods.cs,getImages,,388,Impersonacion + copia desde 172.16.202.4,Filesystem/SMB,Activo
+LAN,Metodo,Metodos/ProductImage/Methods.cs,Impersonation.LogonUser,,413,Win32 advapi32.dll,Sin BD,Activo
+LAN,Metodo,Metodos/ProductImage/Methods.cs,Impersonation.CloseHandle,,417,Win32 kernel32.dll,Sin BD,Activo
+LAN,Metodo,Metodos/ProductImage/Methods.cs,Impersonation (ctor),,421,Impersonacion Windows,Sin BD,Activo
+LAN,Metodo,Metodos/ProductImage/Methods.cs,Impersonation.Dispose,,437,Impersonacion Windows,Sin BD,Activo
+LAN,Metodo,Metodos/ProductImage/Methods.cs,ProductList (ctor),,451,POCO,Sin BD,Activo
+LAN,Metodo,Metodos/ProductImage/Methods.cs,ProductImage (ctor),,461,POCO,Sin BD,Activo
+LAN,Metodo,Metodos/ProductImage/Methods.cs,Extension_Attributes (ctor),,470,POCO,Sin BD,Activo
+LAN,Metodo,Metodos/ProductImage/Methods.cs,Product_Images (ctor),,480,POCO,Sin BD,Activo
+LAN,Metodo,Metodos/CustomerServiceMethods.cs,bitacoraAtencionClientes,,409,SP SP_ACTES_REGISTRO -> ERPMAVI.IntelisisTMP.dbo.Personal + RM1138PendientesxValidar,Intelisis via linked server,RECLASIFICADO
+LAN,Metodo,Metodos/CustomerServiceMethods.cs,obtenerQuejas,,714,ServicioAndroid actes_catalogo_queja,ServicioAndroid,Activo
+LAN,Metodo,Metodos/CustomerServiceMethods.cs,GetBBVAKeyAdvanced,,1124,SOAP externo WSeCommerceMX,HTTP externo,Activo
+LAN,Metodo,Metodos/CustomerServiceMethods.cs,ocultarLetrasNombres,,372,String en memoria,Sin BD,Activo
+LAN,Metodo,Metodos/CustomerServiceMethods.cs,OcultarTelefono,,393,String en memoria,Sin BD,Activo
+LAN,Metodo,Metodos/CustomerServiceMethods.cs,FormatearDatos,,1169,Agrupacion en memoria,Sin BD,Activo
+LAN,Metodo,Metodos/CustomerServiceMethods.cs,FiltrarPorFecha,,1510,Filtrado en memoria,Sin BD,Parcial
+LAN,Metodo,Metodos/CustomerServiceMethods.cs,OrdenarDocumentos,,1709,Ordenamiento en memoria,Sin BD,Activo
+LAN,Metodo,Metodos/CustomerServiceMethods.cs,ToDouble,,1729,Parseo en memoria,Sin BD,Activo
+LAN,Metodo,Metodos/AttributeMethods.cs,AttributeMethods (ctor),,13,Instancia Connection,Sin BD,Activo
+LAN,Metodo,Metodos/AttributeMethods.cs,getAtributosDeMagento,,45,SQLite atributos_de_magento,SQLite,Activo
+LAN,Metodo,Metodos/AttributeMethods.cs,getValorLista,,57,SQLite attribute_options,SQLite,Activo
+LAN,Metodo,Metodos/AttributeMethods.cs,executeCommand,,70,MySQL aplicaciones_web,MySQL,Activo
+LAN,Metodo,Metodos/OpenpayMethods.cs,OpenpayMethods (ctor),,49,Instancia OrderMethods y DB,Sin BD,Activo
+LAN,Metodo,Metodos/OpenpayMethods.cs,SaveToValidateOpenpay,,55,SQLite openpay_orders,SQLite,Activo
+LAN,Metodo,Metodos/OpenpayMethods.cs,SaveOpenpayStoresOrder,,62,SQLite openpay_stores,SQLite,Activo
+LAN,Metodo,Metodos/OpenpayMethods.cs,CheckOrderOpenpay,,103,API Openpay + SQLite + Curl,HTTP externo,Activo
+LAN,Metodo,Metodos/OpenpayMethods.cs,CheckOrderStoresOpenpay,,208,API Openpay,HTTP externo,Activo
+LAN,Metodo,Metodos/StorePickup/CodigoRecogerSucursal.cs,SendNotifyPickUpOrder,,198,Curl a DMZ order/sendStorePickupEmail,Magento REST,Activo
+LAN,Metodo,Metodos/StorePickup/CodigoRecogerSucursal.cs,NuevoCodigoRecogerSucursal,,255,Orquestador sin conexion propia,Sin BD,Parcial
+LAN,Metodo,Metodos/StorePickup/CodigoRecogerSucursal.cs,GenerarIdRecogerEnSucursal,,301,CRC en memoria,Sin BD,Parcial
+LAN,Metodo,Metodos/StorePickup/CodigoRecogerSucursal.cs,GetRandomString,,389,Aleatorio en memoria,Sin BD,Activo
+LAN,Metodo,Metodos/StorePickup/CodigoRecogerSucursal.cs,RecogerEnSucursalCorreo,,547,Arma HTML y envia SMTP,SMTP,Activo
+LAN,Metodo,Metodos/StorePickup/CodigoRecogerSucursal.cs,EnviarCorreo,,674,SMTP server.mavi.mx,SMTP,Activo
+LAN,Metodo,Metodos/StorePickup/CodigoRecogerSucursal.cs,OrderPickup (ctor),,733,POCO,Sin BD,Activo
+LAN,Metodo,Metodos/StorePickup/CodigoRecogerSucursal.cs,OrderDetailsPickup (ctor),,747,POCO,Sin BD,Activo
+LAN,Metodo,Metodos/CustomerMethods.cs,sntz,,184,Regex en memoria,Sin BD,Activo
+LAN,Metodo,Metodos/CustomerMethods.cs,CreateCashReport,,194,Filesystem + share SMB 172.16.200.2,Filesystem/SMB,Activo
+LAN,Metodo,Metodos/ServiceOrderMethods.cs,generateWorkstation,,813,SQLite workstation,SQLite,Activo
+LAN,Metodo,Metodos/ServiceOrderMethods.cs,clearWorkstation,,835,SQLite workstation,SQLite,Activo
+LAN,Metodo,Metodos/TagsMethods.cs,GetTags,,161,SQLite tags,SQLite,Activo
+LAN,Metodo,Metodos/WarrantyMethods.cs,getWarranties,,16,SQLite warranties,SQLite,Parcial
+LAN,Metodo,Metodos/ProductStock/ActualizacionStock.cs,isInMagento,,18,SQLite product_in_stores + sucursales,SQLite,Activo
+LAN,Metodo,Metodos/LiberadorCreditoMethods.cs,LiberarCliente,,40,HTTP a 172.16.215.51:3026/api/venta,HTTP externo,Activo
+LAN,Metodo,Metodos/Credit/CredYPrestamo/Liberador.cs,LiberarCliente,,33,HTTP a 172.16.215.51:3026/api/credilana,HTTP externo,Activo
+LAN,Metodo,Metodos/Credit/CredYPrestamo/maviCrypto.cs,Encripta,,9,3DES/MD5 en memoria,Sin BD,Activo
+LAN,Metodo,Metodos/Credit/CredYPrestamo/maviCrypto.cs,DesEncripta,,29,3DES/MD5 en memoria,Sin BD,Activo
+LAN,Metodo,Metodos/ProductDeltaConfig.cs,GetConfiguration,,10,Lee/crea config-delta.json,Filesystem/SMB,Activo
+LAN,Metodo,Helper/Delta.cs,Delta (ctor),,12,Instancia DB SQLite,SQLite,Activo
+LAN,Metodo,Helper/Delta.cs,IsDelta,,17,SQLite product_history,SQLite,Activo
+LAN,Metodo,Helper/Delta.cs,ProductDelta,,28,SQLite products + product_history,SQLite,Activo
+LAN,Metodo,Helper/Email.cs,enviar_correo,,8,SMTP,SMTP,Activo
+LAN,Constante,Helper/Cadena.cs,QueryImportVIU,,10,Constante string con SQL,Ninguno,Codigo muerto
+LAN,Constante,Helper/Cadena.cs,QueryImportMA,,75,Constante string con SQL,Ninguno,Codigo muerto
+LAN,Clase,Properties/Querys.cs,55 propiedades de lectura de recursos .sql,,36,Lectura de recursos embebidos,Ninguno,Codigo muerto
+LAN,Clase,Models/*,26 archivos de DTOs y POCOs,,,Sin conexion,Sin BD,Activo
+DMZ,Endpoint,MagentoController,magento/attributes,GET,15,Magento REST,Magento REST,Activo
+DMZ,Endpoint,MagentoController,magento/general/attributes,GET,23,Magento REST,Magento REST,Activo
+DMZ,Endpoint,MagentoController,magento/attributeSets,GET,31,Magento REST,Magento REST,Activo
+DMZ,Endpoint,MagentoController,magento/attributeSetChildren/{id},GET,39,Magento REST,Magento REST,Activo
+DMZ,Endpoint,MagentoController,magento/categories,GET,47,Magento REST,Magento REST,Activo
+DMZ,Endpoint,MagentoController,magento/children/{page}/{size}/{store},GET,55,Magento REST,Magento REST,Activo
+DMZ,Endpoint,MagentoController,magento/noImagenProduct/{store},GET,63,Magento REST,Magento REST,Activo
+DMZ,Endpoint,MagentoController,magento/productWithWebsites/{page}/{size},GET,71,Magento REST,Magento REST,Activo
+DMZ,Endpoint,MagentoController,magento/getOrderId/{incrementId},GET,79,Magento REST,Magento REST,Activo
+DMZ,Endpoint,MagentoController,magento/deletePromociones,GET,91,Magento REST,Magento REST,Activo
+DMZ,Endpoint,MagentoController,magento/deleteReservations,GET,103,Magento REST,Magento REST,Activo
+DMZ,Endpoint,MagentoController,magento/getCuenta,POST,113,Magento REST,Magento REST,Activo
+DMZ,Endpoint,MagentoController,magento/setCuenta,POST,122,Magento REST,Magento REST,Activo
+DMZ,Endpoint,ProductsController,product/updateProduct/{store},POST,27,Magento REST,Magento REST,Activo
+DMZ,Endpoint,ProductsController,product/updateConfigurableProduct/{store},POST,36,Magento REST,Magento REST,Activo
+DMZ,Endpoint,ProductsController,product/updateConfigurableProductLink/{sku},POST,45,Magento REST,Magento REST,Activo
+DMZ,Endpoint,ProductsController,product/updateStock,POST,54,Magento REST,Magento REST,Activo
+DMZ,Endpoint,ProductsController,product/getStockByStore,POST,63,Retorna literal stores - sin destino,Ninguno,Stub
+DMZ,Endpoint,ProductsController,product/updatePrice,POST,70,Magento REST,Magento REST,Activo
+DMZ,Endpoint,ProductsController,product/uploadImage,POST,79,Filesystem local,Filesystem/SMB,Activo
+DMZ,Endpoint,ProductsController,product/uploadImagesToMagento,POST,102,Filesystem + subida a Magento,Magento REST,Activo
+DMZ,Endpoint,OrdersController,order/sendStorePickupEmail,POST,211,Magento REST,Magento REST,Activo
+DMZ,Endpoint,OrdersController,order/setOrderStatus,POST,278,Magento REST,Magento REST,Activo
+DMZ,Endpoint,OrdersController,order/getOrderInfo/{incrementId},GET,289,Magento REST,Magento REST,Activo
+DMZ,Endpoint,OrdersController,order/jsonOrders/{incrementId},GET,297,Magento REST,Magento REST,Activo
+DMZ,Endpoint,OrdersController,order/setCAccount,POST,311,Magento REST,Magento REST,Activo
+DMZ,Endpoint,OrdersController,order/authorizationResult,POST,371,Magento REST,Magento REST,Activo
+DMZ,Endpoint,OrdersController,order/getprueba,GET,39,Local - health check,Sin BD,Activo
+DMZ,Endpoint,OrdersController,order/getGuide,POST,200,LAN SQLite servicio_guias,SQLite,Activo
+DMZ,Endpoint,OrdersController,order/setOrder,POST,109,ServicioSAP order/new,ServicioSAP,Migrado
+DMZ,Endpoint,OrdersController,order/returnOrder,POST,260,ServicioSAP order/setreturn,ServicioSAP,Migrado
+DMZ,Endpoint,CustomersController,customer/setCustomer,POST,20,ServicioSAP partner/client,ServicioSAP,Migrado
+DMZ,Endpoint,CustomersController,customer/cashCustomerReport,POST,108,LAN filesystem + share SMB,Filesystem/SMB,Activo
+DMZ,Endpoint,WalletCustomerController,customer/wallet/details,POST,16,ServicioSAP customer/wallet/details,ServicioSAP,Migrado
+DMZ,Endpoint,WalletCustomerController,customer/wallet/getCuentaC/{ordenCompra},GET,47,Sin destino - prefijo y verbo no coinciden con LAN,Ninguno,Roto
+DMZ,Endpoint,CreditController,credit/validateSms,POST,100,LAN -> SP SPVTASCodigoSeguridadeCommerce -> Intelisis,Intelisis via linked server,RECLASIFICADO
+DMZ,Endpoint,CreditController,credit/SendSmsNewNumber,POST,303,LAN ServicioAndroid,ServicioAndroid,Activo
+DMZ,Endpoint,CreditController,credit/CreditoWeb_SaveFirstData,POST,157,LAN -> SP SpCREDISolicitudWebPrimerGuardado -> Intelisis,Intelisis via linked server,RECLASIFICADO
+DMZ,Endpoint,CreditController,credit/SolicitudMercancia,POST,319,LAN ServicioAndroid,ServicioAndroid,Activo
+DMZ,Endpoint,CreditController,credit/SaveImagesProductosMx,POST,212,LAN filesystem + AdminDoc,AdminDoc,Activo
+DMZ,Endpoint,CreditController,credit/guardardocumento,POST,443,LAN AdminDoc,AdminDoc,Activo
+DMZ,Endpoint,CreditController,credit/GetCreditAmounts,POST,347,LAN SQLite mavi_credilana_info,SQLite,Activo
+DMZ,Endpoint,CustomerServiceController,customerService/obtenerQuejas,POST,116,LAN ServicioAndroid,ServicioAndroid,Activo
+DMZ,Endpoint,CustomerServiceController,customerService/bitacoraAtencionClientes,POST,91,LAN -> SP SP_ACTES_REGISTRO -> Intelisis,Intelisis via linked server,RECLASIFICADO
+DMZ,Endpoint,CustomerServiceController,customerService/bbvaKeyAdvanced,POST,267,LAN SOAP externo WSeCommerceMX,HTTP externo,Activo
+DMZ,Endpoint,CustomerServiceController,customerService/ActualizarCamposConfigurables,POST,319,Sin destino en LAN,Ninguno,Roto
+DMZ,Endpoint,CustomerServiceController,customerService/InsertarDesdeTablerateNativo,POST,331,Sin destino en LAN,Ninguno,Roto
+DMZ,Endpoint,CustomerServiceController,customerService/InsertarDesdeTablerateCustom,POST,343,Sin destino en LAN,Ninguno,Roto
+DMZ,Endpoint,StatusController,status/getStatus,POST,12,LAN ping ICMP sin conexion SQL,Sin BD,Activo
+DMZ,Metodo,Conn/Magento.cs,getToken,,20,Magento REST,Magento REST,Activo
+DMZ,Metodo,Conn/Magento.cs,Post,,26,Magento REST,Magento REST,Activo
+DMZ,Metodo,Conn/Magento.cs,Get,,48,Magento REST,Magento REST,Activo
+DMZ,Metodo,Conn/Magento.cs,Delete,,60,Magento REST,Magento REST,Activo
+DMZ,Metodo,Conn/Magento.cs,getOrderInfo,,75,Magento REST,Magento REST,Activo
+DMZ,Metodo,Conn/Magento.cs,getAttributes,,80,Magento REST,Magento REST,Activo
+DMZ,Metodo,Conn/Magento.cs,getGeneralAttributes,,85,Magento REST,Magento REST,Activo
+DMZ,Metodo,Conn/Magento.cs,getAttributeSets,,90,Magento REST,Magento REST,Activo
+DMZ,Metodo,Conn/Magento.cs,getAttributeSetChildren,,95,Magento REST,Magento REST,Activo
+DMZ,Metodo,Conn/Magento.cs,getCategories,,100,Magento REST,Magento REST,Activo
+DMZ,Metodo,Conn/Magento.cs,getChildren,,105,Magento REST,Magento REST,Activo
+DMZ,Metodo,Conn/Magento.cs,getNoImagenProduct,,110,Magento REST,Magento REST,Activo
+DMZ,Metodo,Conn/Magento.cs,getProductWithWebsites,,115,Magento REST,Magento REST,Activo
+DMZ,Metodo,Conn/Magento.cs,getOrderId,,120,Magento REST,Magento REST,Activo
+DMZ,Metodo,Conn/Magento.cs,setOrderStatus,,125,Magento REST,Magento REST,Activo
+DMZ,Metodo,Conn/Magento.cs,sendPickupReadyEmail,,131,Magento REST,Magento REST,Activo
+DMZ,Metodo,Conn/Magento.cs,deteleReservations,,137,Magento REST,Magento REST,Activo
+DMZ,Metodo,Conn/Magento.cs,updateProduct,,142,Magento REST,Magento REST,Activo
+DMZ,Metodo,Conn/Magento.cs,updateConfigurableProduct,,157,Magento REST,Magento REST,Activo
+DMZ,Metodo,Conn/Magento.cs,updateConfigurableProductLink,,172,Magento REST,Magento REST,Activo
+DMZ,Metodo,Conn/Magento.cs,updateStock,,183,Magento REST,Magento REST,Activo
+DMZ,Metodo,Conn/Magento.cs,updatePrice,,188,Magento REST,Magento REST,Activo
+DMZ,Metodo,Conn/Magento.cs,getCuenta,,194,Magento REST,Magento REST,Activo
+DMZ,Metodo,Conn/Magento.cs,setCuenta,,200,Magento REST,Magento REST,Activo
+DMZ,Metodo,Conn/Magento.cs,detelePromociones,,206,Magento REST,Magento REST,Activo
+DMZ,Metodo,Conn/Magento.cs,GetJsonOrder,,233,Magento REST,Magento REST,Activo
+DMZ,Metodo,Conn/Magento.cs,SetCAccount,,238,Magento REST,Magento REST,Activo
+DMZ,Metodo,Metodos/ProductMethods.cs,connect,,18,Conexion FTP/SFTP a Magento,Magento REST,Activo
+DMZ,Metodo,Metodos/ProductMethods.cs,disconnect,,33,Conexion FTP/SFTP a Magento,Magento REST,Activo
+DMZ,Metodo,Metodos/ProductMethods.cs,uploadToMagento,,38,Subida de imagenes a Magento,Magento REST,Activo
+DMZ,Clase,Metodos/OrderMethods.cs,Clase vacia sin metodos,,25,Ninguno,Ninguno,Codigo muerto
+DMZ,Clase,Models/*,20 archivos de DTOs y POCOs,,,Sin conexion,Sin BD,Activo
+LAN,Metodo,Metodos/CreditMethods.cs,ProductosCreditoWeb_SaveData,,94,SP SP_CREDITO_WEB_DATOS -> ERPMAVI.IntelisisTMP.dbo.CREDICCondicionArt + TablaStD + CteTel,Intelisis via linked server,RECLASIFICADO
+LAN,Metodo,Metodos/CreditMethods.cs,CreditoWeb_SaveFirstData,,507,SP SpCREDISolicitudWebPrimerGuardado -> ERPMAVI.IntelisisTMP,Intelisis via linked server,RECLASIFICADO

@@ -1,0 +1,3 @@
+﻿BaseDeDatos,Servidor,Controlador,Endpoint,Metodo,NombreTabla,Accion,Campos Principales,Nombre TablaSAP,API SAP
+Intelisis,MAVICUBOS.grupomavi.com,nombreCliente,,,Cte,Select,"PersonalNombres, PersonalApellidoPaterno, PersonalApellidoMaterno, PersonalTelefonos, Cliente",,
+Intelisis,MAVICUBOS.grupomavi.com,nombreCliente,,,CteTel,Select,"Lada, Telefono, Cliente, Tipo, ValidacionTel",,

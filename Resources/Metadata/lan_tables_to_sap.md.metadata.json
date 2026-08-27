@@ -1,0 +1,5 @@
+{
+  "artifactType": "ARTIFACT_TYPE_OTHER",
+  "summary": "Reestructuración del archivo lan_tables_to_sap.md para desglosar la información por Stored Procedure y por tabla, facilitando su exportación y análisis en Excel.",
+  "updatedAt": "2026-06-03T22:00:35.055399200Z"
+}

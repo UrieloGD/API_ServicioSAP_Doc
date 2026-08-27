@@ -1,0 +1,2 @@
+BaseDeDatos,Servidor,Controlador,Endpoint,Metodo,NombreTabla,Stored Procedures,Accion,Campos Principales,Nombre TablaSAP,API SAP
+IntelisisTmp,MAVICUBOS.grupomavi.com,WholesaleCustomerController,GET /company/wholesale-customer/{wholesaleAccount},WholesaleCustomerMethods.GetWholesaleCustomer,cte,N/A (Inline SQL),Select,"Cliente (= @wholesaleAccount, SqlDbType.VarChar sin Size), Nombre (proyectado; GetString(0) sin IsDBNull) -- WITH(NOLOCK) -- SIN JOIN a CteEnviarA ni filtro de canal/categoria/grupo mayorista",,

@@ -1,0 +1,2 @@
+﻿BaseDeDatos,Servidor,Controlador,Endpoint,Metodo,NombreTabla,Accion,Campos Principales,Nombre TablaSAP,API SAP
+Intelisis,MAVICUBOS.grupomavi.com,OrdersController,GET /order/creditStatus/{idSolicitud},,Venta,Select,"IDEcommerce, Estatus, Situacion, Mov, ID",,

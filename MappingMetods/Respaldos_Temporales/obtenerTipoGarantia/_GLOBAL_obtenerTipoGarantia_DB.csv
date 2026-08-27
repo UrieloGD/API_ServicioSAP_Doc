@@ -1,0 +1,3 @@
+﻿BaseDeDatos,Servidor,Controlador,Endpoint,Metodo,NombreTabla,Accion,Campos Principales,Nombre TablaSAP,API SAP
+Intelisis,MAVICUBOS.grupomavi.com,obtenerTipoGarantia,,,VTASCProveedorActivoGarantia,Select,"TipoGarantia, Marca, Telefono, Proveedor, Linea",,
+Intelisis,MAVICUBOS.grupomavi.com,obtenerTipoGarantia,,,Art,Select,"Proveedor, MarcaE, Linea, Articulo",,

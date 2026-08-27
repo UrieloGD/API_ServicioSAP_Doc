@@ -1,0 +1,6 @@
+{
+  "artifactType": "ARTIFACT_TYPE_IMPLEMENTATION_PLAN",
+  "summary": "Plan de implementación para la migración del módulo de órdenes de LAN a Servicio SAP, indicando las fases, los componentes y las dependencias de tablas que se deben mapear.",
+  "updatedAt": "2026-06-03T16:46:17.114363500Z",
+  "requestFeedback": true
+}

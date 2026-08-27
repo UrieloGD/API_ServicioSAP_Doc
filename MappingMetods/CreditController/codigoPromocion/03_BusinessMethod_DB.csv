@@ -1,0 +1,8 @@
+﻿BaseDeDatos,Servidor,Controlador,Endpoint,Metodo,NombreTabla,Accion,Campos Principales,Nombre TablaSAP,API SAP
+Intelisis,MAVICUBOS.grupomavi.com,CreditController,POST /credit/codigoPromocion,,VTASCVentaCupon,Select,Codigo,,
+Intelisis,MAVICUBOS.grupomavi.com,CreditController,POST /credit/codigoPromocion,,Comercializadora.dbo.Personal,Select,"Departamento, Puesto",,
+Intelisis,MAVICUBOS.grupomavi.com,CreditController,POST /credit/codigoPromocion,,TablaStD,Select,"Valor, TablaSt, Nombre",,
+Intelisis,MAVICUBOS.grupomavi.com,CreditController,POST /credit/codigoPromocion,,VTASCVentaCupon,Update,"FechaUtilizacion, IdEcommerce, Codigo",,
+Intelisis,MAVICUBOS.grupomavi.com,CreditController,POST /credit/codigoPromocion,,Agente,Select,"Sucursal, Agente, SucursalEmpresa",,
+Intelisis,MAVICUBOS.grupomavi.com,CreditController,POST /credit/codigoPromocion,,Sucursal,Select,Sucursal,,
+Intelisis,MAVICUBOS.grupomavi.com,CreditController,POST /credit/codigoPromocion,,VTASCVentaCupon,Insert,"Codigo, Agente, FechaEnvio, Cliente, Sucursal",,

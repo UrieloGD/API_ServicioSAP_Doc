@@ -1,0 +1,73 @@
+---
+proyecto: Mavi
+id_requerimiento: BP05
+descripcion: Exposición y consulta de información de Business Partners hacia el POS.
+elaborado_por: Margarita Jarillo González (Consultor Funcional SAP SD)
+---
+
+# Especificación Funcional: Consulta y Visualización de Clientes (BP)
+
+## 1. Contexto del Requerimiento
+Adaptar y publicar APIs para la visualización de datos de Business Partners (Clientes). El modelo se divide en dos fases:
+- **Fase 1:** Consulta de información por ID de cliente único (extracción de todos los datos asociados).
+- **Fase 2:** Búsqueda dinámica con múltiples filtros, permitiendo el retorno de múltiples registros o clientes.
+
+---
+
+## 2. Modelado de Datos y Estructuras (Maestros de Cliente)
+
+Se requiere la exposición de datos adicionales mediante tablas Z que complementan al Business Partner estándar:
+- `ZSDT_CTE` (Clientes)
+- `ZSDT_CTETEL` (Cliente Teléfono)
+- `ZSDT_CTECTO` (Cliente Contacto)
+- `ZSDT_CTECTO_DIR` (Cliente Contacto Datos de Dirección)
+- `ZSDT_CTECTO_EMPL` (Cliente Contacto Datos de Empleo)
+
+### ⚠️ Reglas de Catálogos (Alineación con el origen)
+- Se eliminan del modelo de consulta las tablas de catálogo que no envían información transaccional relevante al POS (mismas listadas en el documento de especificación de creación).
+- **Consecutivos:** Para tablas de catálogo con más de 1,000 registros, el sistema debe validar el consecutivo de cada registro para garantizar la integridad de la lectura.
+
+---
+
+## 3. Arquitectura de Consulta (Backend SAP S/4HANA)
+
+El servicio utiliza una **Vista CDS (Core Data Services)** para la extracción eficiente de datos, lo cual es el estándar de alto rendimiento en SAP S/4HANA.
+
+### Definición Técnica
+- **Nombre de Objeto S4:** `ZV_DATOS_CLIENTE` (Vista CDS)
+- **Nombre de Artefacto:** `ZB_DATOS_CLIENTE_CDS`
+- **Tipo de Servicio:** Sincrónico
+
+### Entidades OData Expuestas
+La API debe exponer las siguientes entidades estándar para consumo externo:
+
+| Entidad | Método | Descripción |
+| :--- | :--- | :--- |
+| `/A_BusinessPartner` | GET | Información general de uno o todos los socios de negocio (BP). |
+| `/A_BusinessPartner('{BusinessPartner}')` | GET | Información general de un BP específico por ID. |
+| `/A_Customer` | GET | Información general de todos los clientes. |
+| `/A_Customer('{Customer}')` | GET | Información general de un cliente específico por ID. |
+
+---
+
+## 4. Estándares de Consumo OData para el POS
+
+Para asegurar que las búsquedas desde el POS o la API intermedia sean eficientes, se deben soportar los parámetros de consulta estándar de OData:
+
+- **`$filter`**: Para filtrar clientes por criterios específicos.
+- **`$orderby`**: Para ordenar resultados.
+- **`$top` / `$skip`**: Para paginación de datos (vital al manejar catálogos grandes).
+- **`$select`**: Para reducir la carga de red solicitando solo las propiedades necesarias.
+
+---
+
+## 5. Notas de Implementación para el Servicio Nuevo (C#)
+
+Para que el proyecto **ServicioSAP** (API 4.7.2) consuma estos datos correctamente, los subagentes deben considerar:
+
+1. **Abstracción de CDS View:** Al llamar a la vista `ZB_DATOS_CLIENTE_CDS`, el servicio debe enviar obligatoriamente el parámetro `p_num_cliente` en el formato requerido.
+2. **Manejo de Errores Estándar:** La API intermedia debe mapear los códigos de error HTTP de SAP hacia la respuesta del servicio:
+   - **404:** BP no encontrado en S/4HANA.
+   - **401/403:** Fallo en credenciales de CPI.
+   - **500:** Error interno en la vista CDS o procesamiento de datos.
+3. **Persistencia:** Si el POS requiere búsquedas dinámicas (Fase 2), se recomienda implementar un mecanismo de caché en el servicio nuevo para evitar llamadas constantes a SAP S/4HANA cuando el cliente no ha sufrido modificaciones.

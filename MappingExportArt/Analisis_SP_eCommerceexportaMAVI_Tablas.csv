@@ -1,0 +1,41 @@
+Nombre Tabla|Tipo|Campos|Descripcion|Resultado
+#temp_eComerceExportaArt|TEMPORAL (CREATE TABLE)|Created_date DATETIME; sku VARCHAR(25); attribute_set_code VARCHAR(100); product_type VARCHAR(20); categories VARCHAR(max); product_websites VARCHAR(20); name VARCHAR(max); description VARCHAR(max); weight FLOAT; product_online INT; tax_class_name VARCHAR(10); visibility VARCHAR(30); price MONEY; special_price MONEY; special_price_from_date DATETIME; special_price_to_date DATETIME; price_installments MONEY; price_twelve MONEY; price_eighteen MONEY; url_key VARCHAR(300); base_image VARCHAR(300); small_image VARCHAR(300); thumbnail_image VARCHAR(300); additional_attributes VARCHAR(max); qty INT; configurable_variations VARCHAR(100); bundle_price_type VARCHAR(20); bundle_sku_type VARCHAR(20); bundle_price_view VARCHAR(20); bundle_weight_type VARCHAR(20); bundle_values VARCHAR(max); bundle_shipment_type VARCHAR(20); meta_title VARCHAR(500); meta_keywords VARCHAR(500); meta_description VARCHAR(500); oferta INT; ahorro_cotorro INT; exclusivo_online INT; descuento INT; related_skus VARCHAR(250); crosssell_skus VARCHAR(250); upsell_skus VARCHAR(250)|Tabla temporal principal que almacena los articulos procesados para Magento (MAVI).|Contiene los articulos simples listos para exportar.
+art|TABLA PERMANENTE|Articulo; NombreCorto; Descripcion1; Volumen; Peso; Tipo; Categoria; Familia; Linea|Tabla maestra de articulos.|Mercancia inicial para MAVI.
+sip_excluir_productos|TABLA PERMANENTE|IdExcluirProducto; TipoExclusion; MAVI|Tabla que marca que articulos excluir. Se usa el filtro MAVI = 1.|Filtra basura para MAVI.
+sip_productos|TABLA PERMANENTE|Articulo; MAVITV; EstatusPropiedad; EstatusFotografia; SoloSELP|Controla si el articulo ya fue fotografiado y si puede ir a MAVI.|Filtro de calidad.
+excluir_familia_linea|TABLA PERMANENTE|Familia; Linea; MAVI|Tabla para bloquear lineas completas de productos para MAVI.|Excluye categorias completas.
+eCommerceExist|TABLA PERMANENTE|Articulo; Existencia; Almacen|Contiene existencias sincronizadas de Ecommerce.|Base de inventario.
+ArtLinea|TABLA PERMANENTE|Linea; Descripcion|Catalogo de lineas de productos.|Nombres de linea.
+#Listadoarticulos|TEMPORAL (SELECT INTO)|Articulo; Nombrecorto; Nombrelargoe; Familia; Linea; Marcae; Estatus; existencia; preciocont (Precio); Preciocred; Descripcion1; Volumetrico; rtipo (Tipo); MetaPalabras1E; MetaDescripcion1E; list3|Listado base de articulos elegibles para MAVI.|Universo completo de articulos candidatos.
+#articulosIEMay|TEMPORAL (SELECT INTO)|Articulo; familia_intelisis; linea_intelisis; IE; May|Identifica articulos con propiedades especiales para MAVI.|Marca articulos especiales.
+TablaStd|TABLA PERMANENTE|TablaSt; Nombre; Valor|Parametros del sistema (Ej. DM0285AlmacenPrincipal).|Parametriza almacenes para MAVI.
+#AlmacenesPrincipales|TEMPORAL (CREATE TABLE)|Almacen VARCHAR(10); Cantidad INT; Almacenes INT|Almacenes principales configurados en TablaStd.|Parametriza los almacenes principales.
+#AlmacenesSecundarios|TEMPORAL (CREATE TABLE)|Almacen VARCHAR(10); Cantidad INT; Almacenes INT|Almacenes secundarios configurados en TablaStd.|Parametriza almacenes secundarios.
+#AlmacenesRespaldo|TEMPORAL (CREATE TABLE)|Almacen VARCHAR(10); Cantidad INT; Almacenes INT|Almacenes de respaldo.|Parametriza el respaldo de inventario.
+VTASCReglasEcommerce|TABLA PERMANENTE|IdReglasEcommerce; AlmacenesPrincipales; AlmacenesSecundarios; AlmacenRespaldo; ArtPorAlmacenPrincipal|Dicta cuanta existencia minima debe haber para MAVI.|Condiciona inventario.
+ArtDisponible|TABLA PERMANENTE|Empresa; Almacen; Articulo; Disponible|Existencia detallada por almacen.|Se suma contra reglas de MAVI.
+#DisponiblePorAlmacenP|TEMPORAL (CREATE TABLE)|Articulo VARCHAR(20); Disponible INT; Regla INT|Total de existencia de un articulo en los almacenes Principales.|Paso intermedio.
+#articulos|TEMPORAL (SELECT INTO)|Articulo; Nombrecorto; Familia; Linea; Marcae; existencia; rtipo; Preciocont; exclusivoweb; May; IE|Tabla depurada despues de evaluar #Listadoarticulos contra reglas de existencia.|Filtro final de existencia.
+ecommerceactualizarimagenes|TABLA PERMANENTE|Articulo; Estatus; Imagen|Tabla de imagenes de Magento.|Descarta articulos sin imagen procesada.
+SCMArtImagen|TABLA PERMANENTE|Articulo; Imagen; Valor; Orden|Tabla auxiliar de imagenes.|Join con ecommerceactualizarimagenes.
+#propsgeneral|TEMPORAL (SELECT INTO)|IdCatalogoPropiedad; Propiedad; AtributoMagento; AtributoType; TipoVariacion|Define atributos exportados para Magento.|Catalogo base de atributos.
+items_propiedad|TABLA PERMANENTE|articulo; id_fam_prop; valor_posible; valor|Valores de las propiedades asociadas al articulo.|Relacion articulo-propiedad.
+familia_propiedad|TABLA PERMANENTE|id; propiedad; familia; linea|Catalogo que asocia una propiedad a una Familia/Linea.|Filtra atributos aplicables.
+catalogo_propiedad|TABLA PERMANENTE|id; propiedad; atributoMagento; attributetype|Traduccion de propiedades a Magento.|Traduccion de atributos.
+catalogo_valores_posibles|TABLA PERMANENTE|id; valor|Valores discretos de las propiedades.|Traduccion de IDs a texto.
+#artprops|TEMPORAL (SELECT INTO)|articulo; propiedad; valor; atributoMagento; Familia; Linea; TipoVariacion|Extrae los valores de propiedad especificos para cada articulo.|Valores por articulo.
+eCommerceSetPropiedades|TABLA PERMANENTE|IdFamPropiedad; Familia; Linea; NombreSet; VKORG|Define que Attribute Set le toca a cada familia para MAVI.|Asocia la categoria macro.
+#SETprop|TEMPORAL (SELECT INTO)|Familia; Linea; nombreset|Determina el Attribute Set Code basado en eCommerceSetPropiedades.|Agrupa articulos.
+#AtributosAdd|TEMPORAL (SELECT INTO)|Articulo; Adicionales|Concatena en formato clave=valor todos los atributos adicionales de Magento.|String final para additional_attributes.
+EcommerceRelCatMagento|TABLA PERMANENTE|ClassN2Intelisis; ClassN3Virtual; Ruta|Mapeo crudo de categorias de Intelisis a Magento para MAVI.|Rutas completas.
+#categFinal|TEMPORAL (CREATE TABLE)|FamIntelisis VARCHAR(100); LinIntelisis VARCHAR(100); LinVirtual VARCHAR(100); Categoria VARCHAR(300)|Rutas de categoria Magento procesadas y limpias.|Asigna categorias a articulos.
+SDSIPCarrusel|TABLA PERMANENTE|Articulo; IdCategoria; VKORG|Asocia un articulo a carruseles para MAVI.|Aparece en carruseles de MAVI.
+SCSIPCategorias|TABLA PERMANENTE|IdSipCategoria; Categoria|Nombres de las categorias de los carruseles.|Se concatena en la ruta de categorias.
+PropreListaDFinal|TABLA PERMANENTE|Articulo; Lista; Sucursal; Precio|Precios finales desde Intelisis (Lista 0 y 90).|Fuente principal de precios base.
+#precioart|TEMPORAL (SELECT INTO)|articulo; precio_lista; precio_venta; porcentaje_dscto; precio_dif|Calcula precio final de venta para MAVI.|Precios finales al CSV.
+#TempTop10|TEMPORAL (CREATE TABLE)|Articulo VARCHAR(20); Costo MONEY; Venta MONEY; Posicion INT; Inventario MONEY|Calcula un Top 10 de articulos basado en Costo, Venta e Inventario.|Base numerica para Upsells.
+#ArticulosUpsell|TEMPORAL (SELECT INTO)|ArticuloBase; Upsell|Relaciona un articulo con productos mas caros de la misma linea.|String final para upsell_skus.
+eComerceMarketing|TABLA PERMANENTE|IdMarketing; Articulo|Tabla puente para marketing local.|Gestiona relaciones cruzadas.
+PrecioVisible (Bandera)|UPDATE A #temp_eComerceExportaArt|mavi_visible_prices|En MAVI existe una regla exclusiva que marca articulos donde PrecioVisible es False.|Se les oculta el precio al exportar a MAVI.
+#posicionamiento|TEMPORAL (SELECT INTO)|articulo; posicion|Determina el ordenamiento de los productos.|Posicion en los grids de MAVI.
+eComerceExportaArt|TABLA PERMANENTE|Campos Magento + StatusIntelisis|Destino final en SQL Server.|Aqui termina el SP de MAVI. MAVI NO arma configurables y NO calcula plazos crediticios en la capa C# superior.

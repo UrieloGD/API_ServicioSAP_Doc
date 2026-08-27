@@ -1,0 +1,4 @@
+﻿BaseDeDatos,Servidor,Controlador,Endpoint,Metodo,NombreTabla,Accion,Campos Principales,Nombre TablaSAP,API SAP
+Intelisis,MAVICUBOS.grupomavi.com,ObtenerEstatusEmbarque,,,Venta,Select,"MovID, IDEcommerce, Mov",,
+Intelisis,MAVICUBOS.grupomavi.com,ObtenerEstatusEmbarque,,,Embarque,Select,ID,,
+Intelisis,MAVICUBOS.grupomavi.com,ObtenerEstatusEmbarque,,,EmbarqueMov,Select,"AsignadoID, MovID, Mov",,

@@ -1,0 +1,59 @@
+Nombre Tabla,Equivalencia SAP o Sigmavi,Mapeada o No,Notas
+Art,DM01 ZAPI_ARTICULOS_SRV,Sí,
+ArtDisponible,D-IM-11 ZCDS_DIM11_EXISTENCIA_CDS,Sí,
+ArtFam,N/A,Sí,
+ArtLinea,AWS AS_GET_Familia_Linea,Sí,
+ARTJUEGO,"MAST, STKO, STPO, MARA, MAKT",Sí,En SAP son 'Sets' o Listas de Materiales (BOM) estas son para identificar articulos de juego
+ARTJUEGOD,"MAST, STKO, STPO, MARA, MAKT",Sí,En SAP son 'Sets' o Listas de Materiales (BOM) estas son para identificar articulos de juego
+catalogo_propiedad,CatalogoPropiedad,Sí,
+catalogo_valores_posibles,CatalogoValoresPosibles,Sí,
+COMSCListaPrioridadEcommerce,,No,Listada en el correo sin comentarios adicionales.
+COMSCSIPCategorias,SCSIPCategorias,Sí,
+COMSDSIPCarrusel,SDSIPCarrusel,Sí,
+COMSDListaPrioridad,,No,Listada en el correo sin comentarios adicionales.
+Condicion,,No,Listada en el correo sin comentarios adicionales.
+eCommerceCatMagento,eCommerceCatMagento,Sí,
+eComerceExportaArt,,No,"Esta tabla es el resultado final de la migracion de articulos, se dejara toda la informacion en una tabla final como lo hacia en intelisis?"
+eCommerceExist,EcommerceExistencias,Sí,
+eCommercefamilialineaesp,N/A,Deprecada,obsoleta (no se migro la tabla)
+eCommerceIntNivelVirtual,EcommerceIntNivelVirtual,Sí,
+eCommerceLineasRelacion,"/ZAPI_CROSSSELL_SRV/HeaderSet
+/ZAPI_UPSELL_SRV/HeaderSet
+/ZAPI_SUSTITUTOS_SRV/HeaderSet
+",Sí,DELTA CROSSELL. Son múltiples tablas ZMMT_CS_* para jerarquías y artículos.
+eComerceMarketing,,No,Listada en el correo sin comentarios adicionales.
+eCommercePorcSobrePrecio,,No,"Es una tabla maneja vigencias (precios programados por fechas y horas). Permite que el negocio configure un sobreprecio temporal (por ejemplo, para el Hot Sale) y, cuando ese tiempo expira, el sistema regrese automáticamente al sobreprecio ""Normal""."
+eCommerceRelCatMagentoIntelisis,EcommerceRelCatMagento,Sí,eCommerceLineasRelacion
+eCommerceSetPropiedades,eCommerceSetPropiedades,Sí,
+ecommerceactualizarimagenes,EcommerceActualizarImagenes,Sí,
+excluir_familia_linea,ExcluirClassN2ClassN3,Sí,
+familia_propiedad,ClassN2Propiedades,Sí,
+Familias_validas_tdavirtual,ClassN2ValidasTdaVirtual,Sí,
+items_propiedad,ArticulosPropiedades,Sí,
+PlaneadorMacroMAVIJOB,,No,"Se utiliza en nuestro proceso de exportación para tomar decisiones sobre los artículos que se quedan sin stock el sistema consulta esta tabla. Si el artículo tiene activada la configuración de BackOrder (es decir, permitimos venderlo aunque no haya stock físico para resurtirlo después), la tabla obliga a que el artículo siga activo y visible en el E-Commerce (product_online = 1). Si no tiene BackOrder, lo desactiva automáticamente de la tienda (product_online = 2)."
+Prop,,No,
+PropreListaDFinal,SD29 ZAPI_PROPRELIST_SRV,Sí,
+SCM_Art_imagen,SCMArtImagen,Sí,
+sip_excluir_productos,SIPExcluirProductos,Sí,
+sip_productos,SIPProductos,Sí,
+TablaStd,AWS,Sí,AI_GET_CatalogoConfiguracion?NOMBRECATALOGO= 
+TcWDM0285_AtribMgtoValorLista,TcWDM0285_AtributosdeMagento,Sí,
+TcWDM0285_AtributosdeMagento,,No,Listada en el correo sin comentarios adicionales.
+TcWDM0285_ECommerceTemporada,,No,Listada en el correo sin comentarios adicionales.
+Venta,SD01,Sí,
+VentaD,SD01,Sí,
+VTASCProductoControl,,No,"Funciona como una tabla de control tipo ""Lista Blanca / Lista Negra"" por artículo (SKU). Únicamente utiliza el código del artículo. Si un artículo se encuentra registrado en esta tabla, el sistema lo marca para que se disparen bloqueos o validaciones"
+VTASCCategoriasControl,,No,Se utiliza para establecer un precio mínimo permitido por categoría de productos. Utiliza el identificador de la categoría y un campo de precio mínimo. El sistema revisa esta tabla para evitar que se publiquen a la venta artículos cuyo precio sea inferior al límite establecido para su categoría.
+VTASCCondicionesCredVtaLinea,CondicionesCredVtaLinea,Sí,
+VTASCReglasEcommerce,ReglasEcommerce,Sí,
+VTASRConfigurablesFamLineaProp,,No,"Crear API de CRUD. En SAP los configurables son 'variantes', hay que cruzar varias tablas base. MARA, MAKT, AUSP, MEAN, MARC, MARD"
+VTASRAgrupaFamLineaProp,,No,"Crear API de CRUD dinámica. En SAP son características (CABN) y sus valores (AUSP). CABN, AUSP"
+VTASDAgrupaFamLineaPropConf,,No,"Crear API de CRUD dinámica. En SAP son características (CABN) y sus valores (AUSP). CABN, AUSP"
+VTASCPlantillaHTMLSEO,PlantillasHTMLSEO,Sí,
+VTASCRegionSku,,No,"NO EXISTE EN SAP, mandar crear tabla y API CRUD tomando propiedad REGION R5 o R6 del SIP. Nueva Tabla / API CRUD"
+VTASCCodigoPostalRegionCelular,,No,"NO EXISTE EN SAP, mandar crear tabla y API CRUD completo. Nueva Tabla / API CRUD"
+VTASDEcommerceExportaArtExistencia,,No,Solicitar acoplar al SP SpVTASEcommerceExistencia y crear CRUD completo. Nueva Tabla / API CRUD
+eCommerceDetPedidos,,No,"No existe. Crear API CRUD, revisar con Romero/POS quién llena esta tabla. Nueva Tabla / API CRUD"
+VentaEntrega,,No,Listada en el correo sin comentarios adicionales.
+Formapago,,No,Listada en el correo sin comentarios adicionales.
+VTASCMetodosPagoMagento,,No,Listada en el correo sin comentarios adicionales.

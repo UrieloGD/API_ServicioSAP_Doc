@@ -1,0 +1,2 @@
+﻿BaseDeDatos,Servidor,Controlador,Endpoint,Metodo,NombreTabla,Accion,Campos Principales,Nombre TablaSAP,API SAP
+Intelisis,MAVICUBOS.grupomavi.com,ProspectoController,POST /prospecto/recuperarcuenta,,Cte,Select,"Cliente, PersonalNombres, PersonalApellidoPaterno, PersonalApellidoMaterno, FechaNacimiento, RFC",,

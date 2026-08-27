@@ -1,0 +1,40 @@
+﻿ID,Ola,Controlador,Endpoint,MetodoOrigen,DestinoActual,DestinoNuevo,DiasDev,FechaInicio,FechaFin,Estado,Bloqueo/Nota
+H-01,0 Habilitadores,-,conexionSQL.obtenerConexionAdminDoc(),Helpers/ConexionDB/ConexionSQL.cs,-,AdminDoc,0.5,2026-08-04,2026-08-04,Listo,
+H-02,0 Habilitadores,-,Clase Impersonation (P/Invoke),Helpers/Impersonation.cs,-,SMB,0.5,2026-08-05,2026-08-05,Listo,
+H-03,0 Habilitadores,-,Helper HTTP hacia DMZ,Helpers/DmzClient.cs,-,Magento,0.5,2026-08-06,2026-08-06,Listo,
+H-04,0 Habilitadores,-,Corregir SQLiteDb.DefaultPath,Helpers/ConexionDB/SQLiteDb.cs,C:/AntigravityRoute,C:/inetpub/wwwroot/api,0.5,2026-08-07,2026-08-07,Listo,
+E-01,1 Piloto,CreditController,credit/SendSmsNewNumber,CreditMethods.SendSmsNewNumber:1992,ServicioAndroid,ServicioAndroid (igual),0.5,2026-08-10,2026-08-10,Listo,
+E-02,2 SIGMAVI listas,CustomersController,customer/setCustomerList,CustomerMethods.blackwhitelist:120,Intelisis VTASCListaNegra/Blanca,SIGMAVI mismas tablas,1.0,2026-08-11,2026-08-11,Listo,
+E-03,2 SIGMAVI listas,CustomersController,customer/getCustomerList,CustomerMethods.blackwhitelist:120,Intelisis VTASCListaNegra/Blanca,SIGMAVI mismas tablas,0.5,2026-08-12,2026-08-12,Listo,
+E-04,2 SIGMAVI listas,CustomersController,customer/deleteCustomerList,CustomerMethods.blackwhitelist:120,Intelisis VTASCListaBlanca,SIGMAVI misma tabla,0.5,2026-08-13,2026-08-13,Listo,
+E-05,3 SQLite,OrdersController,order/getGuide,OrderMethods.GetGuide:736,SQLite servicio_guias,SQLite (igual),0.5,2026-08-14,2026-08-14,Listo,
+E-06,3 SQLite,CreditController,credit/GetCreditAmounts,CredyPrestamoMethods.GetCredilanaInfo:833,SQLite mavi_credilana_info,SQLite (igual),0.5,2026-08-17,2026-08-17,Listo,
+E-07,4 AdminDoc,CreditController,credit/guardardocumento,CreditMethods.GuardarDocumento:2605,AdminDoc MAVI_DOC_CTE,AdminDoc (igual),0.5,2026-08-18,2026-08-18,Listo,
+E-08,4 AdminDoc,CreditController,credit/SaveImagesProductosMx,CreditMethods.SaveImagesProductosMx:971,AdminDoc + Filesystem,AdminDoc (igual),1.0,2026-08-19,2026-08-19,Listo,
+E-09,5 Sin BD,CustomerServiceController,customerService/obtenerQuejas,CustomerServiceMethods.obtenerQuejas:714,ServicioAndroid ACTES_CATALOGO_QUEJA,ServicioAndroid (igual),0.5,2026-08-20,2026-08-20,Listo,
+E-10,5 Sin BD,CustomerServiceController,customerService/bbvaKeyAdvanced,CustomerServiceMethods.GetBBVAKeyAdvanced:1124,SOAP WSeCommerceMX,SOAP (igual),0.5,2026-08-21,2026-08-21,Listo,
+DESCARTADO,5 Sin BD,CreditController,credit/ExistRFCAndPhoneCte,CreditMethods.ExistRFCAndPhoneCte:1414,Ninguna (neutralizado),Ninguna,0.5,2026-08-24,2026-08-24,Descartado,Descartado el 11-ago, sin ID. Ver checklist.
+DESCARTADO,5 Sin BD,StatusController,status/getStatus,StatusController.cs:12 (inline),Ping a servidor Intelisis,Health-check ServicioSAP,0.5,2026-08-25,2026-08-25,Descartado,Descartado el 11-ago, sin ID. Ver checklist.
+E-11,6 SMB y DMZ,CustomersController,customer/getCuenta,Conn/Magento.cs:309,HTTP DMZ magento/getCuenta,igual,0.5,2026-08-26,2026-08-26,Listo,
+E-12,6 SMB y DMZ,CustomersController,customer/setCuenta,Conn/Magento.cs:319,HTTP DMZ magento/setCuenta,igual,0.5,2026-08-27,2026-08-27,Listo,
+E-13,6 SMB y DMZ,CustomersController,customer/cashCustomerReport,CustomerMethods.CreateCashReport:194,Filesystem + SMB 172.16.200.2,igual,1.0,2026-08-28,2026-08-28,Con nota,Validar red al share
+E-14,9 Mixtos SAP,CreditController,credit/SolicitudMercancia,CreditMethods.SolicitudMercancia:610,Intelisis Cte + Android TEMP,SAP partner/client + Android,1.0,2026-08-31,2026-08-31,Listo,
+E-15,9 Mixtos SAP,CreditController,credit/codigoPromocion,CreditMethods.CodigoPromocion:392,Intelisis VTASCVentaCupon,SIGMAVI VentaCupon,1.5,2026-09-01,2026-09-02,Listo,
+E-16,9 Mixtos SAP,CreditController,credit/getPlazos,CreditMethods.GetPlazos:2530,Intelisis VTASCCondicionesCredVtaLinea,SIGMAVI + SAP SD40,1.5,2026-09-03,2026-09-04,Listo,
+E-17,9 Mixtos SAP,CustomerServiceController,customerService/obtenerTipoGarantia,CustomerServiceMethods.obtenerTipoGarantia:37,Intelisis VTASCProveedorActivoGarantia,SIGMAVI tabla nueva (PCP),1.5,2026-09-07,2026-09-08,BLOQUEADO,BLOQUEADO - estructura Miguel Marin
+M-11,12 Mixtos A,CreditController,credit/validateSms,CreditMethods.ProductosCredito_Clave:50,Android + Intelisis (linked server),Por definir,3.0,2026-09-15,2026-09-18,Con nota,SP cruza a Cte/CteTel
+M-12,12 Mixtos A,CreditController,credit/CreditoWeb_SaveData,CredyPrestamoMethods.CreditoWeb_SaveData:29,Android + Intelisis (linked server),Por definir,3.0,2026-09-21,2026-09-23,Con nota,SP_CREDITO_WEB_DATOS
+M-14,12 Mixtos A,CreditController,credit/CreditoWeb_SaveFirstData,CreditMethods.CreditoWeb_SaveFirstData:507,Android + Intelisis (linked server),Por definir,3.0,2026-09-24,2026-09-28,Con nota,SpCREDISolicitudWebPrimerGuardado
+M-15,12 Mixtos A,CustomerServiceController,customerService/bitacoraAtencionClientes,CustomerServiceMethods.bitacoraAtencionClientes:409,Android + Intelisis (linked server),Por definir,2.0,2026-09-29,2026-09-30,Con nota,SP_ACTES_REGISTRO
+M-01,10 Mixtos B,CreditController,credit/CreditoWeb_FormDatos,CreditMethods.CreditoWeb_FormDatos:677,SQLite + Intelisis,Por definir,5.0,2026-10-01,2026-10-07,Con nota,SP_CREDITO_WEB_VALORES_FORM 83 objetos
+M-02,10 Mixtos B,CreditController,credit/CreditoWeb_Informacion,CreditMethods.CreditoWeb_Informacion:1191,SQLite + Intelisis,Por definir,5.0,2026-10-08,2026-10-14,Con nota,SPCREDICredilana 31 objetos
+M-03,10 Mixtos B,CreditController,credit/SaveCredilanaInfo,CredyPrestamoMethods.LoadCredilanaInfo:675,SQLite + Intelisis,Por definir,3.0,2026-10-15,2026-10-19,Con nota,FnVTASListaCredilanas alimentador
+M-06,11 Mixtos C,CreditController,credit/getSms,CreditMethods.ProductosCredito_Nip:21,Android + Intelisis,Por definir,2.0,2026-10-20,2026-10-21,Con nota,VTASCodigoSMSEcommerce
+M-13,12 Mixtos A,CreditController,credit/CreditoWeb_SaveData_Articulos,CreditMethods.CreditoWeb_SaveData_Articulos:467,Android + Intelisis,Por definir,2.0,2026-10-22,2026-10-23,Con nota,cte_prospecto
+M-07,11 Mixtos C,CreditController,credit/CreditoWeb_Seguro,CredyPrestamoMethods.CreditoWeb_Seguro:228,Intelisis + Android + API Liberador,Por definir,3.0,2026-10-26,2026-10-28,Con nota,SpCREDICredilanaSeguroDeVida
+➡️,DEV2,CreditController,credit/GetPhoneValidatedClientSecretName,CreditMethods.GetPhoneValidatedClientSecretName:1784,Intelisis Cte/CteTel,SAP partner/client,2.0,2026-10-29,2026-10-30,Reasignado,Reasignado a Dev 2 el 12-ago: todos sus destinos son SAP
+M-08,11 Mixtos C,CreditController,credit/SaveHaztenTransaction,CreditMethods.SaveHaztenTransaction:2288,SIGMAVI + Android + Intelisis,Por definir,2.0,2026-11-02,2026-11-03,Con nota,RM0855ACoordenadasProspecto
+M-04,10 Mixtos B,CreditController,credit/CreditoWeb_Solicitud,CreditMethods.CreditoWeb_Solicitud:1290,Intelisis SPCREDICredilana,Por definir,2.0,,,Con nota,Mismo SP que M-02; se resuelven juntas
+M-09,11 Mixtos C,OrdersController,order/ManagePaynetOrders,OrderMethods.ManagePaynetOrders:43,Intelisis spAfectar,Por definir,2.0,,,Con nota,spAfectar declarado muerto
+M-10,11 Mixtos C,OrdersController,order/insertPaymentData,OrderMethods.InsertPaymentData:179,Intelisis CXCCMensajeWebHookOpenPay,Por definir,2.0,,,Con nota,Webhook de OpenPay
+M-05,10 Mixtos B,CreditController,credit/CreditoWeb_SolicitudPrimerGuardado,CreditMethods.CreditoWeb_SolicitudPrimerGuardado:1343,Intelisis,Por definir,2.0,,,Con nota,Hermano de M-14

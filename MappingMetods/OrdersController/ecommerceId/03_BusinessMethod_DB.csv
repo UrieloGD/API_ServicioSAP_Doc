@@ -1,0 +1,4 @@
+﻿BaseDeDatos,Servidor,Controlador,Endpoint,Metodo,NombreTabla,Accion,Campos Principales,Nombre TablaSAP,API SAP
+Intelisis,MAVICUBOS.grupomavi.com,OrdersController,GET /order/estimated-delivery/{ecommerceId},,Venta,Select,"MovId, IDEcommerce, Mov",,
+Intelisis,MAVICUBOS.grupomavi.com,OrdersController,GET /order/estimated-delivery/{ecommerceId},,INVDPaqueteriaGuia,Select,"Paqueteria, NoGuia, NoCodigoRastreo, MovId",,
+Intelisis,MAVICUBOS.grupomavi.com,OrdersController,GET /order/estimated-delivery/{ecommerceId},,EMBCConfiguracionPaqueteria,Select,"LinkPaqueteria, NombrePaqueteria",,

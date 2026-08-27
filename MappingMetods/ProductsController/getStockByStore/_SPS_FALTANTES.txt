@@ -1,0 +1,42 @@
+SP: SpVTASEcommerceStoreStock
+Invocado desde: APIMagento\WebApiMagento\Metodos\ProductMethods.cs:1025  (ProductMethods.getStockStore)
+Conexion: sCadenaConexion  -> MAVICUBOS.grupomavi.com / IntelisisTmp
+Forma de invocacion: SqlCommand con CommandType.Text (por defecto), texto literal
+  "SpVTASEcommerceStoreStock @P0, @P1 ,@P2"  -- NO usa CommandType.StoredProcedure
+CommandTimeout: 10000 segundos (2 h 46 min)
+Parametros detectados en C#:
+  @P0 (SqlDbType.Structured, TypeName = "VTASPedidoMagento") <- DataTable armado en memoria (ProductMethods.cs:1008-1021)
+         columna sku (typeof(string)) <- cada elemento de StoreStockRequest.products
+         columna qty (typeof(int))    <- constante 1 HARDCODEADA (ProductMethods.cs:1018); el request NO trae cantidad
+  @P1 (SqlDbType.Int)                <- StoreStockRequest.store_id  (OJO: el modelo lo declara como string, Models/Product.cs:247)
+  @P2 (SqlDbType.VarChar, sin size)  <- StoreStockRequest.state     (Models/Product.cs:248)
+Retorno esperado (segun el C# que lee el reader):
+  Se usa SqlDataAdapter.Fill(DataSet) y solo se consume ds.Tables[0].
+  De cada fila se lee UNICAMENTE dRow[0].ToString() -- acceso POSICIONAL, sin nombre de columna.
+  Nombre, tipo y significado de esa columna: DESCONOCIDOS (presuntamente el SKU/Articulo con existencia).
+  Columnas adicionales y result sets adicionales: descartados silenciosamente.
+  Si Rows.Count == 0 el C# NO consulta nada mas y devuelve el literal "sinexistencia" (ProductMethods.cs:1061).
+Accion presunta: Select
+  (no verificable: el SP podria escribir; sin el fuente no puede descartarse -- Regla #5)
+PENDIENTE: exportar definicion desde Intelisis y guardar como SPsOrden\SpVTASEcommerceStoreStock.sql
+
+TIPO DE TABLA DEFINIDO POR EL USUARIO (dependencia adicional, tambien faltante)
+Objeto: VTASPedidoMagento  (User-Defined Table Type)
+Referenciado desde: APIMagento\WebApiMagento\Metodos\ProductMethods.cs:1031  (P0.TypeName)
+Conexion: sCadenaConexion  -> MAVICUBOS.grupomavi.com / IntelisisTmp
+Estructura inferida desde el DataTable de C# (ProductMethods.cs:1009-1010):
+  sku  varchar/nvarchar (?)  -- longitud desconocida
+  qty  int
+PENDIENTE: exportar la definicion del tipo (CREATE TYPE) desde Intelisis y guardarla junto al SP.
+  Sin este objeto el SP no se puede recrear ni probar en un entorno de migracion.
+
+NOTA DE ALCANCE
+Se verifico explicitamente que este endpoint NO invoca ninguno de los SPs que el brief
+sugeria como probables: SpVTASEcommerceExistencia, SpVTASEcommercePrecio,
+SpVTASECommerceDisponibilidadArt ni SpINVRepServ. Busqueda directa en ProductMethods.cs
+sin coincidencias en el metodo getStockStore (lineas 1000-1070).
+SpVTASEcommerceStoreStock es un FALTANTE NUEVO, no registrado en la lista de faltantes
+conocidos del proyecto. Debe agregarse a esa lista.
+
+Tampoco se invoca spQuitaPreposicionesArticulos ni spVerCosto (ambos SI disponibles en
+SPsOrden\), por lo que no se diseccionan en este endpoint.

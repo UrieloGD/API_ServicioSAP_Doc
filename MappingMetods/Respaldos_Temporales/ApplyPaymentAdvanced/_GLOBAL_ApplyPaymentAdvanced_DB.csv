@@ -1,0 +1,2 @@
+﻿BaseDeDatos,Servidor,Controlador,Endpoint,Metodo,NombreTabla,Accion,Campos Principales,Nombre TablaSAP,API SAP
+Intelisis,MAVICUBOS.grupomavi.com,ApplyPaymentAdvanced,,,CXCCFacturaMultipagoBBVA,Insert,"Cliente, ClienteEnviarA, Mov, MovID, Monto, Referencia, EstatusPago, FechaPago, Origen",,

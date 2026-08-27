@@ -1,0 +1,2 @@
+﻿BaseDeDatos,Servidor,Controlador,Endpoint,Metodo,NombreTabla,Accion,Campos Principales,Nombre TablaSAP,API SAP
+Intelisis,MAVICUBOS.grupomavi.com,CreditController,GET /credit/getCreditAccount/{pAccount},,CREDIHProspectoACliente,Select,"Prospecto, Cliente, Fecha",,

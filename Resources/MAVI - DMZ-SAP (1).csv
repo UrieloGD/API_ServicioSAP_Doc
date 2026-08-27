@@ -1,0 +1,146 @@
+Origin Controller,Ruta DMZ,HTTP Method,Ruta ServicioSAP,HTTP Method SAP,Programador,Conectado,Generado,Notas
+CreditController,credit/getClienteFactura/{cliente}/{factura},GET→POST,credit/getClienteFactura/{cliente}/{factura},POST,Marcos,Si,Si,TZ01 - Migrado
+CreditController,credit/getClienteSaldo/{cliente},GET,To Do,GET,Marcos,No,No,SD33 - WALLET
+CreditController,credit/MonederoSaldoCredito,POST,To Do,GET,Javier,No,No,SD33 - WALLET
+CreditController,credit/getSms,POST,To Do,GET,Diego,No,No,ANDROID - No requiere SAP
+CreditController,credit/validateSms,POST,To Do,GET,Diego,No,No,ANDROID - No requiere SAP
+CreditController,credit/codigoPromocion,POST,To Do,GET,Javier,No,No,SuccessFactors + BP05 + SIGMAVI - Requiere desarrollo
+CreditController,credit/codigoRecomendado,POST,N/A,N/A,Deprecado,N/A,N/A,DEPRECADO
+CreditController,credit/ExistRFCAndPhoneCte,POST,To Do,GET,Javier,No,No,"BP05 filtro genérico existe, falta SuccesFactor + SD36 + SD05"
+CreditController,credit/getPlazos,GET,To Do,GET,Javier,No,No,TZ01 + SIGMAVI - Requiere desarrollo
+CreditController,credit/getCreditAccount/{pAccount},GET,To Do,GET,Javier,No,No,Validar ZtipoCliente = PROSPECTO en filtro BP05
+CreditController,credit/GetUnificationWalletStatus,POST,To Do,POST,Javier,No,No,BLOQUEADO - APIs/tablas no existen
+CreditController,credit/CheckAccountsPreUnification,POST,To Do,GET,Javier,No,No,cteEnciarA + BP05_MA - Requiere desarrollo
+CreditController,credit/SetUnificationWalletData,POST,To Do,GET,Javier,No,No,BLOQUEADO - APIs/tablas no existen
+CreditController,credit/SolicitudMercancia,POST,To Do,GET,Diego,No,No,Migrar logica a SAP
+CreditController,credit/guardardocumento,POST,To Do,GET,Diego,Si,Si,Migrar logica a SAP
+CreditController,credit/SaveHaztenTransaction,POST,To Do,POST,Diego,No,No,EXT/SIGMAVI - No requiere SAP
+CreditController,credit/CreditoWeb_FormDatos,POST,To Do,POST,Diego,No,No,CrediLana - No requiere SAP
+CreditController,credit/CreditoWeb_SaveFirstData,POST,To Do,POST,Diego,No,No,CrediLana - No requiere SAP
+CreditController,credit/CreditoWeb_SaveData,POST,To Do,POST,Diego,No,No,CrediLana - No requiere SAP
+CreditController,credit/CreditoWeb_SaveData_Articulos,POST,To Do,POST,Diego,No,No,ANDROID - No requiere SAP
+CreditController,credit/CreditoWeb_Informacion,POST,To Do,POST,Diego,No,No,CrediLana - No requiere SAP
+CreditController,credit/CreditoWeb_Solicitud,POST,To Do,POST,Diego,No,No,CrediLana - No requiere SAP
+CreditController,credit/CreditoWeb_SolicitudPrimerGuardado,POST,To Do,POST,Diego,No,No,CrediLana - No requiere SAP
+CreditController,credit/CreditoWeb_Seguro,POST,To Do,POST,Diego,No,No,CrediLana - No requiere SAP
+CreditController,credit/GetCreditAmounts,POST,credit/GetCreditAmounts,POST,Diego,Si,Si,CrediLana - Endpoint SAP existe
+CreditController,credit/Validar_Lada,POST,N/A,POST,Deprecado,N/A,N/A,DEPRECADO
+CreditController,credit/codigoRecomendadoWithUen,POST,To Do,POST,Deprecado,N/A,N/A,UEN variant - No en scope
+CreditController,credit/SaveImagesProductosMx,POST,To Do,POST,Diego,Si,Si,ProductosMX image upload - No requiere SAP
+CreditController,credit/GetPhoneValidatedClientSecretName,POST,To Do,POST,Marcos,No,No,SMS/CrediLana - No requiere SAP
+CreditController,credit/SendSmsNewNumber,POST,credit/SendSmsNewNumber,POST,Diego,Si,Si,SMS - Endpoint SAP existe
+CustomersController,customer/setCustomer,POST,partner/client,POST,Marcos,Si,Si,BP01 - Migrado
+CustomersController,customer/setCustomerList,POST,customer/setCustomerList,POST,Diego,SI,Si,SIGMAVI + SAP - Endpoint SAP existe
+CustomersController,customer/getCustomerList,GET,customer/getCustomerList,POST,Diego,SI,Si,SIGMAVI + SAP - Endpoint SAP existe
+CustomersController,customer/deleteCustomerList,POST,customer/deleteCustomerList,POST,Diego,SI,Si,SIGMAVI + SAP - Endpoint SAP existe
+CustomersController,customer/cashCustomerReport,POST,To Do,POST,Diego,No,No,OTRO - Archivo en red
+CustomerServiceController,customerService/GetAccountDebts,POST,credit/GetAccountDebts,POST,Marcos,Si,Si,EX01 - Migrado
+CustomerServiceController,customerService/ApplyPaymentNeko,POST,credit/ApplyPaymentNeko,POST,Marcos,No,No,ZAPI_REFERENCIAS_BANCARIAS - Estructura SAP existe falta lógica ABAP
+CustomerServiceController,customerService/UpdateStatusPaymentNeko,POST,credit/UpdateStatusPaymentNeko,POST,Marcos,No,No,ZAPI_REFERENCIAS_BANCARIAS - Estructura SAP existe falta lógica ABAP
+CustomerServiceController,customerService/ApplyPaymentAdvanced,POST,To Do,POST,Marcos,No,No,ZAPI_REFERENCIAS_BANCARIAS - Requiere desarrollo
+CustomerServiceController,customerService/UpdateStatusPaymentAdvanced,POST,To Do,POST,Marcos,No,No,ZFICRUD_COBREF_SRV - Requiere desarrollo
+CustomerServiceController,customerService/obtenerTipoGarantia,POST,To Do,POST,Diego,No,No,SIGMAVI - No requiere SAP
+CustomerServiceController,customerService/unirCuenta,POST,partner/client/unircuenta,PATCH,Marcos,No,Si,BP05 ZID_MAGENTO - Recién desarrollado
+CustomerServiceController,customerService/validarCliente,POST,To Do,GET,Javier,No,No,BP05 - Filtro genérico ya existe
+CustomerServiceController,customerService/nombreCliente,POST,partner/client/ma/{clientId},GET,Javier,No,No,BP05_MA - Endpoint SAP ya existe
+CustomerServiceController,customerService/bitacoraAtencionClientes,POST,To Do,POST,Diego,No,No,ANDROID - No requiere SAP
+CustomerServiceController,customerService/validarCoberturaPorCP,POST,To Do,GET,Javier,No,No,SEPOMEX - Endpoint SAP existe
+CustomerServiceController,customerService/obtenerVentanaConfirmacion,POST,To Do,GET,Javier,No,No,BP05 + SD36 + ADDRCHANGE - Requiere desarrollo (3 APIs)
+CustomerServiceController,customerService/obtenerCreditos,POST,To Do,GET,Javier,No,No,SD36 + DM01 + tarjetaSerie - Requiere desarrollo
+CustomerServiceController,customerService/obtenerQuejas,POST,To Do,GET,Diego,No,No,ANDROID - No requiere SAP
+CustomerServiceController,customerService/ObtenerEstatusEmbarque,POST,To Do,GET,Javier,No,No,BLOQUEADO - Pendiente desarrollo ABAP
+CustomerServiceController,customerService/LoginClienteCredito,POST,To Do,GET,Javier,No,No,BP05 - Login por datos BP
+CustomerServiceController,customerService/LoginClienteCreditoFechaN,POST,To Do,GET,Javier,No,No,BP05 - Login por fecha nacimiento
+CustomerServiceController,customerService/GetSTPAccount,POST,To Do,POST,Marcos,No,No,ZAPI_REFERENCIAS_BANCARIAS - Requiere desarrollo ABAP
+CustomerServiceController,customerService/GetSalesChannelsSTP,POST,To Do,GET,Javier,No,No,CteEnviarA  → salesanddistribution-api.mavi.fun/AS_GET_PartnerAddress?SdDoc=0000007844&PartnRole=WE
+CustomerServiceController,customerService/ValidateSTPAccount,GET,To Do,GET,Marcos,No,No,Tabla Z nueva en SAP - Requiere desarrollo
+CustomerServiceController,customerService/bbvaKeyNeko,POST,N/A,N/A,Deprecado,N/A,N/A,DEPRECADO
+CustomerServiceController,customerService/bbvaKeyAdvanced,POST,To Do,GET,Diego,No,No,Herramienta EXT BBVA
+CustomerServiceController,customerService/GetEmpleadoByNomina,POST,partner/successfactor/employee/{userId},GET,Javier,No,No,SuccessFactor - Endpoint SAP existe
+CustomerServiceController,customerService/ActualizarCamposConfigurables,POST,N/A,N/A,Deprecado,N/A,N/A,DEPRECADO
+CustomerServiceController,customerService/InsertarDesdeTablerateNativo,POST,N/A,N/A,Deprecado,N/A,N/A,DEPRECADO
+CustomerServiceController,customerService/InsertarDesdeTablerateCustom,POST,N/A,N/A,Deprecado,N/A,N/A,DEPRECADO
+LoginController,login/authenticate,POST,login/auth,POST,Diego,Si,Si,JWT local - Endpoint SAP existe
+MagentoController,magento/attributes,GET,N/A (MAGENTO directo),N/A,Diego,No,No,DMZ→Magento directo
+MagentoController,magento/general/attributes,GET,N/A (MAGENTO directo),N/A,Diego,No,No,DMZ→Magento directo
+MagentoController,magento/attributeSets,GET,N/A (MAGENTO directo),N/A,Diego,No,No,DMZ→Magento directo
+MagentoController,magento/attributeSetChildren/{id},GET,N/A (MAGENTO directo),N/A,Diego,No,No,DMZ→Magento directo
+MagentoController,magento/categories,GET,N/A (MAGENTO directo),N/A,Diego,No,No,DMZ→Magento directo
+MagentoController,magento/children/{page}/{size}/{store},GET,N/A (MAGENTO directo),N/A,Diego,No,No,DMZ→Magento directo
+MagentoController,magento/noImagenProduct/{store},GET,N/A (MAGENTO directo),N/A,Diego,No,No,DMZ→Magento directo
+MagentoController,magento/productWithWebsites/{page}/{size},GET,N/A (MAGENTO directo),N/A,Diego,No,No,DMZ→Magento directo
+MagentoController,magento/getOrderId/{incrementId},GET,N/A (MAGENTO directo),N/A,Diego,No,No,DMZ→Magento directo
+MagentoController,magento/deletePromociones,GET,N/A (MAGENTO directo),N/A,Diego,No,No,DMZ→Magento directo
+MagentoController,magento/deleteReservations,GET,N/A (MAGENTO directo),N/A,Diego,No,No,DMZ→Magento directo
+MagentoController,magento/getCuenta,POST,N/A (MAGENTO directo),N/A,Diego,No,No,DMZ→Magento directo
+MagentoController,magento/setCuenta,POST,N/A (MAGENTO directo),N/A,Diego,No,No,DMZ→Magento directo
+OrdersController,order/setOrder,POST,order/new,POST,Marcos,Si,Si,SD01 - Migrado
+OrdersController,order/cancelOrder,POST,order/cancelOrder,POST,Javier,Si,Si,SD46 - Endpoint SAP existe faltan escenarios delivery
+OrdersController,order/returnOrder,POST,order/setreturn,POST,Marcos,Si,Si,SD09 - Migrado
+OrdersController,order/getIntelisisStatuses,POST,sale/filter/{filters},GET,Javier,No,Si,SD36 - Reutilizar SaleController
+OrdersController,order/getPosCancellations,POST,order/cancelInvoice,POST,Javier,No,Si,SD48 - DEPRECADO pero endpoint SAP existe
+OrdersController,order/creditStatus/{idSolicitud},GET,sale/filter/{filters},GET,Javier,No,Si,SD36 - Reutilizar SaleController
+OrdersController,order/updateCreditOrderId,POST,To Do,POST,Marcos,No,No,"Se tiene que revisar si es posible actualizar un documento de ventas, revisarlo con Alan"
+OrdersController,order/estimated-delivery/{ecommerceId},GET,To Do,GET,Javier,No,No,SD36 + ADDRCHANGE + tracking - Requiere desarrollo
+OrdersController,order/GetPickUpCode,POST,To Do,POST,Diego,No,No,TrWDM0285_CteRecoge → SIGMAVI
+OrdersController,order/ManagePaynetOrders,POST,To Do,POST,Diego,No,No,Tabla Venta (SD36) + SQLITE + spAfectar VALIDAR FLUJO - Requiere desarrollo
+OrdersController,order/InsertPaymentData,POST,To Do,POST,Diego,No,No,INSERT Tabla CXCCMensajeWebHookOpenPay INTELISIS a Migrar a SIGMAVI
+OrdersController,order/getGuide,POST,order/getGuide,POST,Marcos,Si,Si,Migrado
+OrdersController,order/validateCredit,POST,order/new,POST,Javier,No,No,Mismo flujo que setOrder - Apuntar a order/new pero manteniendo ValidateCredit
+OrdersController,order/authorizationResult,POST,N/A (MAGENTO directo),N/A,Diego,Si,Si,DMZ→Magento directo - No requiere SAP
+OrdersController,order/setOrderStatus,POST,N/A (MAGENTO directo),N/A,Diego,Si,Si,DMZ→Magento directo - No requiere SAP
+OrdersController,order/getOrderInfo/{incrementId},GET,N/A (MAGENTO directo),N/A,Diego,Si,Si,DMZ→Magento directo - No requiere SAP
+OrdersController,order/jsonOrders/{incrementId},GET,N/A (MAGENTO directo),N/A,Diego,Si,Si,DMZ→Magento directo - No requiere SAP
+OrdersController,order/setCAccount,POST,N/A (MAGENTO directo),N/A,Diego,Si,Si,DMZ→Magento directo - No requiere SAP
+OrdersController,order/sendStorePickupEmail,POST,N/A (MAGENTO directo),N/A,Diego,Si,Si,DMZ→Magento directo - No requiere SAP
+OrdersController,order/getprueba,GET,N/A,N/A,Diego,No,No,DEPRECADO
+ProductsController,product/updateProduct/{store},POST,N/A (MAGENTO directo),N/A,Diego,Si,Si,DMZ→Magento directo - No requiere SAP
+ProductsController,product/updateConfigurableProduct/{store},POST,N/A (MAGENTO directo),N/A,Diego,Si,Si,DMZ→Magento directo - No requiere SAP
+ProductsController,product/updateConfigurableProductLink/{sku},POST,N/A (MAGENTO directo),N/A,Diego,Si,Si,DMZ→Magento directo - No requiere SAP
+ProductsController,product/updateStock,POST,N/A (MAGENTO directo),N/A,Diego,Si,Si,DMZ→Magento directo - No requiere SAP
+ProductsController,product/getStockByStore,POST,N/A (MAGENTO directo),N/A,Deprecado,N/A,N/A,DEPRECADO solo hace un return Ok(“stores”); esta obsoleto
+ProductsController,product/updatePrice,POST,N/A (MAGENTO directo),N/A,Diego,Si,Si,DMZ→Magento directo - No requiere SAP
+ProductsController,product/uploadImage,POST,N/A (MAGENTO directo),N/A,Diego,Si,Si,DMZ→Magento directo - No requiere SAP
+ProductsController,product/uploadImagesToMagento,POST,N/A (MAGENTO directo),N/A,Diego,Si,Si,DMZ→Magento directo - No requiere SAP
+ProspectoController,prospecto/rfc,POST,To Do,POST,Javier,No,No,RFC generación + ZTBC_Code_MSTR - Requiere desarrollo
+ProspectoController,prospecto/recuperarcuenta,POST,partner/client/filter/{sapFilter},POST,Javier,No,No,BP05 - Filtro genérico existe
+RecommenderController,recommender/setRecommenderList,POST,To Do,POST,Diego,No,No,SpCREDICodigoRecomendador Requiere analisis
+RecommenderController,recommender/getRecommender,POST,To Do,POST,Javier,No,No,SpCREDICodigoRecomendador Requiere analisis
+RecommenderController,recommender/setCodes,POST,To Do,POST,Deprecado,N/A,N/A,DEPRECADO
+StatusController,status/getStatus,POST,To Do,GET,Diego,No,No,Health probe - No requiere SAP
+WalletCustomerController,customer/wallet/details,POST,customer/wallet/details,POST,Marcos,Si,Si,SD18 - Migrado
+WalletCustomerController,customer/wallet/getCuentaC/{ordenCompra},GET,To Do,GET,Javier,No,Si,SD36 - Consulta de venta por IdEcommerce
+WalletCustomerController,customer/wallet/getMinimumCostToRedeem,POST,To Do,POST,Javier,No,No,SD18 + TablaRangoSt ( AI_GET_CatalogoConfiguracion ) – Requiere desarrollo
+WholesaleCustomerController,company/wholesale-customer/{wholesaleAccount},GET,To Do,GET,Javier,No,Si,BP05MA
+WholesaleCustomerController,company/negotiable-quote/create,POST,To Do,POST,Javier,No,No,"Insert Venta (SD01) Insert VentaD (SD01 Seccion de detalles) los inserts tiene valores fijos (revisar codigo metodo InsertTableVenta, InsertTableVentaD)"
+CustomersController (LAN-only),customer/getCuenta,POST,N/A (MAGENTO),POST,Diego,No,No,LAN-only - No tiene ruta DMZ
+CustomersController (LAN-only),customer/setCuenta,POST,N/A (MAGENTO),POST,Diego,No,No,LAN-only - No tiene ruta DMZ
+CreditController (LAN-only),credit/SaveCredilanaInfo,POST,N/A (SQLlite),POST,Diego,No,No,LAN-only - SQLite
+OrdersController (LAN-only),order/createStorepickupCode/{idE}/{idO},POST,To Do,POST,Javier,No,No,"Migrar GenerarIdRecogerEnSucursal() a SAP, SD36 (venta), BP05MA (cte), VentaEntrega (api par domicilios de entrega ) EcommerceDetPedidos (Pendiente de creacion)"
+OrdersController (LAN-only),order/generateNewStorepickupCode/{idE},POST,N/A,N/A,Deprecado,N/A,N/A,DEPRECADO por metodo crearPrimerCodigoRecogerSucbanktransfer
+OrdersController (LAN-only),order/getOrderId/{idEcommerce},POST,N/A (MAGENTO),GET,Javier,No,No,LAN-only – Magento
+OrdersController (LAN-only),order/getOrderInfoAndSet/{incrementId},POST,N/A (MAGENTO) Y SAP,N/A,Javier,No,No,LAN-only - Magento + SD36 + SD01
+OrdersController (LAN-only),order/checkOpenpay,POST,N/A (SQLITE),POST,Javier,No,No,"LAN-only Ejecuta obtenerEstatusVenta (SD36), SPAFectar, SQLITE"
+ProductsController (LAN-only),product/updateProduct,POST,N/A,POST,Javier,No,No,LAN-only - Job ImportApp
+ProductsController (LAN-only),product/updateProductJsonOnly,POST,N/A,GET,Javier,No,No,LAN-only - Job ImportApp
+ProductsController (LAN-only),product/updatePrice,POST,N/A,GET,Javier,No,No,LAN-only - Job ImportApp
+ProductsController (LAN-only),product/updateConfigurableProduct,POST,product/jerarquia/articulos,GET,Javier,No,No,LAN-only - Job ImportApp
+ProductsController (LAN-only),product/updateStockMavi,POST,product/stock,GET,Javier,No,No,LAN-only - Job ImportApp
+ProductsController (LAN-only),product/updateStock,POST,product/stock,GET,Javier,No,No,LAN-only - Job ImportApp
+ProductsController (LAN-only),product/getStockByStore,POST,product/stock/filter/{filter},GET,Javier,No,No,LAN-only - Job ImportApp
+ProductsController (LAN-only),product/existenciasAlmacenArt,POST,product/stock/filter/{filter},GET,Javier,No,No,LAN-only - Job ImportApp
+ProductsController (LAN-only),product/obtenerImagen,POST,ma/imagenes/optimizadas,GET,Javier,No,Si,LAN-only - product_images
+MercanciaController,mercancias/getAbonos,POST,credit/GetAccountDebts,POST,Deprecado,N/A,N/A,DEPRECADO - EX01/TZ01
+MercanciaController,mercancias/getProximosPagos,POST,credit/GetAccountDebts,POST,Deprecado,N/A,N/A,DEPRECADO - EX01
+MercanciaController,mercancias/getSaldoVencido,POST,credit/GetAccountDebts,POST,Deprecado,N/A,N/A,DEPRECADO - EX01
+MercanciaController,mercancias/getLimiteMercancia,POST,partner/client/{clientId},GET,Deprecado,N/A,N/A,DEPRECADO - BP05 ZlimCred
+MercanciaController,mercancias/ValidarTelefono,POST,partneraddress/partner/phone,PATCH,Deprecado,N/A,N/A,DEPRECADO - Phone handling existe en SAP
+,,,,,,,,
+,,,,,,,,
+,,Programador,Rutas,Conectado,Generado,44,51,
+,,Javier,44,2.27%,15.91%,32.35%,37.50%,34.93%
+,,Diego,60,35.00%,35.00%,,,
+,,Marcos,17,41.18%,47.06%,,,
+,,Deprecado,15,100.00%,100.00%,,,
+,,,,,,,,
+,,Total,,44.61%,49.49%,,,

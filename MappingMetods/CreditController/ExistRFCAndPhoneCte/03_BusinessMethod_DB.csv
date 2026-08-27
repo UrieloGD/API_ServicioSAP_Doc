@@ -1,0 +1,7 @@
+﻿BaseDeDatos,Servidor,Controlador,Endpoint,Metodo,NombreTabla,Accion,Campos Principales,Nombre TablaSAP,API SAP
+Intelisis,MAVICUBOS.grupomavi.com,CreditController,POST /credit/ExistRFCAndPhoneCte,,Personal,Select,"registro, Estatus",,
+Intelisis,MAVICUBOS.grupomavi.com,CreditController,POST /credit/ExistRFCAndPhoneCte,,Cte,Select,"Cliente, Curp, Rfc",,
+Intelisis,MAVICUBOS.grupomavi.com,CreditController,POST /credit/ExistRFCAndPhoneCte,,Venta,Select,"Cliente, ID",,
+Intelisis,MAVICUBOS.grupomavi.com,CreditController,POST /credit/ExistRFCAndPhoneCte,,MOVBITACORA,Select,"ID, Fecha",,
+Intelisis,MAVICUBOS.grupomavi.com,CreditController,POST /credit/ExistRFCAndPhoneCte,,CTETEl,Select,"Cliente, Lada, Telefono",,
+Intelisis,MAVICUBOS.grupomavi.com,CreditController,POST /credit/ExistRFCAndPhoneCte,,CteEnviarA,Select,"Cliente, ID",,

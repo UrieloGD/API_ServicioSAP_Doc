@@ -1,0 +1,6 @@
+﻿BaseDeDatos,Servidor,Controlador,Endpoint,Metodo,NombreTabla,Accion,Campos Principales,Nombre TablaSAP,API SAP
+Intelisis,MAVICUBOS.grupomavi.com,obtenerCreditos,,,Venta,Select,"Id, MovId, FechaEmision, Importe, PrecioTotal, Estatus, OrigenID",,
+Intelisis,MAVICUBOS.grupomavi.com,obtenerCreditos,,,Cte,Select,Nombre,,
+Intelisis,MAVICUBOS.grupomavi.com,obtenerCreditos,,,VentaD,Select,"Cantidad, Articulo, Precio, PrecioAnterior",,
+Intelisis,MAVICUBOS.grupomavi.com,obtenerCreditos,,,Art,Select,Descripcion1,,
+Intelisis,MAVICUBOS.grupomavi.com,obtenerCreditos,,,TarjetaSerieMovMAVI,Select,Importe,,
