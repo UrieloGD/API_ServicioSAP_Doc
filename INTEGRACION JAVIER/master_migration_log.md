@@ -125,3 +125,22 @@ curl --request POST \
   --data '{"cliente":"1500007539","id_magento":999123}'
 ```
 *(Debe retornar `true` o `false`)*
+
+## S2-06: `customerService/validarCliente`
+- **Estado Inicial:** En el sistema legacy (Intelisis), esta función hacía un `SELECT TOP 1` verificando que el BP estuviera ligado a la cuenta de Magento. Si existía, retornaba el nombre y apellidos ocultos con asteriscos (ej. `J**** P****`).
+- **Análisis y Hallazgos:** La DMZ no requería cambios ya que funcionaba como un passthrough perfecto. La implementación en S/4HANA (ServicioSAP) necesitaba usar el servicio BP05 (`GetClientMaAsync`).
+- **Acción Tomada:** 
+  - Se creó el modelo `ValidarClienteRequest` en el backend `ServicioSAP`.
+  - Se portó de forma exacta la función de ofuscamiento `ocultarLetrasNombres` empleando expresiones regulares.
+  - Se comparó el campo extendido `BusinessPartnerMa.To_Cte.ZidMagento` del BP05 con el `id_cliente_magento` recibido.
+  - Se devolvió el objeto ofuscado si hay match, o `"false"` en string si no lo hay (para que la DMZ devuelva `Ok(false)`).
+  - *BugFix:* Se corrigió el uso de `Logger.CustomerService` por `Logger.SAP` y se agregó el archivo nuevo en el `.csproj` para evitar errores de compilación `CS0117` y `CS0234`.
+
+**Prueba Exitosa Magento hacia DMZ (Ruta Pública POST)**
+```bash
+curl --request POST \
+  --url https://localhost:44302/customerService/validarCliente \
+  --header 'Authorization: Bearer <TU_TOKEN_DMZ>' \
+  --header 'content-type: application/json' \
+  --data '{"id_cliente_intelisis":"1500007539","id_cliente_magento":"999123"}'
+```
