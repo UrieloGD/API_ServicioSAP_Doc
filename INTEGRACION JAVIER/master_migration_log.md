@@ -101,3 +101,27 @@ curl --request GET \
   --url https://localhost:44302/credit/getPlazos \
   --header 'Accept: application/json' \
   --header 'Authorization: Bearer <TU_TOKEN_DMZ>'
+```
+
+## S2-05: `customerService/unirCuenta`
+- **Estado Inicial:** El PM proveyó un snippet para ser insertado en la DMZ (`curl.PostSAP("partner/cliente/unirCuenta", JsonConvert.SerializeObject(request))`).
+- **Análisis y Hallazgos:** El código proporcionado por el PM fallaría en producción por 3 discrepancias con la API `ServicioSAP`:
+  1. **Discrepancia de Verbo:** La API interna expone `[HttpPatch]`, pero el PM sugirió usar `PostSAP` (POST).
+  2. **Discrepancia de Ruta:** La API interna escucha en `partner/client/unircuenta`, pero el PM sugirió `partner/cliente/unirCuenta`.
+  3. **Discrepancia de Payload (Mapping):** DMZ envía la llave `"cliente"`, pero el contrato interno de SAP espera `"partner_id"`.
+- **Acción Tomada:** Se ignoró el snippet literal del PM y se construyó una implementación funcional dentro de `APIMagentoDMZ/WebApiMagento/Controllers/CustomerServiceController.cs`. 
+  - Se mapeó `"cliente"` a `"partner_id"` en un nuevo objeto anónimo.
+  - Se utilizó el método `curl.PatchSAP` (ya existente en `Curl.cs`).
+  - Se apuntó a la ruta correcta `partner/client/unircuenta`.
+- **Retrocompatibilidad de Respuesta:** Se forzó a la DMZ a atrapar cualquier cadena de error o excepción proveniente de SAP y transformarla en un estricto `true` / `false`. Con esto se garantizó que Magento siga recibiendo la misma estructura booleana que devolvía la API antigua (Intelisis).
+- El endpoint S2-05 ya delega al robusto método `LinkMagentoAccountAsync` de S/4HANA (que usa `ZSDT_CTE_ODATA_SRV` para parches atómicos en memoria). Está listo.
+
+**Prueba Exitosa Magento hacia DMZ (Ruta Pública POST)**
+```bash
+curl --request POST \
+  --url https://localhost:44302/customerService/unirCuenta \
+  --header 'Authorization: Bearer <TU_TOKEN_DMZ>' \
+  --header 'content-type: application/json' \
+  --data '{"cliente":"1500007539","id_magento":999123}'
+```
+*(Debe retornar `true` o `false`)*

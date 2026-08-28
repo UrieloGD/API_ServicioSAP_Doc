@@ -88,7 +88,7 @@ Endpoints que resuelven contra BP05, wrapper ya construido por Dev 1, más las d
 - [x] ✅ **S2-04** `credit/getPlazos` — SIGMAVI `CondicionesCredVtaLinea` + SAP SD40. **Mixto: Dev 3 entrega SIGMAVI**
   - *Estado: Implementado mediante arquitectura mixta. Se recuperan nombres de condiciones en SIGMAVI y se extrae el campo `Zdiasgracia` de SD40. Endpoint depurado y limpio (listo para Staging).*
   - **⚠️ NOTA PENDIENTE (Confirmación SAP):** Se detectó que SD40 (`Zdiasgracia`) omite el primer mes en su conteo en relación con Intelisis (122 vs 153 para Diferido, 0 vs 31 para Inmediato). A la espera de que el PM y SAP confirmen si esto es un error de configuración o la nueva regla oficial. Módulo cerrado por ahora.
-- [ ] **S2-05** `customerService/unirCuenta` — BP05 → `ZID_MAGENTO`. Investigar la API de actualización de cliente, BP02
+- [x] ✅ **S2-05:** `customerService/unirCuenta` — BP05 -> `ZID_MAGENTO` (API Actualización de cliente), BP02
 - [ ] **S2-06** `customerService/validarCliente` — BP05
 - [ ] **S2-07** `prospecto/recuperarcuenta` — BP05
 - [ ] **S2-08** `recommender/getRecommender` — BP05; falta obtener `znipventa` y confirmar si la API lo expone
