@@ -80,16 +80,24 @@ curl --request POST \
 
 ---
 
-## 4. Documentación de Bloqueo S2-04 (`credit/getPlazos`)
+## 4. Documentación de Cierre S2-04 (`credit/getPlazos`)
 
-**Estatus:** 🔒 BLOQUEADO (Dependencia de SAP SD40).
+**Estatus:** ✅ FINALIZADO Y PROBADO EXITOSAMENTE.
 
-### Resumen del Problema
-1. Inicialmente se pensó que el catálogo maestro de condiciones de crédito (`CondicionesCredVtaLinea`) podría leerse íntegramente desde **SIGMAVI**.
-2. Sin embargo, la lógica legado (Intelisis LAN) cruza `VTASCCondicionesCredVtaLinea` (que sí está en SIGMAVI) con la tabla `Condicion` (la cual contiene el campo `DiasVencimiento`).
-3. Se nos informó que la tabla `Condicion` ya no existe en el nuevo ecosistema SQL/SIGMAVI y fue trasladada hacia SAP a través del wrapper **OData SD40**.
-4. Dado que el wrapper SD40 no cuenta con documentación técnica, endpoints, ni mapeo de entidades en el repositorio, **no es posible avanzar** con el cruce de datos híbrido (SIGMAVI + SAP).
+### Resumen del Cruce Híbrido (SIGMAVI + SAP SD40)
+1. **Consumo de SD40 Nativo:** Se implementó `GetCondicionesPagoAsync` directamente en C# para consumir el OData v4 de SAP (`zapi_condpago`), obteniendo el catálogo maestro de condiciones con su identificador `Zterm`
+#### 📌 2026-08-28 - `credit/getPlazos` (S2-04) - Arquitectura Mixta Finalizada y Lista para Staging
+- **Issue detectado en Pruebas Unitarias:** Al consumir el API de SD40, el valor devuelto para la condición Diferida (`12DA`/`12DV`) en el campo `Zdiasgracia` es **122**, y para la Inmediata (`12IA`/`12IV`) es **0**. En Intelisis (LAN), estos valores siempre fueron **153** y **31** respectivamente. 
+- **Conclusión de Regla de Negocio:** Se detectó que el equipo de SAP SD40 implementó el cálculo restando los primeros 31 días base (153 - 31 = 122).
+- **Acción Tomada:** Se retiraron los logs de depuración inyectados (limpiando el endpoint). El módulo se da por concluido y **listo para staging**.
+- **Refactorización DMZ (Gateway):** Se corrigió la orquestación en el proyecto `APIMagentoDMZ` (`CreditController.cs`) cambiando la invocación interna de `curl.PostSAP` a `curl.GetSAP`. Esto garantizó que el API interno (`ServicioSAP`) pudiera operar exclusivamente con `[HttpGet]`, respetando de principio a fin el contrato original expuesto por LAN.
+- **Acción Pendiente (PM / SAP):** Confirmar si la resta de 31 días en SAP es una mala configuración que corregirán ellos, o si la API de ServicioSAP deberá inyectar `days = zdias + 31` en el futuro. De momento se respeta lo devuelto por SD40.
+3. **Cruce en Memoria (LINQ):** Se integró `PaymentConditionCatalog` para traducir el nombre legado (`CondicionPropre` ej. `12 M MA P DIF`) al código técnico de SAP (ej. `12DA`). Luego, mediante LINQ, se busca `12DA` en la respuesta de SD40 para extraer los días de vencimiento reales (`Zplazo`).
+4. **Compatibilidad:** El JSON resultante conserva exactamente la misma estructura esperada por Magento (listas de `Diferidos` e `Inmediatos` agrupados por `StoreCode` y `Days`).
 
-### Próximos Pasos
-- Queda en espera de que el equipo de SAP (Dev 1 / Dev 4) libere la documentación y el endpoint de SD40.
-- Una vez liberado, se desarrollará el cliente HTTP en `ServicioSAP` para consumir SD40 y se cruzará en memoria (LINQ) con los datos de SIGMAVI.
+**1. Simulación Magento hacia DMZ (Ruta Pública GET)**
+```bash
+curl --request GET \
+  --url https://localhost:44302/credit/getPlazos \
+  --header 'Accept: application/json' \
+  --header 'Authorization: Bearer <TU_TOKEN_DMZ>'

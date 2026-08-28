@@ -85,8 +85,9 @@ Endpoints que resuelven contra BP05, wrapper ya construido por Dev 1, más las d
 - [ ] ⏳ **S2-02** `customerService/LoginClienteCreditoFechaN` — BP05
 - [x] ✅ **S2-03** `company/wholesale-customer/{wholesaleAccount}` — BP05
   - *Completado el 26/08/2026. Orquestación local 100% probada. Se ajustó el Regex de DMZ para admitir cuentas numéricas SAP (ej. 1500008152) e IDs legados, y se transformó la petición a POST hacia el nuevo backend (ServicioSAP) que consume el wrapper BP05 de forma asíncrona.*
-- [ ] 🔒 **S2-04** `credit/getPlazos` — SIGMAVI `CondicionesCredVtaLinea` + SAP SD40. **Mixto: Dev 3 entrega SIGMAVI**
-  - *Bloqueado. La tabla `Condicion` original fue migrada al wrapper SD40 en SAP, el cual aún no está documentado ni construido. Se requiere cruzar SIGMAVI con SD40 en memoria una vez liberado.*
+- [x] ✅ **S2-04** `credit/getPlazos` — SIGMAVI `CondicionesCredVtaLinea` + SAP SD40. **Mixto: Dev 3 entrega SIGMAVI**
+  - *Estado: Implementado mediante arquitectura mixta. Se recuperan nombres de condiciones en SIGMAVI y se extrae el campo `Zdiasgracia` de SD40. Endpoint depurado y limpio (listo para Staging).*
+  - **⚠️ NOTA PENDIENTE (Confirmación SAP):** Se detectó que SD40 (`Zdiasgracia`) omite el primer mes en su conteo en relación con Intelisis (122 vs 153 para Diferido, 0 vs 31 para Inmediato). A la espera de que el PM y SAP confirmen si esto es un error de configuración o la nueva regla oficial. Módulo cerrado por ahora.
 - [ ] **S2-05** `customerService/unirCuenta` — BP05 → `ZID_MAGENTO`. Investigar la API de actualización de cliente, BP02
 - [ ] **S2-06** `customerService/validarCliente` — BP05
 - [ ] **S2-07** `prospecto/recuperarcuenta` — BP05
