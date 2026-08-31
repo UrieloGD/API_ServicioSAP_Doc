@@ -91,11 +91,24 @@ Endpoints que resuelven contra BP05, wrapper ya construido por Dev 1, más las d
 - [x] ✅ **S2-05:** `customerService/unirCuenta` — BP05 -> `ZID_MAGENTO` (API Actualización de cliente), BP02
 - [x] ✅ **S2-06:** `customerService/validarCliente` — BP05 (Enmascaramiento de Nombres + Validación `ZidMagento`)
 - [ ] **S2-07** `prospecto/recuperarcuenta` — BP05
-- [x] ✅ **S2-08** `recommender/getRecommender` — BP05; falta obtener `znipventa` y confirmar si la API lo expone
-          **** ENd Point Deprecado.
-- [ ] **S2-09** `customer/wallet/getMinimumCostToRedeem` — SD18. Usa dos tablas para validar si se puede redimir: **decidir si se vuelven configurables o migran a SIGMAVI**, en cuyo caso pasa a ser mixto con Dev 3
+- [x] ✅ **S2-08** `recommender/getRecommender` — BP05; falta obtener `znipventa` y confirmar si la API lo expone **Endpoint Deprecado**
+- [ ] **S2-09** `customer/wallet/getMinimumCostToRedeem` — configuracionescatalgo(fasAPI), SD52
 
-> ⚠️ **S2-04 y S2-09 son los dos puntos de este Sprint con dependencia externa** (Dev 3 / SIGMAVI). El resto se puede terminar y probar de principio a fin sin esperar a nadie.
+> ⚠️ **S2-04 es el único punto de este Sprint con dependencia externa** (Dev 3 / SIGMAVI). El resto se puede terminar y probar de principio a fin sin esperar a nadie.
+
+---
+
+## Sprint 3 — Endpoints con Cruces Operativos de Dos APIs · 09/09/2026 – 28/09/2026 · 5 endpoints
+
+Mismo criterio de riesgo que en Dev 3: más APIs por endpoint significa más formas de quedar a medias. Se ataca después de agotar el Sprint 2.
+
+- [ ] ⏳ **S3-01** `order/generateNewStorepickupCode/{idEcommerce}` — actualiza `TrWDM0285_CteRecoge`(BPRecogePedidos), tabla que Dev 3 crea en SIGMAVI. **Coordinar con Dev 3**
+- [ ] **S3-02** `order/createStorepickupCode/{idEcommerce}/{idOrder}` — cruza `TrWDM0285_CteRecoge` (BPRecogePedidos) en SigMavi, `Venta` (SD36), `Cte` (BP05), `VentaEntrega` (PartnerAddress) y `EcommerceDetPedidos` (SD36). **Coordinar con Dev 3**, que crea la tabla en SIGMAVI
+- [ ] **S3-03** `customerService/obtenerCreditos` — venta por SD36 y artículos ya resueltos. (La tabla `TarjetaSerieMovMAVI` ya no existirá y no se utilizará más).
+- [ ] **S3-04** `order/estimated-delivery/{ecommerceId}` — SD36 y `ZSRV_SALESDOC_ADDRCHANGE`. Ojo: en SAP designaron la guía como el *tracking*, y el tracking real se desconoce
+- [ ] **S3-05** `order/getOrderInfoAndSet/{incrementId}` — consulta Magento, valida estatus en SD36 y, si procede, genera pedido SD01
+
+> **S3-01 y S3-02 comparten la misma tabla de SIGMAVI** (`TrWDM0285_CteRecoge`) — conviene resolverlos juntos con Dev 3.
 
 ---
 
