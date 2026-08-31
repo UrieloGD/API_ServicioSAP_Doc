@@ -1,6 +1,6 @@
 ---
 tags: [contratos, endpoints, migracion, indice]
-actualizado: 2026-08-25
+actualizado: 2026-08-31
 ---
 
 # Contratos de endpoints — Migración LAN → SAP
@@ -24,20 +24,33 @@ en producción.
 
 | Partida | Endpoint | Ola | Cutover DMZ | Ficha |
 |---|---|---|---|---|
-| E-01 | `credit/SendSmsNewNumber` | 1 | ⏳ escrito, sin commitear ni desplegar | [[E-01_SendSmsNewNumber]] |
-| E-02 | `customer/setCustomerList` | 2 | ⏳ commiteado (`740669e`), sin push ni desplegar | [[E-02_setCustomerList]] |
-| E-03 | `customer/getCustomerList` | 2 | ⏳ escrito, sin commitear ni desplegar | [[E-03_getCustomerList]] |
-| E-04 | `customer/deleteCustomerList` | 2 | ⏳ escrito, sin commitear ni desplegar | [[E-04_deleteCustomerList]] |
-| E-05 | `order/getGuide` | 3 | ⏳ escrito, sin commitear ni desplegar | [[E-05_getGuide]] |
-| E-06 | `credit/GetCreditAmounts` | 3 | ⏳ escrito, sin commitear ni desplegar | [[E-06_GetCreditAmounts]] |
-| E-07 | `credit/guardardocumento` | 4 | ⏳ commiteado (`d933e44`), sin desplegar | [[E-07_guardardocumento]] |
-| E-08 | `credit/SaveImagesProductosMx` | 4 | ⏳ commiteado (`d933e44`), sin desplegar | [[E-08_SaveImagesProductosMx]] |
-| E-09 | `customerService/obtenerQuejas` | 5 | ⏳ escrito, sin commitear ni desplegar | [[E-09_obtenerQuejas]] |
-| E-10 | `customerService/bbvaKeyAdvanced` | 5 | ⏳ escrito, sin commitear ni desplegar | [[E-10_bbvaKeyAdvanced]] |
+| E-01 | `credit/SendSmsNewNumber` | 1 | ✅ subido (`c7d1d29`), sin desplegar | [[E-01_SendSmsNewNumber]] |
+| E-02 | `customer/setCustomerList` | 2 | ✅ subido (`740669e`), sin desplegar | [[E-02_setCustomerList]] |
+| E-03 | `customer/getCustomerList` | 2 | ✅ subido (`740669e`), sin desplegar | [[E-03_getCustomerList]] |
+| E-04 | `customer/deleteCustomerList` | 2 | ✅ subido (`740669e`), sin desplegar | [[E-04_deleteCustomerList]] |
+| E-05 | `order/getGuide` | 3 | ✅ subido (`fa4034e`), sin desplegar | [[E-05_getGuide]] |
+| E-06 | `credit/GetCreditAmounts` | 3 | ✅ subido (`fa4034e`), sin desplegar | [[E-06_GetCreditAmounts]] |
+| E-07 | `credit/guardardocumento` | 4 | ✅ subido (`d933e44`), sin desplegar | [[E-07_guardardocumento]] |
+| E-08 | `credit/SaveImagesProductosMx` | 4 | ✅ subido (`d933e44`), sin desplegar | [[E-08_SaveImagesProductosMx]] |
+| E-09 | `customerService/obtenerQuejas` | 5 | ✅ subido (`c695b2e`), sin desplegar | [[E-09_obtenerQuejas]] |
+| E-10 | `customerService/bbvaKeyAdvanced` | 5 | ✅ subido (`c695b2e`), sin desplegar | [[E-10_bbvaKeyAdvanced]] |
 | E-11 | `customer/getCuenta` | 6 | — sin cutover, va hacia la DMZ | [[E-11_getCuenta]] |
 | E-12 | `customer/setCuenta` | 6 | — sin cutover, va hacia la DMZ | [[E-12_setCuenta]] |
-| E-13 | `customer/cashCustomerReport` | 6 | ⏳ escrito, sin commitear ni desplegar | [[E-13_cashCustomerReport]] |
+| E-13 | `customer/cashCustomerReport` | 6 | ✅ subido (`e403065`), sin desplegar | [[E-13_cashCustomerReport]] |
 | E-14 | `product/obtenerImagen` | 6 | — sin cutover, no existe en la DMZ | [[E-14_obtenerImagen]] |
+| E-15 | `order/GetPickUpCode` | 7 | 🔴 **no aplicar todavía** — dejaría sin clave a todos los pedidos | sin ficha; ver [[FLUJO_RECOGER_EN_SUCURSAL]] |
+
+> Todos los cutovers están subidos a `dbAndroid` desde el 31 ago. **Ninguno desplegado**, y
+> el orden cuando toque es **ServicioSAP primero, la DMZ después**.
+
+## Flujos completos
+
+Cuando una partida es una pieza de algo más grande, el flujo entero va aparte:
+
+| Flujo | Cubre | Partidas |
+|---|---|---|
+| [[FLUJO_RECOGER_EN_SUCURSAL]] | los seis procesos del código de recogida, sus tablas y equivalencias en SIGMAVI y SAP | E-15 y cinco partidas de Dev 2 |
+| [[FLUJO_GETAPIKEY]] | obtención de la llave de Multipagos | E-10 |
 
 ## Los dos patrones de la DMZ, uno al lado del otro
 

@@ -141,6 +141,8 @@ La partida de SIGMAVI que resuelve contra una sola tabla y no lee nada de SAP. V
 
 > ⏳ **E-15 no se puede probar todavía.** Solo lee; los tres flujos que llenan la tabla siguen escribiendo en Intelisis. Dos son de Dev 2 —`createStorepickupCode` (feb 2027) y `generateNewStorepickupCode` (10-11 sep)— y el tercero, `crearPrimerCodigoRecogerSucbanktransfer`, apareció el 20 ago con el work item 8600 y **no está en ningún checklist**. Mientras tanto el endpoint responde 404 siempre. Se puede adelantar la prueba insertando una fila a mano.
 
+> 🗺️ **El flujo completo está mapeado** en [[FLUJO_RECOGER_EN_SUCURSAL]]: los seis procesos que tocan la tabla, sus equivalencias en SIGMAVI y SAP, el orden de migración y los riesgos. Son **cuatro** los procesos que escriben, no tres: además de los dos de Dev 2 y el de banktransfer, `setOrder` siembra la fila sin clave al crear la orden (`OrderMethods.cs:659`).
+
 > ℹ️ **Solo se migró la lectura**, por decisión del 31 ago. `GetPickUpCode` en el legado no cambió desde el análisis del 12 ago —se comparó método contra método—; lo que cambió alrededor son los escritores, que se quedan. Ojo también con que la escritura va por el procedimiento `SpWDM0285_CteRecoge`, que no está en `MaviSAP\StoreProcedure`.
 - 🗑️ ~~`recommender/setRecommenderList`~~ — **descartado el 31 ago, sin ID.** Obsoleto en la LAN, no se migra. Pierde su identificador y los posteriores se reindexan una posición. Al revisarlo se vio además que `CodigoRecomendador` abre `sCadenaConexion`, que es **IntelisisTmp en MAVICUBOS** (`Conn\Connection.cs:26`), no SIGMAVI como decía esta ficha.
 
