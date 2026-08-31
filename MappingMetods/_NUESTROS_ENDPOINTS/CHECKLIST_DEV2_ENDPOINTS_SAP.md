@@ -1,4 +1,4 @@
----
+﻿---
 tags: [checklist, migracion, dev2, endpoints, sap]
 fuente: "MIGRATION_STATUS_MASTER_v2 FINAL.csv"
 actualizado: 2026-08-12
@@ -11,7 +11,7 @@ Lista de control del desarrollador que **implementa los endpoints cuyo destino e
 
 **Leyenda:** `[x]` hecho · `[ ]` pendiente · 🔒 bloqueado · ⏳ falta definición · ⛔ espera wrapper de Dev 1
 
-> Reparto de la migración: [[CHECKLIST_DEV1_WRAPPERS_SAP|Dev 1 — wrappers]] · [[CHECKLIST_DEV4_PAGOS|Dev 4 — flujos de pago]] · [[CHECKLIST_DEV3_NOSAP_NOINTELISIS|Dev 3 — Android, SQLite y SIGMAVI]].
+> Reparto de la migración: [[Checklists/CHECKLIST_DEV1_WRAPPERS_SAP|Dev 1 — wrappers]] · [[CHECKLIST_DEV4_PAGOS|Dev 4 — flujos de pago]] · [[Checklists/CHECKLIST_DEV3_NOSAP_NOINTELISIS|Dev 3 — Android, SQLite y SIGMAVI]].
 
 ## Cómo está ordenado y por qué
 
@@ -162,3 +162,4 @@ Cuatro endpoints de esta lista tocan tablas que **Dev 3 crea en SIGMAVI**. Dev 2
 **0 / 26** endpoints activos terminados, más **2 reasignados desde Dev 3** el 12 ago, más 11 en triaje que pueden mover el conteo al recolocarse. **346 días-desarrollo estimados**, de los cuales **140 dependen de que Dev 1 entregue wrappers a tiempo** — el 40 % del esfuerzo.
 
 Ya migrados con anterioridad y fuera de esta lista: `customer/setCustomer`, `order/setOrder`, `order/returnOrder`, `customer/wallet/details`, `customerService/GetAccountDebts` y `credit/getClienteFactura`.
+

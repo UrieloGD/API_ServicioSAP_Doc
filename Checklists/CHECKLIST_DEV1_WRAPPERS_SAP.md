@@ -1,4 +1,4 @@
----
+﻿---
 tags: [checklist, migracion, dev1, wrappers, sap]
 fuente: "MIGRATION_STATUS_MASTER_v2 FINAL.csv"
 actualizado: 2026-08-12
@@ -11,7 +11,7 @@ Lista de control del desarrollador que **construye las APIs y wrappers de SAP qu
 
 **Leyenda:** `[x]` hecho · `[ ]` pendiente · 🔒 bloqueado · ⏳ en definición · 🔴 en ruta crítica de Dev 2
 
-> Reparto de la migración: [[CHECKLIST_DEV2_ENDPOINTS_SAP|Dev 2 — endpoints sobre SAP]] · [[CHECKLIST_DEV4_PAGOS|Dev 4 — flujos de pago]] · [[CHECKLIST_DEV3_NOSAP_NOINTELISIS|Dev 3 — Android, SQLite y SIGMAVI]].
+> Reparto de la migración: [[Checklists/CHECKLIST_DEV2_ROADMAP|Dev 2 — endpoints sobre SAP]] · [[CHECKLIST_DEV4_PAGOS|Dev 4 — flujos de pago]] · [[Checklists/CHECKLIST_DEV3_NOSAP_NOINTELISIS|Dev 3 — Android, SQLite y SIGMAVI]].
 
 ## La regla que ordena este backlog
 
@@ -77,3 +77,4 @@ Un wrapper se da por terminado cuando Dev 2 puede consumirlo sin preguntar nada:
 **0 / 6** wrappers entregados. Dos en ruta crítica, dos de un solo consumidor, uno por identificar y uno bloqueado por definición externa.
 
 El indicador que importa no es cuántos wrappers van, sino **cuántos días de Dev 2 quedan desbloqueados**: hoy son 0 de 140 días-desarrollo que dependen de esta lista.
+

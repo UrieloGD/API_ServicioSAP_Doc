@@ -1,4 +1,4 @@
----
+﻿---
 tags: [checklist, migracion, plan, sigmavi, mixtos]
 fuente: "_PLAN_MIGRACION_FECHAS.md"
 actualizado: 2026-08-25
@@ -119,7 +119,7 @@ En la práctica esto recae sobre los mixtos `M-11`…`M-08` y sobre las partidas
 
 31 rutas de la DMZ, **E-16 a E-31**. No se portan: lo que se reubica son sus llamadores, que hoy viven en APIMagento. Doce se reconstruyen —ocho de catálogo hacia SQLite, tres reenvíos y un helper compartido para `order/setOrderStatus`—, ocho pasan sin cambio porque las atiende la herramienta de importación, seis solo se verifican y cuatro se dan de baja.
 
-> El desglose por identificador está en [[CHECKLIST_DEV3_NOSAP_NOINTELISIS#Ola 8 — Reubicación de llamadores hacia la DMZ|el checklist de Dev 3]].
+> El desglose por identificador está en [[Checklists/CHECKLIST_DEV3_NOSAP_NOINTELISIS#Ola 8 — Reubicación de llamadores hacia la DMZ|el checklist de Dev 3]].
 
 ## Ola 9 — Mixtos SAP
 
@@ -223,3 +223,4 @@ Todos los cutovers de las olas 1 a 6 están **commiteados y subidos** a `dbAndro
 > 🔴 **Orden de despliegue: ServicioSAP primero, la DMZ después.** El constructor de `Curl` en la DMZ autentica contra la LAN de forma incondicional y fuera de un `try`, así que toda ruta ya migrada sigue dependiendo de que APIMagento responda aunque los datos ya no vayan para allá.
 
 E-01 queda marcada como desarrollo terminado. Lo que falta para que esté **en producción** es desplegar el cutover de la DMZ y confirmar la entrega del SMS.
+

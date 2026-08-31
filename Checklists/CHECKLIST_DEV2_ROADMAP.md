@@ -13,7 +13,7 @@ Lista de control del desarrollador que **implementa los endpoints cuyo destino e
 
 **Leyenda:** `[x]` hecho · `[ ]` pendiente · 🔒 bloqueado · ⏳ falta definición · ⛔ espera wrapper de Dev 1
 
-> Reparto de la migración: [[CHECKLIST_DEV1_WRAPPERS_SAP|Dev 1 — wrappers]] · [[CHECKLIST_DEV3_NOSAP_NOINTELISIS|Dev 3 — Android, SQLite y SIGMAVI]] · [[CHECKLIST_DEV4_PAGOS|Dev 4 — flujos de pago]].
+> Reparto de la migración: [[Checklists/CHECKLIST_DEV1_WRAPPERS_SAP|Dev 1 — wrappers]] · [[Checklists/CHECKLIST_DEV3_NOSAP_NOINTELISIS|Dev 3 — Android, SQLite y SIGMAVI]] · [[CHECKLIST_DEV4_PAGOS|Dev 4 — flujos de pago]].
 
 ## Qué entra en Dev 2 y qué no
 
@@ -43,8 +43,8 @@ De ahí en adelante los Sprints agrupan **por dominio de negocio**: Business Par
 |---|---|---|---:|---|
 | **Sprint 1** | 12/08/2026 – 19/08/2026 | Mapeo e investigación — equivalencias LAN ↔ SAP | 0 (fase de descubrimiento, sin endpoints propios) | De abrir cada ficha y confirmar contra cuántas APIs de SAP resuelve |
 | **Sprint 2** | 20/08/2026 – 08/09/2026 | Endpoints de Business Partner | 9 | De nadie. BP05 ya construido |
-| **Sprint 3** | 09/09/2026 – 28/09/2026 | Endpoints de Ventas (SD) y Monedero Electrónico | 15 | Incluye 3 bloqueados y las 5 partidas de monedero traspasadas de Dev 3 |
-| **Sprint 4** | 29/09/2026 – 13/10/2026 | Endpoints con Cruces Operativos de Dos APIs | 5 | De coordinación con Dev 3 en 2 de los 5 |
+| **Sprint 3** | 09/09/2026 – 28/09/2026 | Endpoints con Cruces Operativos de Dos APIs | 5 | De coordinación con Dev 3 en 2 de los 5 |
+| **Sprint 4** | 29/09/2026 – 13/10/2026 | Endpoints de Ventas (SD) y Monedero Electrónico | 15 | Incluye 3 bloqueados y las 5 partidas de monedero traspasadas de Dev 3 |
 | **Sprint 5** | 14/10/2026 – 29/10/2026 | Endpoints de Alta Complejidad (Múltiples APIs) | 2 | De levantar cinco tablas pendientes en 1 de los 2 |
 | **Sprint 6** | 30/10/2026 – 13/11/2026 | Integración de endpoints de Business Partner Maestro BP05_MA | 3 | ⛔ De que Dev 1 entregue `BP05_MA` |
 | **Sprint 7** | 16/11/2026 – 25/11/2026 | Implementación Endpoints SEPOMEX y SuccessFactor | 4 | ⛔ De que Dev 1 entregue `ZAPI_ZDMT_SEPOMEX` y los wrappers de SuccessFactors |
@@ -61,19 +61,19 @@ Este Sprint **no lleva checklist de endpoints**. Corresponde a la fase de descub
 
 | Endpoint mapeado | Reclasificado en |
 |---|---|
-| `credit/MonederoSaldoCredito` | Sprint 3 — **S3-01** |
+| `credit/MonederoSaldoCredito` | Sprint 4 — **S4-01** |
 | `customerService/LoginClienteCredito` | Sprint 2 — **S2-01** |
 | `customerService/LoginClienteCreditoFechaN` | Sprint 2 — **S2-02** |
 | `customerService/GetEmpleadoByNomina` | Sprint 7 — **S7-01** |
-| `order/cancelOrder` | Sprint 3 — **S3-02** |
-| `order/validateCredit` | Sprint 3 — **S3-03** |
+| `order/cancelOrder` | Sprint 4 — **S4-02** |
+| `order/validateCredit` | Sprint 4 — **S4-03** |
 | `prospecto/rfc` | Sprint 8 — **S8-01** |
-| `customer/wallet/getCuentaC/{ordenCompra}` | Sprint 3 — **S3-04** |
+| `customer/wallet/getCuentaC/{ordenCompra}` | Sprint 4 — **S4-04** |
 | `company/wholesale-customer/{wholesaleAccount}` | Sprint 2 — **S2-03** |
-| `order/generateNewStorepickupCode/{idEcommerce}` | Sprint 4 — **S4-01** |
+| `order/generateNewStorepickupCode/{idEcommerce}` | Sprint 3 — **S3-01** |
 | `order/checkOpenpay` | Sprint 9 — **S9-08** |
 
-> 💡 El más rápido de reclasificar fue `order/validateCredit` (hoy **S3-03**): mismo flujo que `setOrder`, ya migrado — basta apuntarlo a su propia ruta.
+> 💡 El más rápido de reclasificar fue `order/validateCredit` (hoy **S4-03**): mismo flujo que `setOrder`, ya migrado — basta apuntarlo a su propia ruta.
 
 ---
 
@@ -93,33 +93,47 @@ Endpoints que resuelven contra BP05, wrapper ya construido por Dev 1, más las d
 - [ ] **S2-07** `prospecto/recuperarcuenta` — BP05
 - [x] ✅ **S2-08** `recommender/getRecommender` — BP05; falta obtener `znipventa` y confirmar si la API lo expone
           **** ENd Point Deprecado.
-- [ ] **S2-09** `customer/wallet/getMinimumCostToRedeem` — SD18. Usa dos tablas para validar si se puede redimir: **decidir si se vuelven configurables o migran a SIGMAVI**, en cuyo caso pasa a ser mixto con Dev 3
+- [ ] **S2-09** `customer/wallet/getMinimumCostToRedeem` — configuracionescatalgo(fasAPI), SD52
 
-> ⚠️ **S2-04 y S2-09 son los dos puntos de este Sprint con dependencia externa** (Dev 3 / SIGMAVI). El resto se puede terminar y probar de principio a fin sin esperar a nadie.
+> ⚠️ **S2-04 es el único punto de este Sprint con dependencia externa** (Dev 3 / SIGMAVI). El resto se puede terminar y probar de principio a fin sin esperar a nadie.
 
 ---
 
-## Sprint 3 — Endpoints de Ventas (SD) y Monedero Electrónico · 09/09/2026 – 28/09/2026 · 15 endpoints
+## Sprint 3 — Endpoints con Cruces Operativos de Dos APIs · 09/09/2026 – 28/09/2026 · 5 endpoints
+
+Mismo criterio de riesgo que en Dev 3: más APIs por endpoint significa más formas de quedar a medias. Se ataca después de agotar el Sprint 2.
+
+- [ ] ⏳ **S3-01** `order/generateNewStorepickupCode/{idEcommerce}` — actualiza `TrWDM0285_CteRecoge`(BPRecogePedidos), tabla que Dev 3 crea en SIGMAVI. **Coordinar con Dev 3**
+- [ ] **S3-02** `customerService/obtenerCreditos` — venta por SD36 y artículos ya resueltos. (La tabla `TarjetaSerieMovMAVI` ya no existirá y no se utilizará más).
+- [ ] **S3-03** `order/estimated-delivery/{ecommerceId}` — SD36 y `ZSRV_SALESDOC_ADDRCHANGE`. Ojo: en SAP designaron la guía como el *tracking*, y el tracking real se desconoce
+- [ ] **S3-04** `order/createStorepickupCode/{idEcommerce}/{idOrder}` — cruza `TrWDM0285_CteRecoge` (BPRecogePedidos) en SigMavi, `Venta` (SD36), `Cte` (BP05), `VentaEntrega` (PartnerAddress) y `EcommerceDetPedidos` (SD36). **Coordinar con Dev 3**, que crea la tabla en SIGMAVI
+- [ ] **S3-05** `order/getOrderInfoAndSet/{incrementId}` — consulta Magento, valida estatus en SD36 y, si procede, genera pedido SD01
+
+> **S3-01 y S3-04 comparten la misma tabla de SIGMAVI** (`TrWDM0285_CteRecoge`) — conviene resolverlos juntos con Dev 3.
+
+---
+
+## Sprint 4 — Endpoints de Ventas (SD) y Monedero Electrónico · 29/09/2026 – 13/10/2026 · 15 endpoints
 
 ### Endpoints de Ventas y Monedero
 
-- [ ] ⏳ **S3-01** `credit/MonederoSaldoCredito` — SD18. La ficha advierte que la estimación lo trata como no construido mientras el resumen lo da por completo: **verificar cuál es cierto** antes de estimar.
-- [ ] ⏳ **S3-02** `order/cancelOrder` — SD46. Al 70 %; faltan los escenarios de cancelación y no se tiene el documento de entrega
-- [ ] ⏳ **S3-03** `order/validateCredit` — mismo flujo que `setOrder`; según la ficha basta apuntarlo al método de orden ya migrado, con su propia ruta
-- [ ] ⏳ **S3-04** `customer/wallet/getCuentaC/{ordenCompra}` — SD36
-- [ ] **S3-05** `credit/getCreditAccount/{pAccount}` — la tabla legada deja de existir; se valida en `ZSDT_CTE` con `ZtipoCliente = PROSPECTO`
-- [ ] **S3-06** `order/getIntelisisStatuses` — SD36
-- [ ] **S3-07** `order/creditStatus/{idSolicitud}` — SD36. El mapeo ya está documentado, incluida la traducción `01→Pendiente`, `02→Concluido`, `03→Anulado`
+- [ ] ⏳ **S4-01** `credit/MonederoSaldoCredito` — SD18. La ficha advierte que la estimación lo trata como no construido mientras el resumen lo da por completo: **verificar cuál es cierto** antes de estimar.
+- [ ] ⏳ **S4-02** `order/cancelOrder` — SD46. Al 70 %; faltan los escenarios de cancelación y no se tiene el documento de entrega
+- [ ] ⏳ **S4-03** `order/validateCredit` — mismo flujo que `setOrder`; según la ficha basta apuntarlo al método de orden ya migrado, con su propia ruta
+- [ ] ⏳ **S4-04** `customer/wallet/getCuentaC/{ordenCompra}` — SD36
+- [ ] **S4-05** `credit/getCreditAccount/{pAccount}` — la tabla legada deja de existir; se valida en `ZSDT_CTE` con `ZtipoCliente = PROSPECTO`
+- [ ] **S4-06** `order/getIntelisisStatuses` — SD36
+- [ ] **S4-07** `order/creditStatus/{idSolicitud}` — SD36. El mapeo ya está documentado, incluida la traducción `01→Pendiente`, `02→Concluido`, `03→Anulado`
 
-> 💡 **S3-03** (`validateCredit`) es el candidato más probable a resolverse en horas y no en días: si la ficha acierta, es reapuntar una ruta a un método ya migrado.
+> 💡 **S4-03** (`validateCredit`) es el candidato más probable a resolverse en horas y no en días: si la ficha acierta, es reapuntar una ruta a un método ya migrado.
 >
-> 🟡 **S3-01 con estimación contradictoria** entre "no construido" y "completo" en el archivo maestro — es la prioridad de aclarar dentro de este Sprint.
+> 🟡 **S4-01 con estimación contradictoria** entre "no construido" y "completo" en el archivo maestro — es la prioridad de aclarar dentro de este Sprint.
 
 ### Bloqueados dentro de este Sprint
 
-- [ ] 🔒 **S3-08** `customerService/ObtenerEstatusEmbarque` — consulta SD36, pero las tablas `Embarque` y `EmbarquesMov` **no existen**. Pendiente de desarrollo del equipo ABAP.
-- [ ] 🔒 **S3-09** `credit/GetUnificationWalletStatus` — el requerimiento RM-SD-2026-006 menciona tablas y APIs que no existen. Planificado al final hasta nuevo aviso.
-- [ ] 🔒 **S3-10** `credit/SetUnificationWalletData` — misma causa que S3-09.
+- [ ] 🔒 **S4-08** `customerService/ObtenerEstatusEmbarque` — consulta SD36, pero las tablas `Embarque` y `EmbarquesMov` **no existen**. Pendiente de desarrollo del equipo ABAP.
+- [ ] 🔒 **S4-09** `credit/GetUnificationWalletStatus` — el requerimiento RM-SD-2026-006 menciona tablas y APIs que no existen. Planificado al final hasta nuevo aviso.
+- [ ] 🔒 **S4-10** `credit/SetUnificationWalletData` — misma causa que S4-09.
 
 ### Traspaso desde Dev 3 · 12 ago — monedero
 
@@ -127,13 +141,13 @@ Las dos partidas del monedero **estaban en el plan de Dev 3 y pasaron íntegras 
 
 | ID | Tabla de origen | Destino | Wrapper |
 |---|---|---|---|
-| **S3-11** | `Cte` — `SerieMonedero` / `SerieMonederoVIU` | BP05 · `zapi_bp05ma` | 🟩 listo |
-| **S3-12** | `CteEnviarA` | `ZAPI_BP05MA_SRV/…/to_CteDatosComerciales` | 🟪 por construir |
-| **S3-13** | `CXC` — saldo y estatus | TZ01 Mercadería | 🟩 listo |
-| **S3-14** | `VentaD` | SD36 · SD08 si es movimiento final | 🟩 listo |
-| **S3-15** | `CREDIHUnificacionMonedero` | Tabla Z de SAP | 🔒 no existe |
+| **S4-11** | `Cte` — `SerieMonedero` / `SerieMonederoVIU` | BP05 · `zapi_bp05ma` | 🟩 listo |
+| **S4-12** | `CteEnviarA` | `ZAPI_BP05MA_SRV/…/to_CteDatosComerciales` | 🟪 por construir |
+| **S4-13** | `CXC` — saldo y estatus | TZ01 Mercadería | 🟩 listo |
+| **S4-14** | `VentaD` | SD36 · SD08 si es movimiento final | 🟩 listo |
+| **S4-15** | `CREDIHUnificacionMonedero` | Tabla Z de SAP | 🔒 no existe |
 
-**Lo único bloqueado es dónde vive `CREDIHUnificacionMonedero` (S3-15).** El resto tiene destino y cuatro de cinco ya tienen wrapper, así que la partida puede avanzar bastante antes de tropezar.
+**Lo único bloqueado es dónde vive `CREDIHUnificacionMonedero` (S4-15).** El resto tiene destino y cuatro de cinco ya tienen wrapper, así que la partida puede avanzar bastante antes de tropezar.
 
 Conviene separar la pregunta: el monedero **ya está migrado** —`customer/wallet/details` corre contra SD18 desde el 15 de julio—; lo que falta ubicar es la **bitácora de unificaciones**, que es otra cosa.
 
@@ -141,23 +155,9 @@ Tres hallazgos que Dev 3 dejó verificados sobre el legado y conviene no redescu
 
 - 🔴 **Dos validaciones contradictorias sobre los mismos parámetros.** `CheckAccountsPreUnification` (**S6-03**) exige que **ambas** cuentas sean `"CREDITO MENUDEO"`; `InsertUnificationWallet` exige `"CONTADO"` para la de contado y `"CREDITO MENUDEO"` para la de crédito. Un cliente puede pasar la pre-validación y ser rechazado al insertar. Hay que decidir cuál regla es la buena.
 - 🔴 **La condición de rechazo del insert es más laxa de lo que aparenta**: solo rechaza si concurren las tres comprobaciones, de modo que una cuenta de crédito con saldo pendiente pasa igual.
-- ⚠️ **`GetUnificationWalletStatus` (**S3-09**) devuelve cuatro valores**, no tres: `DESCONOCIDO`, `PENDIENTE`, `COMPLETADO` y `RECHAZADO`. `PENDIENTE` es el estado de una unificación recién insertada —el más frecuente al consultar— y no estaba documentado.
+- ⚠️ **`GetUnificationWalletStatus` (**S4-09**) devuelve cuatro valores**, no tres: `DESCONOCIDO`, `PENDIENTE`, `COMPLETADO` y `RECHAZADO`. `PENDIENTE` es el estado de una unificación recién insertada —el más frecuente al consultar— y no estaba documentado.
 
 > ⚠️ Sin validar tampoco: la UEN sale de `IdEcommerce[0]`, así que una cadena vacía lanza excepción y responde 500; y el insert no comprueba duplicados para el mismo `IdEcommerce`.
-
----
-
-## Sprint 4 — Endpoints con Cruces Operativos de Dos APIs · 29/09/2026 – 13/10/2026 · 5 endpoints
-
-Mismo criterio de riesgo que en Dev 3: más APIs por endpoint significa más formas de quedar a medias. Se ataca después de agotar los Sprints 2–3.
-
-- [ ] ⏳ **S4-01** `order/generateNewStorepickupCode/{idEcommerce}` — actualiza `TrWDM0285_CteRecoge`(BPRecogePedidos), tabla que Dev 3 crea en SIGMAVI. **Coordinar con Dev 3**
-- [ ] **S4-02** `customerService/obtenerCreditos` — venta por SD36 y artículos ya resueltos. Falta definir de dónde sale el importe de `TarjetaSerieMovMAVI`
-- [ ] **S4-03** `order/estimated-delivery/{ecommerceId}` — SD36 y `ZSRV_SALESDOC_ADDRCHANGE`. Ojo: en SAP designaron la guía como el *tracking*, y el tracking real se desconoce
-- [ ] **S4-04** `order/createStorepickupCode/{idEcommerce}/{idOrder}` — cruza `TrWDM0285_CteRecoge` (BPRecogePedidos) en SigMavi, `Venta` (SD36), `Cte` (BP05), `VentaEntrega` (PartnerAddress) y `EcommerceDetPedidos` (SD36). **Coordinar con Dev 3**, que crea la tabla en SIGMAVI
-- [ ] **S4-05** `order/getOrderInfoAndSet/{incrementId}` — consulta Magento, valida estatus en SD36 y, si procede, genera pedido SD01
-
-> **S4-01 y S4-04 comparten la misma tabla de SIGMAVI** (`TrWDM0285_CteRecoge`) — conviene resolverlos juntos con Dev 3.
 
 ---
 
@@ -228,9 +228,8 @@ Cuatro endpoints de esta lista tocan tablas que **Dev 3 crea en SIGMAVI**. Dev 2
 | ID | Endpoint de Dev 2 | Depende de |
 |---|---|---|
 | **S2-04** | `credit/getPlazos` | `CondicionesCredVtaLinea` en SIGMAVI |
-| **S4-04** | `order/createStorepickupCode/...` | `TrWDM0285_CteRecoge` en SIGMAVI |
-| **S4-01** | `order/generateNewStorepickupCode/...` | `TrWDM0285_CteRecoge` en SIGMAVI |
-| **S2-09** | `customer/wallet/getMinimumCostToRedeem` | Dos tablas por definir, candidatas a SIGMAVI |
+| **S3-04** | `order/createStorepickupCode/...` | `TrWDM0285_CteRecoge` (BPRecogePedidos) en SigMavi |
+| **S3-01** | `order/generateNewStorepickupCode/...` | `TrWDM0285_CteRecoge`(BPRecogePedidos) |
 
 > Del lado de Dev 3, las partidas espejo son **E-16** (`getPlazos`), **E-19** (`GetPickUpCode`) y **E-20** (`setRecommenderList`, relacionada con **S2-08**). Conviene acordar el orden de entrega antes de arrancar cualquiera de las dos puntas, no durante.
 
@@ -244,18 +243,18 @@ Cuatro endpoints de esta lista tocan tablas que **Dev 3 crea en SIGMAVI**. Dev 2
 | 🔴 | **S8-02 puede ser trabajo desechable.** El legado tiene un `return` incondicional en ambos métodos de validación — confirmar con Producto antes de construir | 38 días del Sprint 8 |
 | 🔴 | **S5-02 sin cinco tablas creadas.** No se puede estimar en firme hasta levantar el inventario | Fecha del Sprint 5 |
 | 🟡 | **S9-03 y S9-06 duplicados en el maestro** (Magento vs. Intelisis como origen) | Estimación del Sprint 9 |
-| 🟡 | **S3-01 con estimación contradictoria** entre "no construido" y "completo" en el archivo maestro | Prioridad dentro del Sprint 3 |
-| 🟡 | **S3-15 sin tabla Z definida** en SAP | Cierre del monedero (Sprint 3) |
-| 🟡 | **S3-12 sin wrapper construido** todavía | Cierre del monedero (Sprint 3) |
+| 🟡 | **S4-01 con estimación contradictoria** entre "no construido" y "completo" en el archivo maestro | Prioridad dentro del Sprint 4 |
+| 🟡 | **S4-15 sin tabla Z definida** en SAP | Cierre del monedero (Sprint 4) |
+| 🟡 | **S4-12 sin wrapper construido** todavía | Cierre del monedero (Sprint 4) |
 
 ### Decisiones que bloquean trabajo
 
 | Tema | Bloquea | Quién decide |
 |---|---|---|
-| Regla válida entre `CheckAccountsPreUnification` e `InsertUnificationWallet` | **S6-03**, S3-15 | Producto |
+| Regla válida entre `CheckAccountsPreUnification` e `InsertUnificationWallet` | **S6-03**, S4-15 | Producto |
 | Validez real de `ExistRFCAndPhoneCte` (¿se quiere la regla o se apaga?) | **S8-02** | Producto |
 | Ubicación de `prospecto/rfc` (SAP o SIGMAVI) | **S8-01** | Arquitectura |
-| Tabla Z para `CREDIHUnificacionMonedero` | **S3-15** | SAP / DBA |
+| Tabla Z para `CREDIHUnificacionMonedero` | **S4-15** | SAP / DBA |
 | Entrega de `BP05_MA` | **S6-01, S6-02, S6-03** | Dev 1 |
 | Entrega de `ZAPI_ZDMT_SEPOMEX` | **S7-02** | Dev 1 |
 | Identificar el wrapper de `obtenerVentanaConfirmacion` | **S7-04** | Dev 1 / Arquitectura |
@@ -271,8 +270,8 @@ Cuatro endpoints de esta lista tocan tablas que **Dev 3 crea en SIGMAVI**. Dev 2
 |---|---|---|---:|---|
 | Sprint 1 | Mapeo e investigación (sin endpoints propios) | 12/08 – 19/08/2026 | 0 | 🟨 fase de descubrimiento — alimenta Sprints 2+ |
 | Sprint 2 | Endpoints de Business Partner | 20/08 – 08/09/2026 | 9 | 🎯 sin bloqueos, BP05 ya construido |
-| Sprint 3 | Ventas (SD) y Monedero Electrónico | 09/09 – 28/09/2026 | 15 | incluye 3 bloqueados y 5 accesos de monedero |
-| Sprint 4 | Cruces Operativos de Dos APIs | 29/09 – 13/10/2026 | 5 | tras agotar Sprints 2–3 |
+| Sprint 3 | Cruces Operativos de Dos APIs | 09/09 – 28/09/2026 | 5 | tras agotar Sprint 2 |
+| Sprint 4 | Ventas (SD) y Monedero Electrónico | 29/09 – 13/10/2026 | 15 | incluye 3 bloqueados y 5 accesos de monedero |
 | Sprint 5 | Alta Complejidad (Múltiples APIs) | 14/10 – 29/10/2026 | 2 | 1 de 2 sin tablas creadas |
 | Sprint 6 | Business Partner Maestro BP05_MA | 30/10 – 13/11/2026 | 3 | ⛔ espera a Dev 1 |
 | Sprint 7 | SEPOMEX y SuccessFactor | 16/11 – 25/11/2026 | 4 | ⛔ espera a Dev 1 |

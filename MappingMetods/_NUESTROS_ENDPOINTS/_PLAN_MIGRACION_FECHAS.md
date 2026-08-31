@@ -1,4 +1,4 @@
----
+﻿---
 tags: [mapeo-lan, plan, calendario, migracion, sigmavi]
 proyecto: APIMagento → ServicioSAP
 capa: LAN (Nexo)
@@ -196,7 +196,7 @@ La partida de SIGMAVI que resuelve contra una sola tabla y **no lee nada de SAP*
 | 8.5 Sin llamador identificado | 6 | Solo verificar |
 | 8.6 Baja | 4 | Eliminar, coordinado con Magento |
 
-El desglose por identificador está en [[CHECKLIST_DEV3_NOSAP_NOINTELISIS#Ola 8 — Reubicación de llamadores hacia la DMZ|el checklist de Dev 3]].
+El desglose por identificador está en [[Checklists/CHECKLIST_DEV3_NOSAP_NOINTELISIS#Ola 8 — Reubicación de llamadores hacia la DMZ|el checklist de Dev 3]].
 
 > ✅ **Decisión del 12 ago.** Las ocho rutas de producto pasan tal cual: las consume la herramienta de importación, y el procedimiento almacenado que las alimenta lo migra a C# otro equipo. Las seis sin llamador se conservan por si se requieren más adelante. `setOrderStatus`, que hoy se invoca desde cinco sitios distintos de la LAN, se centraliza en un único método compartido que Dev 3 entrega y Dev 2 consume.
 
@@ -318,3 +318,4 @@ Requieren **decisión de arquitectura previa**. Las fechas son un marcador de po
 - Alcance detallado: [[_ALCANCE_MIGRACION_LAN_a_SAP]]
 - Decisiones del ODS: [[_DECISIONES_ODS]]
 - Índice del equipo: [[README]]
+

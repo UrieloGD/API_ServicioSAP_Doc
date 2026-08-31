@@ -1,4 +1,4 @@
----
+﻿---
 tags: [checklist, migracion, dev3, plan, sigmavi, mixtos]
 fuente: "_PLAN_MIGRACION_FECHAS.md · MIGRATION_STATUS_MASTER_v2 FINAL.csv"
 actualizado: 2026-08-23
@@ -15,7 +15,7 @@ Lista de control del desarrollador que migra a `ServicioSAP` **todo aquello cuyo
 
 **Leyenda:** `[x]` hecho · `[ ]` pendiente · 🔒 bloqueado · ⏳ en definición · 🟠 destino de conexión sin definir · 🗑️ descartado
 
-> Reparto de la migración: [[CHECKLIST_DEV1_WRAPPERS_SAP|Dev 1 — wrappers de SAP]] · [[CHECKLIST_DEV2_ENDPOINTS_SAP|Dev 2 — endpoints sobre SAP]] · [[CHECKLIST_DEV4_PAGOS|Dev 4 — flujos de pago]].
+> Reparto de la migración: [[Checklists/CHECKLIST_DEV1_WRAPPERS_SAP|Dev 1 — wrappers de SAP]] · [[Checklists/CHECKLIST_DEV2_ROADMAP|Dev 2 — endpoints sobre SAP]] · [[CHECKLIST_DEV4_PAGOS|Dev 4 — flujos de pago]].
 >
 > El avance por endpoint y el resultado de las pruebas viven en [[ESTADO_PRUEBAS_Y_AVANCE]]; los contratos, en [[Contratos/README|Contratos]]; el calendario, en [[_PLAN_MIGRACION_FECHAS]].
 
@@ -488,3 +488,4 @@ El contador solo cuenta partidas cerradas, así que esconde el trabajo a medias:
 **Las 31 entradas de la Ola 8 no son 31 partidas de desarrollo.** Tras el análisis del 12 ago se reparten así: **12 llamadores a reconstruir** —8 de catálogo hacia SQLite, 3 reenvíos y 1 helper compartido—, 8 rutas sin cambio que atiende la herramienta de importación, 6 que solo se verifican y 4 que se dan de baja. Contarlas todas como partidas infla el alcance y distorsiona el porcentaje de avance.
 
 **El 57 % del alcance de Dev 3 está en el bloque A**, que no depende de nadie. Es el argumento para agotarlo antes de tocar el bloque B.
+

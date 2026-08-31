@@ -1,4 +1,4 @@
----
+﻿---
 tags: [plan, maestro, gantt, devs, migracion]
 fuente: "MIGRATION_STATUS_MASTER_v2_ASIGNADO.csv"
 actualizado: 2026-08-12
@@ -8,7 +8,7 @@ actualizado: 2026-08-12
 
 Cómo debe programarse cada cosa, en qué orden y qué depende de qué. **Sin fechas**: el eje son días relativos desde el arranque de cada frente, no calendario. Las fechas se ponen cuando estén definidos arranque y capacidad.
 
-> Detalle por rol: [[CHECKLIST_DEV1_WRAPPERS_SAP|Dev 1]] · [[CHECKLIST_DEV2_ENDPOINTS_SAP|Dev 2]] · [[CHECKLIST_DEV3_NOSAP_NOINTELISIS|Dev 3]] · [[CHECKLIST_DEV4_PAGOS|Dev 4]].
+> Detalle por rol: [[Checklists/CHECKLIST_DEV1_WRAPPERS_SAP|Dev 1]] · [[Checklists/CHECKLIST_DEV2_ROADMAP|Dev 2]] · [[Checklists/CHECKLIST_DEV3_NOSAP_NOINTELISIS|Dev 3]] · [[CHECKLIST_DEV4_PAGOS|Dev 4]].
 
 ## Las reglas que ordenan el plan
 
@@ -374,3 +374,4 @@ Son los cuatro puntos donde un retraso de un desarrollador para a otro. Todo lo 
 **`ExistRFCAndPhoneCte` son 38 días para reconstruir algo apagado.** Es la barra más larga de Dev 2 y arrastra dos wrappers de Dev 1. En el legado sus dos métodos de validación tienen un `return` incondicional en la primera línea: el endpoint no consulta nada y siempre responde lo mismo. Dev 3 lo descartó por eso. Si Producto confirma que no se necesita, **se caen 38 días de Dev 2 y 24 de Dev 1**.
 
 **Los 11 endpoints de la fase 0 de Dev 2 no están estimados.** No traen número de APIs en el archivo maestro, así que ni se pueden ordenar ni sumar al total. Hasta que se triajen, los 346 días de Dev 2 son un piso, no una previsión.
+
