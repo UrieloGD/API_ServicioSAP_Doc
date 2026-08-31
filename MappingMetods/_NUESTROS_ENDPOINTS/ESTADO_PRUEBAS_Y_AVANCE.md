@@ -62,10 +62,11 @@ Para que el número signifique algo y no sea una impresión, cada partida se mid
 | E-12 | `customer/setCuenta` | 6 | **80 %** | 🔶 Rama de error verificada el 25 ago; la escritura real no se ejecutó | Probar la escritura + despliegue |
 | E-13 | `customer/cashCustomerReport` | 6 | **80 %** | 🔶 Validación y escritura local verificadas el 25 ago. **La copia al share no es verificable desde desarrollo** | Se valida en QA |
 | E-14 | `product/obtenerImagen` | 6 | **55 %** ⁽⁵⁾ | 🔶 Solo el 401. **No es verificable desde desarrollo**: la impersonación falla antes de la copia | Se valida en QA |
-| E-48    | `credit/SolicitudMercancia`           | 7   | 0 %      | —                       | Conexión a definir por equipo SAP |
-| E-49    | `credit/codigoPromocion`              | 8   | 0 %      | —                       | 🟠 Origen IntelisisTmp            |
-| E-50    | `credit/getPlazos`                    | 8   | 0 %      | —                       | 🟠 Origen IntelisisTmp            |
-| E-51    | `customerService/obtenerTipoGarantia` | 8   | 0 %      | —                       | 🔒 Estructura de Miguel Marín     |
+| E-15 | `order/GetPickUpCode` | 7 | **35 %** ⁽⁶⁾ | ⏳ Sin probar: la tabla en SIGMAVI está vacía hasta que Dev 2 mueva los escritores | Depende de Dev 2 (10-11 sep) |
+| E-47    | `credit/SolicitudMercancia`           | 7   | 0 %      | —                       | Conexión a definir por equipo SAP |
+| E-48    | `credit/codigoPromocion`              | 8   | 0 %      | —                       | 🟠 Origen IntelisisTmp            |
+| E-49    | `credit/getPlazos`                    | 8   | 0 %      | —                       | 🟠 Origen IntelisisTmp            |
+| E-50    | `customerService/obtenerTipoGarantia` | 8   | 0 %      | —                       | 🔒 Estructura de Miguel Marín     |
 | ➡️ | ~~`credit/GetUnificationWalletStatus`~~ | — | — | — | **Reasignado a Dev 2** el 12 ago |
 | ➡️ | ~~`credit/SetUnificationWalletData`~~ | — | — | — | **Reasignado a Dev 2** el 12 ago |
 
@@ -115,9 +116,21 @@ Es decir: si en QA falla, será porque el archivo no está en esa ruta o por per
 | | Partidas | Avance medio |
 |---|---|---|
 | Habilitadores (4) | **4 al 100 %** | **100 %** |
-| Endpoints en alcance (18) | 3 al 100 %, 5 al 90 %, 4 al 80 %, 1 al 55 %, 4 sin iniciar | 67,5 % |
-| Mixtos (12) | 2 al 25 % | 4,2 % |
-| **Total (34)** | | **49,0 %** |
+| Endpoints en alcance (19) | 3 al 100 %, 6 al 90 %, 4 al 80 %, 1 al 55 %, 1 al 35 %, 4 sin iniciar | 65,8 % |
+| Mixtos (15) | 2 al 25 %, 13 sin iniciar | 3,3 % |
+| **Total (38)** | | **44,7 %** |
+
+> 🔴 **El total baja del 49,0 % al 44,7 %, y casi todo es una corrección, no un retroceso.**
+> Dos cosas a la vez, el 31 ago:
+>
+> 1. **El denominador de los mixtos estaba mal.** Decía 12 y la tabla de arriba lista **15**
+>    filas `M-xx`, contadas una a una. Con 12 el promedio de los mixtos salía 4,2 %; con 15
+>    es 3,3 %. Eso solo ya baja el total al 45,1 %.
+> 2. **Entró E-15 al 35 %**, por debajo de la media, que resta las cuatro décimas restantes.
+>
+> El trabajo hecho no cambió: cambió sobre cuántas partidas se promedia. La cuenta es
+> `(4×100 + 1 250 + 50) ÷ 38`, donde 1 250 es la suma de los 19 endpoints y 50 la de los 15
+> mixtos.
 
 > ⚠️ **El denominador cambió el 25 ago, de 37 a 34.** La tabla decía "21 endpoints en alcance"
 > pero solo lista **18** filas `E-xx`, y a esas les faltaba **E-14**, que sí está en el
@@ -125,7 +138,7 @@ Es decir: si en QA falla, será porque el archivo no está en esa ruta o por per
 > enumera, en vez de arrastrar un número que ya no cuadraba. Los porcentajes por partida no
 > cambiaron; lo que cambió es sobre cuántas se promedian.
 
-> **Al 26 ago, todo el código migrado y todos los cutovers están commiteados y subidos** a
+> **Al 31 ago, todo el código migrado y todos los cutovers están commiteados y subidos** a
 > `dbAndroid` en los dos repositorios, hasta la Ola 6 inclusive. **Nada desplegado.** El
 > avance medio no se movió respecto al 25 ago porque la rúbrica mide código, compilación,
 > pruebas, e2e, cutover y ficha — no si el trabajo está subido.
@@ -135,6 +148,11 @@ del servidor. **La Ola 4 es la primera que llega al 100 % con el cutover incluid
 AdminDoc sí responde desde desarrollo y se pudo verificar cada fila. Lo que queda de E-07 y
 E-08 ya no depende del equipo de desarrollo: es despliegue, y en el caso de E-08 confirmar
 que el app pool pueda escribir en su carpeta.
+
+⁽⁶⁾ **El 35 % de E-15 cubre código y compilación, y nada más.** No hay pruebas, ni e2e, ni
+cutover, ni ficha. No es un bloqueo de entorno como los de arriba: el endpoint lee una tabla
+que hoy nadie llena en SIGMAVI, porque los tres flujos que la escriben siguen en el legado y
+son de Dev 2. Se puede probar antes insertando una fila a mano en `BpRecogePedidos`.
 
 ⁽⁵⁾ **E-14 no tiene cutover posible**: no existe ruta suya en la DMZ, así que ese 10 % de la rúbrica nunca se puede ganar. El 55 % cubre código, compilación y ficha; todo lo demás depende de H-02.
 
@@ -862,14 +880,50 @@ Conviene tenerlo presente al validarlo en QA, porque es justo el punto que se ar
 
 #### Sobre los verbos y el cutover
 
-Solo **E-13 lleva cutover**, aplicado el 25 ago y commiteado el 26 (`e403065` en
+Solo **E-13 lleva cutover**, aplicado el 25 ago, commiteado el 26 y subido el 31 (`e403065` en
 APIMagentoDMZ). E-11 y E-12 van en sentido contrario —de ServicioSAP hacia la DMZ— y E-14 no
 existe en la DMZ, así que ninguna de esas tres tiene una ruta que conmutar.
 
-El código de la ola se subió el 26 ago en `4315c50` de ServicioSAP. Los porcentajes de la
+El código de la ola se commiteó el 26 ago en `4315c50` de ServicioSAP y se subió el 31. Los porcentajes de la
 tabla no cambian por eso: commitear no es una casilla de la rúbrica.
 
 Artefacto reproducible: `ServicioSap\ServicioSap\Tests\ServicioSap.Ola6.http`.
+
+### Ola 7 — E-15, 31 ago (escrito, sin probar)
+
+`order/GetPickUpCode` quedó escrito y compilando, y ahí se detuvo. **No se ejecutó ninguna
+prueba**, porque no habría medido nada: la tabla que lee está vacía.
+
+Qué se construyó:
+
+| Archivo | Contenido |
+|---|---|
+| `Methods\Order\StorePickupMethods.cs` | `GetPickUpCodeAsync`, la lectura |
+| `Models\SAP\Order\StorePickupModels.cs` | `StoreReadyPickupRequest` y `StoreReadyPickupResponse` |
+| `Controllers\OrderController.cs` | la ruta `order/GetPickUpCode` |
+
+El contrato se conserva entero: `NotFound` si falta `IdEcommerce` o si no hay fila,
+`Json(StoreReadyPickupResponse)` si la hay, `BadRequest(e.Message)` en la excepción.
+Asíncrono, con `obtenerConexionSigMaviAsync`.
+
+> 📌 **La tabla destino ya existía y se llama distinto.** El legado lee
+> `TrWDM0285_CteRecoge` en IntelisisTmp; el equivalente en SIGMAVI es **`BpRecogePedidos`**
+> —mismas columnas, `MaviSAP: Tables\BpRecogePedidos.sql`, creada en abril de 2025—. Los
+> checklists decían que Dev 3 tenía que crearla: no hace falta. Conviene avisar a Dev 2, que
+> programa contra el nombre viejo.
+
+> ⏳ **Por qué no se probó.** Los tres flujos que escriben la tabla siguen en el legado y
+> escriben en Intelisis: `crearPrimerCodigoRecogerSuc`, `NuevoCodigoRecogerSucursal` y
+> `crearPrimerCodigoRecogerSucbanktransfer`. Los dos primeros son `createStorepickupCode` y
+> `generateNewStorepickupCode`, partidas de Dev 2 con fecha 10-11 sep y feb 2027. Hasta
+> entonces el endpoint responde 404 siempre, y ese 404 no distingue "no existe" de "aún no
+> migraron los escritores".
+
+> ⚠️ **`crearPrimerCodigoRecogerSucbanktransfer` no está en ningún checklist.** Apareció el
+> 20 ago en el work item 8600 y lo llama `OrderMethods.cs:695`. Escribe la misma tabla por el
+> procedimiento `SpWDM0285_CteRecoge`, que tampoco está en `MaviSAP\StoreProcedure`.
+
+**Sólo se migró la lectura**, por decisión del 31 ago. Los escritores se quedan donde están.
 
 ### Refactor transversal — endpoints a asíncrono, 20 ago
 
@@ -1116,9 +1170,9 @@ montos de préstamo **menores**, sin error ni aviso. Verificado en APIMagento
 
 | Tema | Bloquea | Quién decide |
 |---|---|---|
-| Equivalencia de `IntelisisTmp` | E-49, E-50 y los 12 mixtos | Arquitectura |
+| Equivalencia de `IntelisisTmp` | E-48, E-49 y los 12 mixtos | Arquitectura |
 | Convención de conexiones: fábricas estáticas del stash vs métodos de instancia de la Ola 0 | Integrar el stash del 29-jul (M-14, M-08) | Líder técnico |
-| Estructura de garantías | E-51 | Miguel Marín (PCP) |
+| Estructura de garantías | E-50 | Miguel Marín (PCP) |
 | ~~Definición de monedero~~ | ➡️ Dev 2 desde el 12 ago | — |
 | ~~¿Se elimina `ExistRFCAndPhoneCte`?~~ | — | ✅ Descartado el 11 ago |
 

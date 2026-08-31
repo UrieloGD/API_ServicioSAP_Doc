@@ -202,7 +202,7 @@ Existen dentro del flujo de `order/new`, **sin ruta propia**. Sirven como refere
 |---|---|---|---|
 | **E-01** `SendSmsNewNumber` | 0.5 d | **0.25 d** | El método está completo; solo falta el controller |
 | **E-05** `order/getGuide` | 0.5 d | **0.75 d** | Hay que escribir el `SELECT`, no solo exponer |
-| **E-51** `codigoPromocion` | 1.5 d | **0.75 d** | Ya está en SIGMAVI; falta `Aplica` y el prefijo `credit/` |
+| **E-50** `codigoPromocion` | 1.5 d | **0.75 d** | Ya está en SIGMAVI; falta `Aplica` y el prefijo `credit/` |
 | Los otros 30 | Sin cambio | Sin cambio | Se confirma que parten de cero |
 
 **Efecto neto sobre el total: −0.75 días.** El calendario no se mueve de forma significativa.

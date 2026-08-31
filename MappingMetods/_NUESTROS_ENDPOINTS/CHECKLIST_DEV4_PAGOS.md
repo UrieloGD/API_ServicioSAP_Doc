@@ -1,4 +1,4 @@
----
+﻿---
 tags: [checklist, migracion, dev4, pagos, sap]
 fuente: "MIGRATION_STATUS_MASTER_v2 FINAL.csv"
 actualizado: 2026-08-12
@@ -11,7 +11,7 @@ Lista de control del desarrollador dedicado a los **flujos de pago**. A diferenc
 
 **Leyenda:** `[x]` hecho · `[ ]` pendiente · ⏳ falta definición
 
-> Reparto de la migración: [[CHECKLIST_DEV1_WRAPPERS_SAP|Dev 1 — wrappers]] · [[CHECKLIST_DEV2_ENDPOINTS_SAP|Dev 2 — endpoints sobre SAP]] · [[CHECKLIST_DEV3_NOSAP_NOINTELISIS|Dev 3 — Android, SQLite y SIGMAVI]].
+> Reparto de la migración: [[Checklists/CHECKLIST_DEV1_WRAPPERS_SAP|Dev 1 — wrappers]] · [[Checklists/CHECKLIST_DEV2_ROADMAP|Dev 2 — endpoints sobre SAP]] · [[Checklists/CHECKLIST_DEV3_NOSAP_NOINTELISIS|Dev 3 — Android, SQLite y SIGMAVI]].
 
 ## Por qué este bloque va aparte
 
@@ -73,3 +73,4 @@ Por decisión del 12 ago, tres endpoints que tocan pasarelas de pago **se quedan
 **0 / 7** endpoints terminados y **0 / 2** wrappers construidos. Los 32 días de la fase 2 dependen íntegramente del wrapper de referencias bancarias, y la fase 3 de una tabla Z que todavía no existe en SAP.
 
 Las dos dependencias externas —el desarrollador de apoyo y la tabla Z del equipo ABAP— conviene solicitarlas en la primera semana: ninguna requiere desarrollo previo y ambas bloquean fases completas.
+
