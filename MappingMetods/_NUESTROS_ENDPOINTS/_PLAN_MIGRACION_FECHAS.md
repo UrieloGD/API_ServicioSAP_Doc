@@ -9,11 +9,13 @@ inicio: 2026-08-04
 
 # Plan de migración LAN → ServicioSAP — control y fechas
 
-Listado de control de **41 partidas**: 4 habilitadores y 37 endpoints. Incluye los ya mapeados y todos los que se reapuntan a **SIGMAVI (DEVMAVI)**.
+Listado de control de **40 partidas**: 4 habilitadores y 36 endpoints. Incluye los ya mapeados y todos los que se reapuntan a **SIGMAVI (DEVMAVI)**.
 
-> ➕ **Ocho partidas incorporadas el 12 ago** tras cotejar el alcance contra `PLAN_MAESTRO_ACTIVIDADES_DEVS.xlsx`, que asigna 74 endpoints al Dev 1. Tres son endpoints nuestros que faltaban —`E-14`, `E-15` y `E-16`— y cinco son mixtos nuevos —`M-04` a `➡️`—. Los identificadores se asignan **al final de cada serie, no en orden de ola**, para no volver a reindexar lo ya numerado.
+> ➕ **Ocho partidas incorporadas el 12 ago** tras cotejar el alcance contra `PLAN_MAESTRO_ACTIVIDADES_DEVS.xlsx`, que asigna 74 endpoints al Dev 1. Tres son endpoints nuestros que faltaban —`E-14`, `E-15` y `setRecommenderList`, éste último descartado el 31 ago— y cinco son mixtos nuevos —`M-04` a `➡️`—. Los identificadores se asignan **al final de cada serie, no en orden de ola**, para no volver a reindexar lo ya numerado.
 
-> 🗑️ **Descartados el 11 ago, de 37 partidas originales a 35.** `credit/ExistRFCAndPhoneCte` y `status/getStatus` salen del alcance de migración: **pierden su identificador** y quedan registrados en la Ola 5 sin ID, tachados, con el motivo del descarte. Los endpoints posteriores se reindexaron dos posiciones. Tras reasignar el monedero a Dev 2 el 12 ago, la serie vigente es **E-01 a E-30** sin huecos, más **M-11 a 🗑️**.
+> 🗑️ **Descartados el 11 ago, de 37 partidas originales a 35.** `credit/ExistRFCAndPhoneCte` y `status/getStatus` salen del alcance de migración: **pierden su identificador** y quedan registrados en la Ola 5 sin ID, tachados, con el motivo del descarte. Los endpoints posteriores se reindexaron dos posiciones. Tras reasignar el monedero a Dev 2 el 12 ago quedó sin huecos, más **M-11 a 🗑️**.
+
+> 🗑️ **Descartado el 31 ago: `recommender/setRecommenderList`.** Mismo criterio — pierde su identificador y los posteriores se reindexan una posición. La serie vigente es **E-01 a E-50** sin huecos.
 
 **Listado en CSV para seguimiento:** [[_CONTROL_MIGRACION.csv]]
 **Detalle de tablas antes y después:** [[_ALCANCE_MIGRACION_LAN_a_SAP]]
@@ -167,14 +169,15 @@ Bloque único: comparten método `CustomerMethods.blackwhitelist:120` y SP `SpVT
 
 ## Ola 7 — SIGMAVI sin dependencia de SAP
 
-Las dos partidas de SIGMAVI que resuelven contra una sola tabla y **no leen nada de SAP**. Verificado sobre el código el 12 ago.
+La partida de SIGMAVI que resuelve contra una sola tabla y **no lee nada de SAP**. Verificado sobre el código el 12 ago.
 
 | ID | Endpoint | Tabla actual | Tabla nueva | Días | Fecha |
 |---|---|---|---|---:|---|
 | E-15 | `order/GetPickUpCode` | `TrWDM0285_CteRecoge` | **SIGMAVI** tabla nueva | 1.0 | — |
-| E-16 | `recommender/setRecommenderList` | `CREDIDCodigoRecomendador` | **SIGMAVI** `CodigosRecomendados` | 1.0 | — |
 
-> ➕ **Incorporadas el 12 ago**, estaban fuera del alcance original. `GetPickUpCode` hace un `SELECT ClaveVenta FROM TrWDM0285_CteRecoge` y nada más; `setRecommenderList` resuelve por `SpCREDICodigoRecomendador` hacia SIGMAVI y `TcAAEA00030_EnvioMensajes` en Android.
+> ➕ **Incorporada el 12 ago**, estaba fuera del alcance original. `GetPickUpCode` hace un `SELECT ClaveVenta FROM TrWDM0285_CteRecoge` y nada más.
+
+> 🗑️ **`recommender/setRecommenderList` descartado el 31 ago, sin ID.** Obsoleto en la LAN. Además resolvía contra **IntelisisTmp en MAVICUBOS**, no contra SIGMAVI como decía esta tabla.
 
 > ⚠️ **No confundir con `order/createStorepickupCode`**, que vive en el mismo archivo del legado —`StorePickup\CodigoRecogerSucursal.cs`— pero **sí** cruza a `Venta` y `Cte`. Ése es de Dev 2.
 
@@ -209,16 +212,16 @@ Cierran el trabajo de Dev 3 que **necesita una lectura previa contra SAP** antes
 
 | ID | Endpoint | Lee de SAP | Escribe en | Días | Fecha |
 |---|---|---|---|---:|---|
-| E-48 | `credit/SolicitudMercancia` | `partner/client/{clientId}` | `ServicioAndroid` | 1.0 | — |
-| E-49 | `credit/codigoPromocion` | SuccessFactors + BP05 | **SIGMAVI** `VentaCupon` | 1.5 | — |
-| E-50 | `credit/getPlazos` | TZ01 | **SIGMAVI** `CondicionesCredVtaLinea` | 1.5 | — |
-| E-51 | `customerService/obtenerTipoGarantia` ⏳ | `Art` — maestro de materiales | **SIGMAVI** tabla nueva | 1.5 | — |
+| E-47 | `credit/SolicitudMercancia` | `partner/client/{clientId}` | `ServicioAndroid` | 1.0 | — |
+| E-48 | `credit/codigoPromocion` | SuccessFactors + BP05 | **SIGMAVI** `VentaCupon` | 1.5 | — |
+| E-49 | `credit/getPlazos` | TZ01 | **SIGMAVI** `CondicionesCredVtaLinea` | 1.5 | — |
+| E-50 | `customerService/obtenerTipoGarantia` ⏳ | `Art` — maestro de materiales | **SIGMAVI** tabla nueva | 1.5 | — |
 
-> **E-48** parte en dos el `INSERT ... SELECT` único del legado: leer el Business Partner en C# y luego insertar. Requiere el **helper de conversión de cuenta `C%` → BP**, que no existe y lo van a necesitar E-49, E-50 y varios mixtos.
+> **E-47** parte en dos el `INSERT ... SELECT` único del legado: leer el Business Partner en C# y luego insertar. Requiere el **helper de conversión de cuenta `C%` → BP**, que no existe y lo van a necesitar E-48, E-49 y varios mixtos.
 
-> ⛔ **E-49 depende del wrapper de SuccessFactors** que construye Dev 1. El de TZ01 que usa E-50 ya existe.
+> ⛔ **E-48 depende del wrapper de SuccessFactors** que construye Dev 1. El de TZ01 que usa E-49 ya existe.
 
-> 🔒 **E-51 está bloqueado.** La tabla la alimenta PCP y **Miguel Marín** debe entregar la estructura. Al recibirla, verificar que conserve `TipoGarantia`, `Marca`, `Telefono`, `Proveedor`, `Linea`.
+> 🔒 **E-50 está bloqueado.** La tabla la alimenta PCP y **Miguel Marín** debe entregar la estructura. Al recibirla, verificar que conserve `TipoGarantia`, `Marca`, `Telefono`, `Proveedor`, `Linea`.
 
 ---
 
@@ -283,7 +286,7 @@ Requieren **decisión de arquitectura previa**. Las fechas son un marcador de po
 
 | # | Riesgo | Impacto | Mitigación |
 |---|---|---|---|
-| 1 | **Estructura de garantías (Miguel Marín)** | E-51 no arranca | Solicitar antes del 1 de septiembre |
+| 1 | **Estructura de garantías (Miguel Marín)** | E-50 no arranca | Solicitar antes del 1 de septiembre |
 | 2 | ~~**Definición de monedero (Valentin)**~~ | ➡️ Reasignado a Dev 2 el 12 ago | — |
 | 3 | ~~**Alcance de red a los shares SMB**~~ | ~~E-13 y la ola 6 completa~~ | ✅ Cerrado: red validada el 5 ago y permisos confirmados en el servidor el 11 ago |
 | 4 | **Medición de `op` sin caché** | Ola 10 oscila entre 2 y 13 días | Extraer logs de 30 días esta semana |

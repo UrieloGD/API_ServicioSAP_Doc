@@ -1,7 +1,7 @@
 ---
 tags: [contrato, endpoint, migracion, ola-6]
 partida: E-13
-actualizado: 2026-08-26
+actualizado: 2026-08-31
 ---
 
 # E-13 — `customer/cashCustomerReport`
@@ -82,7 +82,7 @@ método.
 La DMZ **deserializa a `ApiResponse` y reenvía el objeto**, así que el cliente recibe el
 `{status, message}` como objeto, no como cadena.
 
-**Cutover:** ⏳ aplicado el 25 ago, commiteado y subido el 26 ago (`e403065` en `dbAndroid`),
+**Cutover:** ⏳ aplicado el 25 ago, commiteado el 26 ago (`e403065` en `dbAndroid`) y subido el 31,
 **sin desplegar**.
 
 > 🔴 **Orden de despliegue: ServicioSAP primero, la DMZ después.** El constructor de `Curl`

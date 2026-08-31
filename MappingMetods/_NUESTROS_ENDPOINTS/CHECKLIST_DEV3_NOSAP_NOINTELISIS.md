@@ -6,11 +6,12 @@ rol: "Dev 3 — todo lo que no va a SAP ni se queda en Intelisis"
 agente: Nexo (con asistencia de Claude)
 ---
 
+
 # Checklist Dev 3 — Migración de lo que no va a SAP
 
 Lista de control del desarrollador que migra a `ServicioSAP` **todo aquello cuyo destino de datos no es SAP core y que no se queda en Intelisis**.
 
-> ℹ️ **Convive con [[CHECKLIST_MIGRACION_LAN_A_SAP]], no lo sustituye.** Aquél es el checklist operativo original de las 37 partidas, con el histórico de decisiones y riesgos tal como se fue escribiendo, y sigue siendo el que se marca día a día. Éste es la **vista de rol**: el alcance completo de Dev 3 según el archivo maestro, con la numeración reindexada, las 31 rutas de reapunte de la DMZ y la coordinación con los otros desarrolladores. Si los dos discrepan sobre el estado de una partida, manda el original.
+> ℹ️ **Convive con [[CHECKLIST_MIGRACION_LAN_A_SAP]], no lo sustituye.** Aquél es el checklist operativo original de las 38 partidas medibles, con el histórico de decisiones y riesgos tal como se fue escribiendo, y sigue siendo el que se marca día a día. Éste es la **vista de rol**: el alcance completo de Dev 3 según el archivo maestro, con la numeración reindexada, las 31 rutas de reapunte de la DMZ y la coordinación con los otros desarrolladores. Si los dos discrepan sobre el estado de una partida, manda el original.
 
 **Leyenda:** `[x]` hecho · `[ ]` pendiente · 🔒 bloqueado · ⏳ en definición · 🟠 destino de conexión sin definir · 🗑️ descartado
 
@@ -43,7 +44,7 @@ El plan se divide en tres bloques, y **el criterio es la dependencia externa, no
 |---|---|---|---:|---|
 | — | 0 – 2 | Cerradas: habilitadores, piloto y listas | 8 | ✅ desarrollo terminado |
 | **A** | **3 – 8** | Sin ninguna conexión a SAP | 43 | De nadie. Se puede cerrar completo hoy |
-| **B** | **9** | Mixtos SAP | 4 | De que S/4 responda; E-49 además de un wrapper de Dev 1 |
+| **B** | **9** | Mixtos SAP | 4 | De que S/4 responda; E-48 además de un wrapper de Dev 1 |
 | **C** | **11 – 13** | Mixtos Intelisis | 18 | 🟠 De la decisión de arquitectura sobre `IntelisisTmp` |
 
 Se agota el bloque A antes de entrar al B. La razón es simple: el bloque A es el único frente del proyecto sin bloqueos externos, y consumirlo mientras los demás están detenidos es lo que mantiene el avance cuando SAP o Arquitectura no responden. Si se empieza por el B y SAP se cae una semana, no hay a qué cambiarse.
@@ -103,8 +104,8 @@ Se agota el bloque A antes de entrar al B. La razón es simple: el bloque A es e
 
 ## Ola 5 — ServicioAndroid y SOAP externo
 
-- [ ] **E-09** `customerService/obtenerQuejas` — `ServicioAndroid`. **90 %**: escrito el 21 ago en `Methods\CustomerService\CustomerServiceMethods.cs`, compila en 0 errores, cutover commiteado y subido el 26 ago (`c695b2e`). Los 5 casos verificados el 23 ago contra servicios reales; ficha lista. Falta desplegar. ✅ Confirmado que `intelisisConn` **no toca Intelisis**: la cadena es `sCadenaConexionAndriod` (APIMagento: `Conn\Connection.cs:28`); la variable ya no se llama así en ServicioSAP.
-- [ ] **E-10** `customerService/bbvaKeyAdvanced` — SOAP `WSeCommerceMX`. **90 %**: escrito el 21 ago, misma clase, cutover commiteado y subido el 26 ago (mismo commit que E-09). `MULTIPAGOS_APIKEY_URL` y `CODIGO_ENT` ya portadas al `Web.config`. Los 5 casos verificados el 23 ago contra el SOAP real; ficha lista. Falta desplegar.
+- [ ] **E-09** `customerService/obtenerQuejas` — `ServicioAndroid`. **90 %**: escrito el 21 ago en `Methods\CustomerService\CustomerServiceMethods.cs`, compila en 0 errores, cutover commiteado el 24 ago (`c695b2e`) y subido el 31. Los 5 casos verificados el 23 ago contra servicios reales; ficha lista. Falta desplegar. ✅ Confirmado que `intelisisConn` **no toca Intelisis**: la cadena es `sCadenaConexionAndriod` (APIMagento: `Conn\Connection.cs:28`); la variable ya no se llama así en ServicioSAP.
+- [ ] **E-10** `customerService/bbvaKeyAdvanced` — SOAP `WSeCommerceMX`. **90 %**: escrito el 21 ago, misma clase, cutover commiteado el 24 ago y subido el 31 (mismo commit que E-09). `MULTIPAGOS_APIKEY_URL` y `CODIGO_ENT` ya portadas al `Web.config`. Los 5 casos verificados el 23 ago contra el SOAP real; ficha lista. Falta desplegar.
 
 > ✅ **Verbo resuelto el 21 ago, en el cutover.** La LAN declara `obtenerQuejas` como `[HttpPost]` y la DMZ la llamaba con `curl.Get(...)` desde el 28-jul (`6a55c6a`). Ahora la DMZ **conserva su `[HttpPost]` público** y llama con `curl.PostSAP(...)`, que es el verbo del legado.
 
@@ -121,7 +122,7 @@ Se agota el bloque A antes de entrar al B. La razón es simple: el bloque A es e
 
 ## Ola 6 — SMB y DMZ
 
-> **Escrita y probada el 25 ago; commiteada y subida el 26** en `4315c50` de ServicioSAP, con el cutover de E-13 en `e403065` de APIMagentoDMZ. Nada desplegado.
+> **Escrita y probada el 25 ago; commiteada el 26 y subida el 31** en `4315c50` de ServicioSAP, con el cutover de E-13 en `e403065` de APIMagentoDMZ. Nada desplegado.
 
 - [ ] **E-11** `customer/getCuenta` — DMZ → Magento, con `Curl` (H-03). **90 %**: los 4 casos verificados el 25 ago contra la cadena completa, con APIMagentoDMZ levantada en local. Sin cutover: no hay ruta suya en la DMZ. Falta desplegar.
 - [ ] **E-12** `customer/setCuenta` — DMZ → Magento, con `Curl` (H-03). **80 %**: rama de error verificada el 25 ago. ⚠️ **La escritura real no se ejecutó**: graba `customer_credit_account` en un cliente de Magento y falta acordar un id de prueba.
@@ -132,10 +133,16 @@ Se agota el bloque A antes de entrar al B. La razón es simple: el bloque A es e
 
 ## Ola 7 — SIGMAVI sin dependencia de SAP
 
-Las dos partidas de SIGMAVI que resuelven contra una sola tabla y no leen nada de SAP. Verificado sobre el código el 12 ago.
+La partida de SIGMAVI que resuelve contra una sola tabla y no lee nada de SAP. Verificado sobre el código el 12 ago.
 
-- [ ] **E-15** `order/GetPickUpCode` — `SELECT ClaveVenta FROM TrWDM0285_CteRecoge`, una sola tabla, que se crea en SIGMAVI. 🤝 Dev 2 depende de esa tabla para `createStorepickupCode` y `generateNewStorepickupCode`.
-- [ ] **E-16** `recommender/setRecommenderList` — `SpCREDICodigoRecomendador` → tabla `CodigosRecomendados` en SIGMAVI, más `TcAAEA00030_EnvioMensajes` en Android.
+- [ ] **E-15** `order/GetPickUpCode` — **35 %**: escrito el 31 ago en `Methods\Order\StorePickupMethods.cs`, commiteado y subido en `8cf2c52`, con sus modelos y la ruta en `OrderController`, compila en 0 errores, asíncrono. Sin pruebas, sin cutover y sin ficha. 🤝 Dev 2 depende de la misma tabla para `createStorepickupCode` y `generateNewStorepickupCode`.
+
+> 📌 **La tabla ya existe en SIGMAVI y se llama `BpRecogePedidos`**, no `TrWDM0285_CteRecoge` — mismas columnas, `MaviSAP: Tables\BpRecogePedidos.sql`, creada en abril de 2025. **Dev 3 no tiene que crearla.** Ese es el nombre contra el que quedó programado E-15, y conviene avisar a Dev 2, cuyo checklist todavía dice el nombre viejo.
+
+> ⏳ **E-15 no se puede probar todavía.** Solo lee; los tres flujos que llenan la tabla siguen escribiendo en Intelisis. Dos son de Dev 2 —`createStorepickupCode` (feb 2027) y `generateNewStorepickupCode` (10-11 sep)— y el tercero, `crearPrimerCodigoRecogerSucbanktransfer`, apareció el 20 ago con el work item 8600 y **no está en ningún checklist**. Mientras tanto el endpoint responde 404 siempre. Se puede adelantar la prueba insertando una fila a mano.
+
+> ℹ️ **Solo se migró la lectura**, por decisión del 31 ago. `GetPickUpCode` en el legado no cambió desde el análisis del 12 ago —se comparó método contra método—; lo que cambió alrededor son los escritores, que se quedan. Ojo también con que la escritura va por el procedimiento `SpWDM0285_CteRecoge`, que no está en `MaviSAP\StoreProcedure`.
+- 🗑️ ~~`recommender/setRecommenderList`~~ — **descartado el 31 ago, sin ID.** Obsoleto en la LAN, no se migra. Pierde su identificador y los posteriores se reindexan una posición. Al revisarlo se vio además que `CodigoRecomendador` abre `sCadenaConexion`, que es **IntelisisTmp en MAVICUBOS** (`Conn\Connection.cs:26`), no SIGMAVI como decía esta ficha.
 
 > ⚠️ No confundir con `order/createStorepickupCode`, que vive en el mismo archivo del legado (`StorePickup\CodigoRecogerSucursal.cs`) pero **sí** cruza a `Venta` y `Cte`. Ése es de Dev 2.
 
@@ -151,14 +158,14 @@ El grueso del trabajo real de la ola. Los ocho métodos viven en `Conn\Magento.c
 
 | ID | Ruta que consume | Método de origen en la LAN | Tabla SQLite que escribe |
 |---|---|---|---|
-| E-17 | `magento/attributes` | `getAttributes` | `attribute_options` |
-| E-18 | `magento/general/attributes` | `getGeneralAttributes` | `attributes` |
-| E-19 | `magento/attributeSets` | `getAttributeSets` | `attribute_sets` |
-| E-20 | `magento/attributeSetChildren/{id}` | `sendAttributesToIntelisis` | `atributos_de_magento` |
-| E-21 | `magento/categories` | `getCategories` | `categories` |
-| E-22 | `magento/children/{page}/{size}/{store}` | `getChildren` | `children` |
-| E-23 | `magento/noImagenProduct/{store}` | `getNoImageProduct` | `no_imagen_product` |
-| E-24 | `magento/productWithWebsites/{page}/{size}` | `getProductWithWebsites` | `product_in_stores` |
+| E-16 | `magento/attributes` | `getAttributes` | `attribute_options` |
+| E-17 | `magento/general/attributes` | `getGeneralAttributes` | `attributes` |
+| E-18 | `magento/attributeSets` | `getAttributeSets` | `attribute_sets` |
+| E-19 | `magento/attributeSetChildren/{id}` | `sendAttributesToIntelisis` | `atributos_de_magento` |
+| E-20 | `magento/categories` | `getCategories` | `categories` |
+| E-21 | `magento/children/{page}/{size}/{store}` | `getChildren` | `children` |
+| E-22 | `magento/noImagenProduct/{store}` | `getNoImageProduct` | `no_imagen_product` |
+| E-23 | `magento/productWithWebsites/{page}/{size}` | `getProductWithWebsites` | `product_in_stores` |
 
 > 🔴 **Las ocho tablas no existen en nuestro `data.db`.** Hoy solo están contempladas `servicio_guias` y `mavi_credilana_info`, las dos del script de la Ola 3. Hace falta **un segundo script** con estas ocho, y antes sacar su definición del `data.db` del legado. Con eso, los **2 días asignados a este sub-bloque se quedan cortos**: solo levantar las definiciones y escribir el script es una jornada larga.
 
@@ -172,38 +179,38 @@ No guardan nada, solo devuelven a quien preguntó. El patrón ya está resuelto 
 
 | ID | Ruta | Método de origen |
 |---|---|---|
-| E-25 | `magento/getOrderId/{incrementId}` | `OrdersController.cs:421` |
-| E-26 | `magento/deletePromociones` | `deletePromociones` |
-| E-27 | `magento/deleteReservations` | `deleteReservations` |
+| E-24 | `magento/getOrderId/{incrementId}` | `OrdersController.cs:421` |
+| E-25 | `magento/deletePromociones` | `deletePromociones` |
+| E-26 | `magento/deleteReservations` | `deleteReservations` |
 
-> `E-28 magento/getCuenta` y `E-29 magento/setCuenta` **ya están cubiertas** como E-11 y E-12 en la Ola 6; aquí solo se listan para que el conjunto quede completo.
+> `E-27 magento/getCuenta` y `E-28 magento/setCuenta` **ya están cubiertas** como E-11 y E-12 en la Ola 6; aquí solo se listan para que el conjunto quede completo.
 
 ### 8.3 · Órdenes — 1 helper compartido y 2 llamadores - 2 días
 
 | ID | Ruta | Quién la llama hoy |
 |---|---|---|
-| E-30 | `order/setOrderStatus` | **Cinco sitios**: `OrdersController.cs:338`, tres puntos de `OpenpayMethods` y `CodigoRecogerSucursal.cs:192` |
-| E-31 | `order/jsonOrders/{incrementId}` | `Magento.getOrderInfoAndSet`, endpoint de Dev 2 |
-| E-32 | `order/setCAccount` | `Magento.SetCAccount` |
+| E-29 | `order/setOrderStatus` | **Cinco sitios**: `OrdersController.cs:338`, tres puntos de `OpenpayMethods` y `CodigoRecogerSucursal.cs:192` |
+| E-30 | `order/jsonOrders/{incrementId}` | `Magento.getOrderInfoAndSet`, endpoint de Dev 2 |
+| E-31 | `order/setCAccount` | `Magento.SetCAccount` |
 
-> ✅ **Decisión del 12 ago sobre E-30:** se construye **un único método compartido** en ServicioSAP que envuelva la llamada, y cada flujo lo consume, en vez de replicar la llamada en cinco sitios como hace el legado. Cinco copias de la misma petición son exactamente lo que termina divergiendo, y el contrato de la DMZ es uno solo. El helper lo entrega Dev 3 —es una llamada a la DMZ, sin SAP de por medio— y **Dev 2 lo consume** en los flujos que le tocan.
+> ✅ **Decisión del 12 ago sobre E-29:** se construye **un único método compartido** en ServicioSAP que envuelva la llamada, y cada flujo lo consume, en vez de replicar la llamada en cinco sitios como hace el legado. Cinco copias de la misma petición son exactamente lo que termina divergiendo, y el contrato de la DMZ es uno solo. El helper lo entrega Dev 3 —es una llamada a la DMZ, sin SAP de por medio— y **Dev 2 lo consume** en los flujos que le tocan.
 
-> El llamador de E-31 vive dentro de `order/getOrderInfoAndSet`, que es partida de Dev 2, así que se reconstruye allá y no aquí.
+> El llamador de E-30 vive dentro de `order/getOrderInfoAndSet`, que es partida de Dev 2, así que se reconstruye allá y no aquí.
 
 ### 8.4 · Importación de productos — 8 rutas, sin cambio - 1 día
 
 | ID | Ruta | | ID | Ruta |
 |---|---|---|---|---|
-| E-33 | `product/updateProduct/{store}` | | E-37 | `product/getStockByStore` |
-| E-34 | `product/updateConfigurableProduct/{store}` | | E-38 | `product/updatePrice` |
-| E-35 | `product/updateConfigurableProductLink/{sku}` | | E-39 | `product/uploadImage` |
-| E-36 | `product/updateStock` | | E-40 | `product/uploadImagesToMagento` |
+| E-32 | `product/updateProduct/{store}` | | E-36 | `product/getStockByStore` |
+| E-33 | `product/updateConfigurableProduct/{store}` | | E-37 | `product/updatePrice` |
+| E-34 | `product/updateConfigurableProductLink/{sku}` | | E-38 | `product/uploadImage` |
+| E-35 | `product/updateStock` | | E-39 | `product/uploadImagesToMagento` |
 
 > ✅ **Decisión del 12 ago: pasan tal cual.** Las consume la **herramienta de importación de productos**, que es otro proyecto, y la lógica que hoy vive en un procedimiento almacenado **la migra a C# otro equipo**. Esa herramienta seguirá siendo su cliente. Para nosotros no hay desarrollo: es una dependencia externa que solo hay que no romper.
 
 ### 8.5 · Sin llamador identificado — 6 rutas, se conservan - 1 día
 
-`E-41 order/authorizationResult`, `E-42 order/sendStorePickupEmail`, `E-43 order/getOrderInfo/{incrementId}` y las tres de producto sin llamador en la LAN. No aparece ninguna invocación en los tres repositorios, así que lo más probable es que sean entrada desde Magento hacia la DMZ.
+`E-40 order/authorizationResult`, `E-41 order/sendStorePickupEmail`, `E-42 order/getOrderInfo/{incrementId}` y las tres de producto sin llamador en la LAN. No aparece ninguna invocación en los tres repositorios, así que lo más probable es que sean entrada desde Magento hacia la DMZ.
 
 > **Decisión del 12 ago: se conservan**, por si se requieren más adelante. No hay llamador que reconstruir; el trabajo se limita a verificar que siguen operando tras el apagado.
 
@@ -211,10 +218,10 @@ No guardan nada, solo devuelven a quien preguntó. El patrón ya está resuelto 
 
 | ID   | Ruta                                            | Motivo                                     |
 | ---- | ----------------------------------------------- | ------------------------------------------ |
-| E-44 | `customerService/ActualizarCamposConfigurables` | 🔴 Proxy colgante                          |
-| E-45 | `customerService/InsertarDesdeTablerateNativo`  | 🔴 Proxy colgante                          |
-| E-46 | `customerService/InsertarDesdeTablerateCustom`  | 🔴 Proxy colgante                          |
-| E-47 | `order/getprueba`                               | Stub de diagnóstico expuesto en producción |
+| E-43 | `customerService/ActualizarCamposConfigurables` | 🔴 Proxy colgante                          |
+| E-44 | `customerService/InsertarDesdeTablerateNativo`  | 🔴 Proxy colgante                          |
+| E-45 | `customerService/InsertarDesdeTablerateCustom`  | 🔴 Proxy colgante                          |
+| E-46 | `order/getprueba`                               | Stub de diagnóstico expuesto en producción |
 
 > 🔴 **Los tres proxies ya están rotos hoy, no se romperán con el apagado.** Construyen un `Curl` y reenvían a rutas de `customerService/` que **no existen** en APIMagento —enumeradas sus 23 rutas, ninguna es ésta—. `Curl.Post` atrapa el 404 y devuelve el texto de la excepción como respuesta; el controlador se lo pasa a `DeserializeObject`, que revienta, y el cliente recibe 500. Coordinar la baja con Magento.
 
@@ -244,22 +251,22 @@ Lo que quede pendiente de SAP **se anota en la sección de entregas de abajo** c
 
 | ID   | Endpoint                              | Lo que construye Dev 3                                                  | Lo que espera a Dev 2                         |
 | ---- | ------------------------------------- | ----------------------------------------------------------------------- | --------------------------------------------- |
-| E-48 | `credit/SolicitudMercancia`           | Método, `INSERT` a `ServicioAndroid` y helper de cuenta `C%` → BP       | — `partner/client` ya existe                  |
-| E-49 | `credit/codigoPromocion`              | Tabla `VentaCupon` en SIGMAVI, método y conexión                        | Lectura de personal contra **SuccessFactors** |
-| E-50 | `credit/getPlazos`                    | Tabla `CondicionesCredVtaLinea` en SIGMAVI y método                     | Consulta de condiciones a **TZ01**            |
-| E-51 | `customerService/obtenerTipoGarantia` | Tabla en SIGMAVI, método y **exportación de los datos desde Intelisis** | Consulta del artículo a **DM01**              |
+| E-47 | `credit/SolicitudMercancia`           | Método, `INSERT` a `ServicioAndroid` y helper de cuenta `C%` → BP       | — `partner/client` ya existe                  |
+| E-48 | `credit/codigoPromocion`              | Tabla `VentaCupon` en SIGMAVI, método y conexión                        | Lectura de personal contra **SuccessFactors** |
+| E-49 | `credit/getPlazos`                    | Tabla `CondicionesCredVtaLinea` en SIGMAVI y método                     | Consulta de condiciones a **TZ01**            |
+| E-50 | `customerService/obtenerTipoGarantia` | Tabla en SIGMAVI, método y **exportación de los datos desde Intelisis** | Consulta del artículo a **DM01**              |
 
-> ✅ **E-49 ya está construido** en `Methods\Order\OrderMethods.cs:829` como `HandlePromoCode`, expuesto en `order/validatecupon/{codigo}` y consumido dentro del flujo de órdenes. Cubre validación, quema y regeneración del cupón. **Falta alinear el nombre de la tabla**: el código escribe contra `VentasCupones` y el nombre acordado es `VentaCupon`.
+> ✅ **E-48 ya está construido** en `Methods\Order\OrderMethods.cs:829` como `HandlePromoCode`, expuesto en `order/validatecupon/{codigo}` y consumido dentro del flujo de órdenes. Cubre validación, quema y regeneración del cupón. **Falta alinear el nombre de la tabla**: el código escribe contra `VentasCupones` y el nombre acordado es `VentaCupon`.
 
 > ✅ **Nombres de objetos en SIGMAVI:** se conserva el nombre del original **sin el prefijo de Intelisis**, como ya se hizo en la Ola 2 con `ListaNegra`, `ListaBlanca` y `SpListaNBMagento`. Por eso `VTASCVentaCupon` → **`VentaCupon`** y `VTASCCondicionesCredVtaLinea` → **`CondicionesCredVtaLinea`**.
 
-> ✅ **E-51 deja de estar bloqueado por SAP.** La tabla destino es `DM0415 Configuración Garantías Atención a Clientes` y sus dueños son **Valentin y Humberto**, no Miguel Marín como decía el checklist. La consulta del artículo va a **DM01**, cuyo wrapper ya existe en `Methods\MaterialManagement\ProductMethods.cs`. Nosotros creamos la tabla en SIGMAVI y la poblamos exportando desde Intelisis.
+> ✅ **E-50 deja de estar bloqueado por SAP.** La tabla destino es `DM0415 Configuración Garantías Atención a Clientes` y sus dueños son **Valentin y Humberto**, no Miguel Marín como decía el checklist. La consulta del artículo va a **DM01**, cuyo wrapper ya existe en `Methods\MaterialManagement\ProductMethods.cs`. Nosotros creamos la tabla en SIGMAVI y la poblamos exportando desde Intelisis.
 
-> ✅ **DM07 y `ZAPI_SUCURSALES_SRV` son el mismo servicio de sucursales**, una es la cabecera del otro. La llamada de E-49 apunta a lo correcto; queda cerrada esa duda.
+> ✅ **DM07 y `ZAPI_SUCURSALES_SRV` son el mismo servicio de sucursales**, una es la cabecera del otro. La llamada de E-48 apunta a lo correcto; queda cerrada esa duda.
 
-> ⚠️ **Las tres partidas pendientes comparten forma:** una consulta que hoy une en un solo SQL dos orígenes que se separan. Conviene escribir E-48 primero y que E-50 y E-51 copien su patrón.
+> ⚠️ **Las tres partidas pendientes comparten forma:** una consulta que hoy une en un solo SQL dos orígenes que se separan. Conviene escribir E-47 primero y que E-49 y E-50 copien su patrón.
 
-### Defectos abiertos en E-49, ya en producción
+### Defectos abiertos en E-48, ya en producción
 
 `HandlePromoCode` está construido y en uso, pero al revisarlo el 12 ago salieron cuatro cosas que conviene resolver antes de darlo por cerrado:
 
@@ -270,7 +277,7 @@ Lo que quede pendiente de SAP **se anota en la sección de entregas de abajo** c
 
 > ⚠️ **Revisar las columnas del `INSERT` de regeneración.** El código escribe `Codigo, Agente, FechaEnvio, BP, Centro` y el levantamiento de negocio espera `Codigo, Agente, FechaEnvio, Cliente, Sucursal`. Además inserta el código del agente en la columna `Codigo`: puede ser intencional —que el código del promotor se reutilice— pero de eso depende que la validación siga encontrando una fila con `FechaUtilizacion` nula.
 
-> ℹ️ **E-48 no aparece en el levantamiento de tablas** (`endpoints 1(_GLOBAL_MASTER_DB)`), pese a que lee el Business Partner de SAP. O quedó fuera del inventario o se clasificó como puramente Android. Sus decisiones siguen sin fuente externa.
+> ℹ️ **E-47 no aparece en el levantamiento de tablas** (`endpoints 1(_GLOBAL_MASTER_DB)`), pese a que lee el Business Partner de SAP. O quedó fuera del inventario o se clasificó como puramente Android. Sus decisiones siguen sin fuente externa.
 
 ### Sobre el Excel de tablas como fuente
 
@@ -294,9 +301,9 @@ Se anotan aquí conforme se cierra cada partida nuestra, y se entregan en bloque
 
 | Origen | Qué falta conectar | Estado |
 |---|---|---|
-| E-49 | Datos de personal —departamento y puesto— contra **SuccessFactors**. Hoy el código los toma de la API de Android | Pendiente de que Dev 1 entregue la API |
-| E-50 | Condiciones de crédito contra **TZ01** | Wrapper existente |
-| E-51 | Artículo contra **DM01** | Wrapper existente |
+| E-48 | Datos de personal —departamento y puesto— contra **SuccessFactors**. Hoy el código los toma de la API de Android | Pendiente de que Dev 1 entregue la API |
+| E-49 | Condiciones de crédito contra **TZ01** | Wrapper existente |
+| E-50 | Artículo contra **DM01** | Wrapper existente |
 
 ## Ola -- — Monedero · ➡️ reasignada a Dev 2 el 12 ago
 
@@ -387,7 +394,7 @@ Dev 3 resuelve la parte que va a Android, SQLite o SIGMAVI; **Dev 2 cierra la pa
 
 ## Ya resuelto sin trabajo pendiente
 
-- [x] **E-21** `login/authenticate` — ServicioSAP ya expone `login/auth` con su propio JWT (`Controllers\LoginController.cs`), y el constructor de `Curl` en la DMZ ya autentica contra él. **No hay nada que migrar.**
+- [x] **E-20** `login/authenticate` — ServicioSAP ya expone `login/auth` con su propio JWT (`Controllers\LoginController.cs`), y el constructor de `Curl` en la DMZ ya autentica contra él. **No hay nada que migrar.**
 
 ---
 
@@ -397,10 +404,9 @@ Cinco partidas tienen a los dos equipos dentro. Conviene acordar el orden antes 
 
 | Partida de Dev 3              | Qué entrega Dev 3                          | Qué espera Dev 2                                                             |
 | ----------------------------- | ------------------------------------------ | ---------------------------------------------------------------------------- |
-| **E-49** `codigoPromocion`    | `VentaCupon` en SIGMAVI                    | SuccessFactors + BP05                                                        |
-| **E-50** `getPlazos`          | `CondicionesCredVtaLinea` en SIGMAVI       | TZ01                                                                         |
-| **E-15** `GetPickUpCode`      | `TrWDM0285_CteRecoge` en SIGMAVI           | `createStorepickupCode` y `generateNewStorepickupCode` dependen de esa tabla |
-| **E-16** `setRecommenderList` | `CodigosRecomendados` en SIGMAVI           | `recommender/getRecommender`                                                 |
+| **E-48** `codigoPromocion`    | `VentaCupon` en SIGMAVI                    | SuccessFactors + BP05                                                        |
+| **E-49** `getPlazos`          | `CondicionesCredVtaLinea` en SIGMAVI       | TZ01                                                                         |
+| **E-15** `GetPickUpCode`      | Nada: `BpRecogePedidos` ya existe en SIGMAVI | Mover los escritores — `createStorepickupCode`, `generateNewStorepickupCode` y el nuevo `crearPrimerCodigoRecogerSucbanktransfer` |
 | **M-01…M-14**                 | La rama que va a Android, SQLite o SIGMAVI | La rama que va a SAP                                                         |
 
 > ⚠️ **Dev 2 no debe crear estas tablas por su cuenta ni programar contra Intelisis mientras tanto.** Es la vía más rápida a un verde que no significa nada.
@@ -427,9 +433,9 @@ Cinco partidas tienen a los dos equipos dentro. Conviene acordar el orden antes 
 |---|---|---|
 
 | Equivalencia de `IntelisisTmp` | Las tres olas de mixtos | Arquitectura |
-| Estructura de `DM0415` — garantías | E-51 | **Valentin y Humberto** (corregido el 12 ago; el checklist tenía a Miguel Marín) |
+| Estructura de `DM0415` — garantías | E-50 | **Valentin y Humberto** (corregido el 12 ago; el checklist tenía a Miguel Marín) |
 | ~~Definición de monedero~~ | ➡️ Reasignado a Dev 2 el 12 ago | — |
-| Baja de los tres proxies colgantes | E-44, E-45, E-46 | Producto + Magento |
+| Baja de los tres proxies colgantes | E-43, E-44, E-45 | Producto + Magento |
 | Número de cliente SAP: hay 51 llamadas en `110`, una en `050` y una en `100` | Cualquier consulta a S/4 | **Dev de SAP** — escalado el 12 ago |
 | Definición de los procedimientos almacenados — 6 en total | Estimar las olas 7, 10 y 12 | **DBA / Intelisis** — pedirlos juntos |
 | ¿Quién poda los SP de sus referencias a Intelisis? | Toda la Ola 12 | Arquitectura — es trabajo de base, no de desarrollo |
@@ -466,7 +472,7 @@ Sus estimaciones se sostienen. Las que dependen de conseguir definiciones son la
 
 | Bloque | Partidas | Estado |
 |---|---:|---|
-| Cerradas — habilitadores, E-01…E-04, E-07, E-08 y E-21 | 11 | ✅ desarrollo terminado |
+| Cerradas — habilitadores, E-01…E-04, E-07, E-08 y E-20 | 11 | ✅ desarrollo terminado |
 | **Bloque A** — sin conexión a SAP | 43 | 🎯 frente activo |
 | **Bloque B** — mixtos SAP | 4 | tras cerrar el bloque A |
 
