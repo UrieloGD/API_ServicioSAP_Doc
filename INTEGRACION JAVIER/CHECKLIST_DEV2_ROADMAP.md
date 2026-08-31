@@ -151,10 +151,10 @@ Tres hallazgos que Dev 3 dejó verificados sobre el legado y conviene no redescu
 
 Mismo criterio de riesgo que en Dev 3: más APIs por endpoint significa más formas de quedar a medias. Se ataca después de agotar los Sprints 2–3.
 
-- [ ] ⏳ **S4-01** `order/generateNewStorepickupCode/{idEcommerce}` — actualiza `TrWDM0285_CteRecoge`, tabla que Dev 3 crea en SIGMAVI. **Coordinar con Dev 3**
+- [ ] ⏳ **S4-01** `order/generateNewStorepickupCode/{idEcommerce}` — actualiza `TrWDM0285_CteRecoge`(BPRecogePedidos), tabla que Dev 3 crea en SIGMAVI. **Coordinar con Dev 3**
 - [ ] **S4-02** `customerService/obtenerCreditos` — venta por SD36 y artículos ya resueltos. Falta definir de dónde sale el importe de `TarjetaSerieMovMAVI`
 - [ ] **S4-03** `order/estimated-delivery/{ecommerceId}` — SD36 y `ZSRV_SALESDOC_ADDRCHANGE`. Ojo: en SAP designaron la guía como el *tracking*, y el tracking real se desconoce
-- [ ] **S4-04** `order/createStorepickupCode/{idEcommerce}/{idOrder}` — cruza `TrWDM0285_CteRecoge`, `Venta` (SD36), `Cte` (BP05), `VentaEntrega` y `EcommerceDetPedidos`. **Coordinar con Dev 3**, que crea la tabla en SIGMAVI
+- [ ] **S4-04** `order/createStorepickupCode/{idEcommerce}/{idOrder}` — cruza `TrWDM0285_CteRecoge` (BPRecogePedidos) en SigMavi, `Venta` (SD36), `Cte` (BP05), `VentaEntrega` (PartnerAddress) y `EcommerceDetPedidos` (SD36). **Coordinar con Dev 3**, que crea la tabla en SIGMAVI
 - [ ] **S4-05** `order/getOrderInfoAndSet/{incrementId}` — consulta Magento, valida estatus en SD36 y, si procede, genera pedido SD01
 
 > **S4-01 y S4-04 comparten la misma tabla de SIGMAVI** (`TrWDM0285_CteRecoge`) — conviene resolverlos juntos con Dev 3.
