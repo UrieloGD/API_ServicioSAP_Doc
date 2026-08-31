@@ -97,10 +97,15 @@ ya puedes pasar a recogerlo"* a *"comparte esta clave con el vendedor en sucursa
 | Hoy, en Intelisis | Equivalente | Estado |
 |---|---|---|
 | `TrWDM0285_CteRecoge` | **`BpRecogePedidos`** en SIGMAVI | ✅ **Ya existe** — `MaviSAP: Tables\BpRecogePedidos.sql`, Miguel Angel Aguilar Marín, 28/04/2025 |
-| `eCommerceDetPedidos` | **`EcommerceDetPedidos`** en SIGMAVI | ✅ **Ya existe** — `MaviSAP: Tables\CREATE TABLE EcommerceDetPedidos.sql`, y trae columna `RecogerEnSucursal BIT` |
-| `Venta` | SAP, wrapper **SD36** | ✅ `SalesMethods.CheckDocumentExistsSD36Async` |
+| `eCommerceDetPedidos` | **SD36** — las partidas del documento de ventas | ✅ `SalesMethods.CheckDocumentExistsSD36Async`, que ya pide `$expand=to_salesdoc_items` |
+| `Venta` | SAP, wrapper **SD36** | ✅ mismo wrapper |
 | `Cte` | SAP, wrapper **BP05** | ✅ `partner/client` |
-| `VentaEntrega` | SAP, entrega | 🔴 **Sin wrapper identificado** — es de Dev 1 |
+| `VentaEntrega` | **API de direcciones** | ✅ `DeliveryAddressMethods.GetSalesDocumentAddressAsync` — `partneraddress/salesdoc/{sdDoc}/role/{partnRole}` |
+
+> ℹ️ **La tabla `EcommerceDetPedidos` de SIGMAVI no es el equivalente**, aunque exista
+> (`MaviSAP: Tables\CREATE TABLE EcommerceDetPedidos.sql`, con columna `RecogerEnSucursal
+> BIT`). Es el reflejo local que escribe el flujo de órdenes y del que se sirve
+> `SpCodigoRecogeSucursal`. La fuente para este flujo es **SD36**. Decidido el 31-ago.
 
 `BpRecogePedidos` tiene exactamente las columnas que el flujo usa: `IdEcommerce`, `Nombre`,
 `Correo`, `Telefono`, `ClaveVenta`.
@@ -113,7 +118,7 @@ ya puedes pasar a recogerlo"* a *"comparte esta clave con el vendedor en sucursa
 
 | Hoy | Equivalente | Estado |
 |---|---|---|
-| `SpWDM0285_CteRecoge` — escribe la fila, 5 parámetros | ninguno | 🔴 **Falta.** No está en `MaviSAP\StoreProcedure`; hay que sacar su definición de Intelisis |
+| `SpWDM0285_CteRecoge` — escribe la fila, 5 parámetros | **su lógica pasa a C#** | ✅ **Resuelto.** Es un `INSERT` pelado, sin lógica; se escribe en línea donde hoy se le llama. Ver [[PLAN_RECOGER_EN_SUCURSAL]] |
 | consulta de datos para el correo | **`SpCodigoRecogeSucursal`** | ✅ **Ya existe** — `MaviSAP: StoreProcedure\SpCodigoRecogeSucursal.sql`, Miguel Marín, 16/05/2025 |
 
 > 📌 **`SpCodigoRecogeSucursal` ya define el patrón de la migración.** No consulta Intelisis:
@@ -130,10 +135,10 @@ ya puedes pasar a recogerlo"* a *"comparte esta clave con el vendedor en sucursa
 
 | Método | Qué consulta | Después de migrar |
 |---|---|---|
-| `GetDatosCte` | `Venta` + `Cte` + `VentaEntrega` + `EcommerceDetPedidos` | SD36 + BP05 + entrega, y `EcommerceDetPedidos` local |
-| `GetDatosCteCorreo` | `Venta` + `TrWDM0285_CteRecoge` | **`SpCodigoRecogeSucursal`**, ya resuelto |
-| `OrderId` | `ecommercedetpedidos` | tabla local de SIGMAVI |
-| artículos del correo | `eCommerceDetPedidos` | tabla local de SIGMAVI |
+| `GetDatosCte` | `Venta` + `Cte` + `VentaEntrega` + `EcommerceDetPedidos` | **SD36** (documento y UEN) + **BP05** (nombre y correo) + **API de direcciones** (teléfono) |
+| `GetDatosCteCorreo` | `Venta` + `TrWDM0285_CteRecoge` | **`SpCodigoRecogeSucursal`** — ver el hueco del UEN en el plan |
+| `OrderId` | `ecommercedetpedidos` | **SD36**, `to_salesdoc_items` |
+| artículos del correo | `eCommerceDetPedidos` | **SD36**, `to_salesdoc_items` |
 | `ValidaDuplicidadIdEcommerce` | cuenta filas de la tabla | `BpRecogePedidos` |
 | `GetCodigoDuplicado` | cuenta claves repetidas | `BpRecogePedidos` |
 

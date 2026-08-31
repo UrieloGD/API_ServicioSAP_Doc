@@ -50,6 +50,7 @@ Cuando una partida es una pieza de algo más grande, el flujo entero va aparte:
 | Flujo | Cubre | Partidas |
 |---|---|---|
 | [[FLUJO_RECOGER_EN_SUCURSAL]] | los seis procesos del código de recogida, sus tablas y equivalencias en SIGMAVI y SAP | E-15 y cinco partidas de Dev 2 |
+| [[PLAN_RECOGER_EN_SUCURSAL]] | qué se construye para cada rama, y el análisis de `SpCodigoRecogeSucursal` | idem |
 | [[FLUJO_GETAPIKEY]] | obtención de la llave de Multipagos | E-10 |
 
 ## Los dos patrones de la DMZ, uno al lado del otro
