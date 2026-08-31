@@ -36,7 +36,7 @@ Estos no traen número de APIs en el archivo maestro, así que **no se pueden or
 - [ ] ⏳ **`prospecto/rfc`** — falta definir si vive en SAP o en SIGMAVI
 - [ ] ⏳ **`customer/wallet/getCuentaC/{ordenCompra}`** — SD36
 - [ ] ⏳ **`company/wholesale-customer/{wholesaleAccount}`** — BP05
-- [ ] ⏳ **`order/generateNewStorepickupCode/{idEcommerce}`** — actualiza `TrWDM0285_CteRecoge`, tabla que Dev 3 crea en SIGMAVI. **Coordinar con Dev 3**
+- [ ] ⏳ **`order/generateNewStorepickupCode/{idEcommerce}`** — actualiza la tabla de recoger en sucursal, que en SIGMAVI ya existe como **`BpRecogePedidos`**. **Coordinar con Dev 3**
 - [ ] ⏳ **`order/checkOpenpay`** — job del servidor LAN. Toca SQLite e Intelisis
 
 > 💡 `order/validateCredit` es el candidato más probable a resolverse en horas y no en días: si la ficha acierta, es reapuntar una ruta a un método ya migrado. Vale la pena mirarlo primero.
@@ -142,11 +142,17 @@ Tres hallazgos que Dev 3 dejó verificados sobre el legado y conviene no redescu
 
 Cuatro endpoints de esta lista tocan tablas que **Dev 3 crea en SIGMAVI**. Dev 2 no debe programarlos contra Intelisis ni crear la tabla por su cuenta: da un verde que no significa nada.
 
+> 📌 **Corregido el 31 ago: la tabla de recoger en sucursal ya existe y se llama `BpRecogePedidos`.** El legado la conoce como `TrWDM0285_CteRecoge`; el equivalente en SIGMAVI está en `MaviSAP: Tables\BpRecogePedidos.sql` desde abril de 2025, con las mismas columnas. Dev 3 no la crea, ya la usa: E-15 `order/GetPickUpCode` quedó programado contra ese nombre el 31 ago.
+>
+> ⚠️ **Hay un tercer escritor que no estaba listado:** `crearPrimerCodigoRecogerSucbanktransfer`, del flujo de transferencia bancaria, añadido el 20 ago con el work item 8600 y llamado desde `OrderMethods.cs:695`. Escribe la misma tabla por el procedimiento `SpWDM0285_CteRecoge`, **que no está en `MaviSAP\StoreProcedure`** y habrá que sacar de Intelisis.
+>
+> 🔢 **Cuidado con `Telefono`:** en `BpRecogePedidos` es `BIGINT`, mientras el legado le pasa `VarChar` tras quitarle los no-dígitos con un `Regex`. Afecta a quien migre los escritores, no a la lectura.
+
 | Endpoint de Dev 2 | Depende de |
 |---|---|
 | `credit/getPlazos` | `CondicionesCredVtaLinea` en SIGMAVI |
-| `order/createStorepickupCode/...` | `TrWDM0285_CteRecoge` en SIGMAVI |
-| `order/generateNewStorepickupCode/...` | `TrWDM0285_CteRecoge` en SIGMAVI |
+| `order/createStorepickupCode/...` | `BpRecogePedidos` en SIGMAVI — **ya existe**, no hay que crearla |
+| `order/generateNewStorepickupCode/...` | `BpRecogePedidos` en SIGMAVI — **ya existe**, no hay que crearla |
 | `customer/wallet/getMinimumCostToRedeem` | Dos tablas por definir, candidatas a SIGMAVI |
 
 ---
