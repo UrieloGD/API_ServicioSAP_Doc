@@ -81,8 +81,8 @@ Este Sprint **no lleva checklist de endpoints**. Corresponde a la fase de descub
 
 Endpoints que resuelven contra BP05, wrapper ya construido por Dev 1, más las dos partidas mixtas (SIGMAVI/Dev 3) que se unifican aquí.
 
-- [ ] ⏳ **S2-01** `customerService/LoginClienteCredito` — BP05
-- [ ] ⏳ **S2-02** `customerService/LoginClienteCreditoFechaN` — BP05
+- [ ] ⏳ **S2-01** `customerService/LoginClienteCredito` — BP05 (En espera hasta que se tenga un cliente de Crédito para pruebas)
+- [ ] ⏳ **S2-02** `customerService/LoginClienteCreditoFechaN` — BP05 (En espera hasta que se tenga un cliente de Crédito para pruebas)
 - [x] ✅ **S2-03** `company/wholesale-customer/{wholesaleAccount}` — BP05
   - *Completado el 26/08/2026. Orquestación local 100% probada. Se ajustó el Regex de DMZ para admitir cuentas numéricas SAP (ej. 1500008152) e IDs legados, y se transformó la petición a POST hacia el nuevo backend (ServicioSAP) que consume el wrapper BP05 de forma asíncrona.*
 - [x] ✅ **S2-04** `credit/getPlazos` — SIGMAVI `CondicionesCredVtaLinea` + SAP SD40. **Mixto: Dev 3 entrega SIGMAVI**
@@ -91,8 +91,7 @@ Endpoints que resuelven contra BP05, wrapper ya construido por Dev 1, más las d
 - [x] ✅ **S2-05:** `customerService/unirCuenta` — BP05 -> `ZID_MAGENTO` (API Actualización de cliente), BP02
 - [x] ✅ **S2-06:** `customerService/validarCliente` — BP05 (Enmascaramiento de Nombres + Validación `ZidMagento`)
 - [ ] **S2-07** `prospecto/recuperarcuenta` — BP05
-- [x] ✅ **S2-08** `recommender/getRecommender` — BP05; falta obtener `znipventa` y confirmar si la API lo expone
-          **** ENd Point Deprecado.
+- [x] ✅ **S2-08** `recommender/getRecommender` — BP05; falta obtener `znipventa` y confirmar si la API lo expone **Endpoint Deprecado**
 - [ ] **S2-09** `customer/wallet/getMinimumCostToRedeem` — configuracionescatalgo(fasAPI), SD52
 
 > ⚠️ **S2-04 es el único punto de este Sprint con dependencia externa** (Dev 3 / SIGMAVI). El resto se puede terminar y probar de principio a fin sin esperar a nadie.
@@ -104,12 +103,12 @@ Endpoints que resuelven contra BP05, wrapper ya construido por Dev 1, más las d
 Mismo criterio de riesgo que en Dev 3: más APIs por endpoint significa más formas de quedar a medias. Se ataca después de agotar el Sprint 2.
 
 - [ ] ⏳ **S3-01** `order/generateNewStorepickupCode/{idEcommerce}` — actualiza `TrWDM0285_CteRecoge`(BPRecogePedidos), tabla que Dev 3 crea en SIGMAVI. **Coordinar con Dev 3**
-- [ ] **S3-02** `customerService/obtenerCreditos` — venta por SD36 y artículos ya resueltos. (La tabla `TarjetaSerieMovMAVI` ya no existirá y no se utilizará más).
-- [ ] **S3-03** `order/estimated-delivery/{ecommerceId}` — SD36 y `ZSRV_SALESDOC_ADDRCHANGE`. Ojo: en SAP designaron la guía como el *tracking*, y el tracking real se desconoce
-- [ ] **S3-04** `order/createStorepickupCode/{idEcommerce}/{idOrder}` — cruza `TrWDM0285_CteRecoge` (BPRecogePedidos) en SigMavi, `Venta` (SD36), `Cte` (BP05), `VentaEntrega` (PartnerAddress) y `EcommerceDetPedidos` (SD36). **Coordinar con Dev 3**, que crea la tabla en SIGMAVI
+- [ ] **S3-02** `order/createStorepickupCode/{idEcommerce}/{idOrder}` — cruza `TrWDM0285_CteRecoge` (BPRecogePedidos) en SigMavi, `Venta` (SD36), `Cte` (BP05), `VentaEntrega` (PartnerAddress) y `EcommerceDetPedidos` (SD36). **Coordinar con Dev 3**, que crea la tabla en SIGMAVI
+- [ ] **S3-03** `customerService/obtenerCreditos` — venta por SD36 y artículos ya resueltos. (La tabla `TarjetaSerieMovMAVI` ya no existirá y no se utilizará más).
+- [ ] **S3-04** `order/estimated-delivery/{ecommerceId}` — SD36 y `ZSRV_SALESDOC_ADDRCHANGE`. Ojo: en SAP designaron la guía como el *tracking*, y el tracking real se desconoce
 - [ ] **S3-05** `order/getOrderInfoAndSet/{incrementId}` — consulta Magento, valida estatus en SD36 y, si procede, genera pedido SD01
 
-> **S3-01 y S3-04 comparten la misma tabla de SIGMAVI** (`TrWDM0285_CteRecoge`) — conviene resolverlos juntos con Dev 3.
+> **S3-01 y S3-02 comparten la misma tabla de SIGMAVI** (`TrWDM0285_CteRecoge`) — conviene resolverlos juntos con Dev 3.
 
 ---
 
@@ -228,7 +227,7 @@ Cuatro endpoints de esta lista tocan tablas que **Dev 3 crea en SIGMAVI**. Dev 2
 | ID | Endpoint de Dev 2 | Depende de |
 |---|---|---|
 | **S2-04** | `credit/getPlazos` | `CondicionesCredVtaLinea` en SIGMAVI |
-| **S3-04** | `order/createStorepickupCode/...` | `TrWDM0285_CteRecoge` (BPRecogePedidos) en SigMavi |
+| **S3-02** | `order/createStorepickupCode/...` | `TrWDM0285_CteRecoge` (BPRecogePedidos) en SigMavi |
 | **S3-01** | `order/generateNewStorepickupCode/...` | `TrWDM0285_CteRecoge`(BPRecogePedidos) |
 
 > Del lado de Dev 3, las partidas espejo son **E-16** (`getPlazos`), **E-19** (`GetPickUpCode`) y **E-20** (`setRecommenderList`, relacionada con **S2-08**). Conviene acordar el orden de entrega antes de arrancar cualquiera de las dos puntas, no durante.
