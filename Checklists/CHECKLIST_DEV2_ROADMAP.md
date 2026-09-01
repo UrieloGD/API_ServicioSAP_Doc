@@ -90,7 +90,8 @@ Endpoints que resuelven contra BP05, wrapper ya construido por Dev 1, más las d
   - **⚠️ NOTA PENDIENTE (Confirmación SAP):** Se detectó que SD40 (`Zdiasgracia`) omite el primer mes en su conteo en relación con Intelisis (122 vs 153 para Diferido, 0 vs 31 para Inmediato). A la espera de que el PM y SAP confirmen si esto es un error de configuración o la nueva regla oficial. Módulo cerrado por ahora.
 - [x] ✅ **S2-05:** `customerService/unirCuenta` — BP05 -> `ZID_MAGENTO` (API Actualización de cliente), BP02
 - [x] ✅ **S2-06:** `customerService/validarCliente` — BP05 (Enmascaramiento de Nombres + Validación `ZidMagento`)
-- [ ] **S2-07** `prospecto/recuperarcuenta` — BP05
+- [x] ✅ **S2-07** `prospecto/recuperarcuenta` — BP05 
+      Para probar el estatus 1 se requiere conocer los datos personales y RFC de un Business Partner existente en SAP.
 - [x] ✅ **S2-08** `recommender/getRecommender` — BP05; falta obtener `znipventa` y confirmar si la API lo expone **Endpoint Deprecado**
 - [ ] **S2-09** `customer/wallet/getMinimumCostToRedeem` — configuracionescatalgo(fasAPI), SD52
 

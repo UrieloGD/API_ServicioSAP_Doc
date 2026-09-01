@@ -144,3 +144,22 @@ curl --request POST \
   --header 'content-type: application/json' \
   --data '{"id_cliente_intelisis":"1500007539","id_cliente_magento":"999123"}'
 ```
+
+### 2026-08-31: S2-07 prospecto/recuperarcuenta`n- **Estado**: Migrado a S/4HANA (BP02 / ZB_DATOS_CLIENTE).
+- **Detalles**: 
+  - Se creó ProspectoController en ServicioSAP.
+  - Se implementó la búsqueda de clientes por nombre, apellidos, fecha de nacimiento y RFC utilizando la vista CDS ZB_DATOS_CLIENTE a través del filtro OData $filter.
+  - Se incluyó la validación para enviar la fecha en formato datetime'YYYY-MM-DDT00:00:00' compatible con OData v2.
+  - Se adaptó la misma lógica de Intelisis para remover acentos (QuitarAcentos) en las búsquedas y para ofuscar los nombres encontrados (ocultarLetrasNombres).
+  - Se devuelve estatus: 1 si hay match (con la cuenta y nombre ofuscado) y estatus: 4 si los datos son inválidos o no existe el cliente.
+
+**Prueba Exitosa (DMZ):**
+``bash
+curl --request POST \
+  --url https://kdll3fhcyo-lan.grupomavi.com/api/prospecto/recuperarcuenta \
+  --header 'Authorization: Bearer <TU_TOKEN_DMZ>' \
+  --header 'content-type: application/json' \
+  --data '{"nombre":"JUAN","apellidoPaterno":"PEREZ","apellidoMaterno":"GARCIA","fechaNacimiento":"1990-01-01","rfc":"PEGJ900101XYZ"}'
+``
+*Nota: Para probar el estatus 1 se requiere conocer los datos personales y RFC de un Business Partner existente en SAP.*
+
