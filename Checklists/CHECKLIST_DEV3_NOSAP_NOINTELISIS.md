@@ -408,10 +408,21 @@ Cinco partidas tienen a los dos equipos dentro. Conviene acordar el orden antes 
 | ----------------------------- | ------------------------------------------ | ---------------------------------------------------------------------------- |
 | **E-48** `codigoPromocion`    | `VentaCupon` en SIGMAVI                    | SuccessFactors + BP05                                                        |
 | **E-49** `getPlazos`          | `CondicionesCredVtaLinea` en SIGMAVI       | TZ01                                                                         |
-| **E-15** `GetPickUpCode`      | Nada: `BpRecogePedidos` ya existe en SIGMAVI | Mover los escritores — `createStorepickupCode`, `generateNewStorepickupCode` y el nuevo `crearPrimerCodigoRecogerSucbanktransfer` |
+| **E-15** `GetPickUpCode`      | **Los cuatro métodos auxiliares de `BpRecogePedidos`** — ver abajo. La tabla ya existe | Mover los escritores — `createStorepickupCode`, `generateNewStorepickupCode` y el nuevo `crearPrimerCodigoRecogerSucbanktransfer` |
 | **M-01…M-14**                 | La rama que va a Android, SQLite o SIGMAVI | La rama que va a SAP                                                         |
 
 > ⚠️ **Dev 2 no debe crear estas tablas por su cuenta ni programar contra Intelisis mientras tanto.** Es la vía más rápida a un verde que no significa nada.
+
+> 📌 **Los cuatro auxiliares de recoger en sucursal son entrega de Dev 3, y no pertenecen a la Ola 7.** Sirven a los escritores, que son partidas de Dev 2, pero tocan `BpRecogePedidos` en SIGMAVI y por la regla de reparto los escribe Dev 3. Se anotan aquí para que el trabajo quede registrado sin ampliar E-15, que sigue siendo solo la lectura.
+>
+> | Método en `StorePickupMethods` | Sustituye a | Qué hace |
+> |---|---|---|
+> | `ExisteRecogeAsync` | `ValidaDuplicidadIdEcommerce` | `COUNT` por `IdEcommerce` |
+> | `ExisteClaveAsync` | `GetCodigoDuplicado` | `COUNT` por `ClaveVenta` |
+> | `ActualizarClaveAsync` | `UpdatePickUpCode` | `UPDATE` de la clave |
+> | `GenerarClave` | `GenerarIdRecogerEnSucursal` | CRC + reintentos, sin base |
+>
+> El plan completo, con el `INSERT` que sustituye al SP y el orden de ejecución, está en [[PLAN_RECOGER_EN_SUCURSAL]].
 
 ---
 
