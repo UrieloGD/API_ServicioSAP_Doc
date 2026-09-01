@@ -116,7 +116,17 @@ Es decir: la conmutación está escrita pero no está en vigor. Y aun cuando se 
 
 Escribe en dos tablas de `ServicioAndroid`:
 
-1. **`VTASDCodigoVerificacioneCommerce`** — solo si no existe ya un `IdRef` para ese par `Cliente`/`IdCarrito`. Inserta `Codigo = LEFT(NEWID(),8)`, `FechaExpira = GETDATE() + 2 minutos`, `Estatus = 1`.
+1. **`VTASDCodigoVerificacioneCommerce`** — solo si no existe ya un `IdRef` para ese par `Cliente`/`IdCarrito`. Inserta `FechaExpira = GETDATE() + 2 minutos`, `Estatus = 1` y el `Codigo`, que lo genera SQL Server:
+
+   ```sql
+   RIGHT('000000' + CAST(ABS(CHECKSUM(NEWID())) % 1000000 AS VARCHAR(6)), 6)
+   ```
+
+   **Seis dígitos numéricos** con ceros a la izquierda.
+
+> 🔴 **Corregido el 31-ago: el formato del código había divergido.** ServicioSAP insertaba `LEFT(NEWID(), 8)` —ocho caracteres alfanuméricos— porque así estaba el legado cuando se migró E-01. La LAN lo cambió a seis dígitos numéricos el 24 ago (`970d5b1`, *"SmsNewNumber Alfanumerico a Numerico 6 digitos"*), después de nuestra migración. Se alinea antes de desplegar; de haber salido así, el cliente habría recibido un código con letras donde la pantalla espera números.
+>
+> Conviene revisar si hay más partidas ya migradas donde el legado se movió después.
 2. **`TcAAEA00030_EnvioMensajes`** — la fila que el módem consume: `IdRegistro` = el `IdRef` anterior, `EstatusEnvio = 1`, `Telefono` ya normalizado.
 
 ## Las dos ramas del método
