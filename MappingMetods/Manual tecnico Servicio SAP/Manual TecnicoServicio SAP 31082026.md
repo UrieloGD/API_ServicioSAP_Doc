@@ -12,18 +12,18 @@
 
 En la siguiente tabla se mapean las constantes y orígenes de datos utilizados en la capa de consumo hacia su destino real:
 
-| Constante / Configuración        | Destino Real (URL / Ruta)                                     |
-| :------------------------------- | :------------------------------------------------------------ |
-| **S/4HANA (OData)**              | `https://vhmvods4ci.sap.svrwes4h.com:44300/sap/opu/odata/sap` |
-| **`URL_ANDROID_API`**            | `https://android-api.mavi.fun`                                |
-| **`URL_BP_API`**                 | `https://businesspartner-api.mavi.fun`                        |
-| **`URL_SALES_DISTRIBUTION_API`** | `https://salesanddistribution-api.mavi.fun`                   |
-| **`VETA_URL_LIBERADOR`**         | `http://172.16.215.51:3026/api/venta`                         |
-| **`AwsBaseUrl`**                 | `https://54wblyc2h6.execute-api.us-east-1.amazonaws.com/`     |
-| **`SQLITE_DB_PATH`**             | `C:\inetpub\wwwroot\sap\`                                     |
-| **`IMAGES_CREDIT_PATH`**         | `C:\inetpub\wwwroot\sap\images\credit`                        |
-| **Servidor (IIS)**               | `172.16.215.64` (Windows Server On-Premise)                   |
-| **Ambiente (Mandante)**          | `110` (QA - `SAP_STAGE`)                                      |
+| Constante / Configuración | Destino Real (URL / Ruta) |
+| :--- | :--- |
+| **S/4HANA (OData)** | `https://vhmvods4ci.sap.svrwes4h.com:44300/sap/opu/odata/sap` |
+| **`URL_ANDROID_API`** | `https://android-api.mavi.fun` |
+| **`URL_BP_API`** | `https://businesspartner-api.mavi.fun` |
+| **`URL_SALES_DISTRIBUTION_API`**| `https://salesanddistribution-api.mavi.fun` |
+| **`VETA_URL_LIBERADOR`** | `http://172.16.215.51:3026/api/venta` |
+| **`AwsBaseUrl`** | `https://54wblyc2h6.execute-api.us-east-1.amazonaws.com/` |
+| **`SQLITE_DB_PATH`** | `C:\inetpub\wwwroot\sap\` |
+| **`IMAGES_CREDIT_PATH`** | `C:\inetpub\wwwroot\sap\images\credit` |
+| **Servidor (IIS)** | `172.16.215.64` (Windows Server On-Premise) |
+| **Ambiente (Mandante)** | `110` (QA - `SAP_STAGE`) |
 
 > [!NOTE]
 > **Arquitectura y Trusted Hosts (Seguridad DMZ)**
@@ -55,18 +55,18 @@ pie title Distribución del Estado Global de Endpoints (149 Endpoints)
 ```mermaid
 flowchart TD
     subgraph DMZ ["DMZ Magento"]
-        A["Magento Frontend <br> API REST"] -->|curl.PostSAP| B["Bridge HTTP Client"]
+        A["Magento Frontend / API REST"] -->|curl.PostSAP| B["Bridge HTTP Client"]
     end
 
-    subgraph Backend ["ServicioSAP <br> (.NET 4.7.2)"]
-        B -->|HttpPost| C["Controllers <br> (Order, BP, <br> Abonos, Product)"]
-        C --> D["Methods Layer <br> (Async / OData First)"]
+    subgraph Backend ["ServicioSAP (.NET 4.7.2)"]
+        B -->|HttpPost| C["Controllers (Order, BP, Abonos, Product)"]
+        C --> D["Methods Layer (Async / OData First)"]
     end
 
     subgraph Integration ["SAP S/4HANA & Subservicios"]
-        D -->|OAuth 2.0 <br> CSRF| E["S/4HANA OData <br> (SD01, BP05, EX01, <br> TZ01, DIM11)"]
-        D -->|Entity Framework| F[("SQLite <br> (openpay_orders, <br> servicio_guias)")]
-        D -->|SqlClient| G[("SQL Server <br> Android DB <br> (TcAAEA00030 SMS)")]
+        D -->|OAuth 2.0 / CSRF| E["S/4HANA OData (SD01, BP05, EX01, TZ01, DIM11)"]
+        D -->|Entity Framework| F[("SQLite (openpay_orders, servicio_guias)")]
+        D -->|SqlClient| G[("SQL Server Android DB (TcAAEA00030 SMS)")]
     end
 ```
 
@@ -296,56 +296,56 @@ Para garantizar un alto rendimiento en producción (*evitando Thread Pool Starva
 
 ### 1. 🎮 Auditoría de Controladores (`ServicioSAP/Controllers/`)
 
-| Controlador                        | Endpoint                                     | Firma HTTP C#                   | Estatus Async                                          | Método Interno Invocado (`Methods/`)                          |
-| :--------------------------------- | :------------------------------------------- | :------------------------------ | :----------------------------------------------------- | :------------------------------------------------------------ |
-| **`BusinessPartnerController.cs`** | `GET /partner/client/{clientId}`             | `async Task<IHttpActionResult>` | 🟢 **ASYNC**                                           | `bpMethods.GetClientAsync(...)`                               |
-|                                    | `POST /partner/client`                       | `async Task<IHttpActionResult>` | 🟢 **ASYNC**                                           | `bpMethods.SubmitClientInfoAsync(...)`                        |
-|                                    | `PATCH /partner/client`                      | `async Task<IHttpActionResult>` | 🟢 **ASYNC**                                           | `bpMethods.SubmitClientInfoAsync(...)`                        |
-|                                    | `PATCH /partner/client/unircuenta`           | `async Task<IHttpActionResult>` | 🟢 **ASYNC**                                           | `bpMethods.LinkMagentoAccountAsync(...)`                      |
-|                                    | `GET /partner/client/filter/{f}`             | `async Task<IHttpActionResult>` | 🟢 **ASYNC**                                           | `bpMethods.GetFilterClientsAsync(...)`                        |
-|                                    | `GET /partner/client/ma/{clientId}`          | `async Task<IHttpActionResult>` | 🟢 **ASYNC**                                           | `bpMethods.GetClientMaAsync(...)`                             |
-|                                    | `GET /partner/successfactor/employee/{id}`   | `async Task<IHttpActionResult>` | 🟢 **ASYNC**                                           | `bpMethods.GetSuccessFactorEmployeeAsync(...)`                |
-|                                    | `GET /partner/ventadist/client/{id}`         | `async Task<IHttpActionResult>` | 🟢 **ASYNC**                                           | `bpMethods.GetCustomerSalesChannelsAsync(...)`                |
-|                                    | `GET /partner/ConsultaAnexos/{v}`            | `async Task<IHttpActionResult>` | 🟢 **ASYNC**                                           | `bpMethods.GetConsultaAnexosAsync(...)`                       |
-|                                    | `POST /partner/testnew`                      | `async Task<IHttpActionResult>` | 🔴 **SÍNCRONO**                                        | `bpMethods.TestCreateClientRaw(...)` *(vía Task.Wait)*        |
-| **`PartnerAddressController.cs`**  | `GET /partneraddress/partner/{bpId}`         | `async Task<IHttpActionResult>` | 🟢 **ASYNC**                                           | `deliveryMethods.GetBusinessPartnerAddressAsync(...)`         |
-|                                    | `POST /partneraddress/partner/{bpId}`        | `async Task<IHttpActionResult>` | 🟢 **ASYNC**                                           | `deliveryMethods.CreateBusinessPartnerAddressAsync(...)`      |
-|                                    | `PATCH /partneraddress/.../address/{id}`     | `async Task<IHttpActionResult>` | 🟢 **ASYNC**                                           | `deliveryMethods.UpdateBusinessPartnerAddressAsync(...)`      |
-|                                    | `PATCH /partneraddress/partner/phone`        | `async Task<IHttpActionResult>` | 🟢 **ASYNC**                                           | `deliveryMethods.UpdateAddressPhoneNumberAsync(...)`          |
-|                                    | `GET /partneraddress/salesdoc/{sd}/role/{r}` | `async Task<IHttpActionResult>` | 🟢 **ASYNC**                                           | `deliveryMethods.GetSalesDocumentAddressAsync(...)`           |
-|                                    | `POST /partneraddress/salesdoc`              | `async Task<IHttpActionResult>` | 🟢 **ASYNC**                                           | `deliveryMethods.ChangeSalesDocumentAddressAsync(...)`        |
-| **`AbonosController.cs`**          | `POST /credit/GetAccountDebts`               | `async Task<IHttpActionResult>` | 🟢 **ASYNC**                                           | `_abonoMethods.GetDocumentosNoCompensadosAsync(...)`          |
-|                                    | `POST /credit/getClienteFactura/{c}/{f}`     | `async Task<IHttpActionResult>` | 🟢 **ASYNC**                                           | `_abonoMethods.GetParcialidadesAsync(...)`                    |
-|                                    | `POST /credit/UpdateStatusPaymentNeko`       | `async Task<IHttpActionResult>` | 🟢 **ASYNC**                                           | `_abonoMethods.UpdatePaymentStatusNekoAsync(...)`             |
-|                                    | `POST /credit/ApplyPaymentNeko`              | `IHttpActionResult`             | 🔴 **SÍNCRONO**                                        | `_abonoMethods.ApplyPaymentIntentNeko(...)`                   |
-| **`CreditController.cs`**          | `POST /credit/SendSmsNewNumber`              | `async Task<IHttpActionResult>` | 🟢 **ASYNC**                                           | `CreditMethods.SendSmsNewNumberAsync(...)`                    |
-|                                    | `POST /credit/GetCreditAmounts`              | `async Task<IHttpActionResult>` | 🟢 **ASYNC**                                           | `CredilanaMethods.GetCredilanaInfoAsync(...)`                 |
-|                                    | `POST /credit/guardardocumento`              | `async Task<IHttpActionResult>` | 🟢 **ASYNC**                                           | `DocumentMethods.GuardarDocumentoAsync(...)`                  |
-|                                    | `POST /credit/SaveImagesProductosMx`         | `async Task<IHttpActionResult>` | 🟢 **ASYNC**                                           | `DocumentMethods.SaveImagesProductosMxAsync(...)`             |
-| **`SaleController.cs`**            | `POST /sale`                                 | `async Task<IHttpActionResult>` | 🟢 **ASYNC**                                           | `SalesMethods.InsertDocumentAsync(...)`                       |
-|                                    | `GET /sale/{documentId}`                     | `async Task<IHttpActionResult>` | 🟢 **ASYNC**                                           | `SalesMethods.GetDocumentByIdAsync(...)`                      |
-|                                    | `GET /sale/filter/{filters}`                 | `async Task<IHttpActionResult>` | 🟢 **ASYNC**                                           | `SalesMethods.GetFilterDocumentsAsync(...)`                   |
-| **`WalletCustomerController.cs`**  | `POST /customer/wallet/details`              | `async Task<IHttpActionResult>` | 🟢 **ASYNC**                                           | `walletMethods.GetCustomerWalletAsync(...)`                   |
-| **`ImagenController.cs`**          | `GET /ma/imagenes/optimizadas`               | `async Task<IHttpActionResult>` | 🟢 **ASYNC**                                           | `ImagenMethods.GetArticulosConImagenOptimizadaAsync(...)`     |
-|                                    | `GET /ma/imagenes/refresh`                   | `async Task<IHttpActionResult>` | 🟢 **ASYNC**                                           | `ImagenMethods.GetArticulosConImagenOptimizadaAsync(...)`     |
-| **`EtiquetasController.cs`**       | `GET /etiquetas`                             | `async Task<IHttpActionResult>` | 🟢 **ASYNC**                                           | `ProductMethods.GetEtiquetasAsync(...)`                       |
-| **`AccountController.cs`**         | `POST /account/bonus/async`                  | `async Task<IHttpActionResult>` | 🟢 **ASYNC**                                           | `accountMethods.GetBonusAsync(...)`                           |
-|                                    | `POST /account/bonus`                        | `IHttpActionResult`             | 🔴 **SÍNCRONO**                                        | `accountMethods.GetBonus(...)`                                |
-| **`OrderController.cs`**           | `POST /order/new`                            | `IHttpActionResult`             | 🔴 **SÍNCRONO**                                        | `orderMethods.SetOrder(...)`                                  |
-|                                    | `POST /order/setreturn`                      | `IHttpActionResult`             | 🔴 **SÍNCRONO**                                        | `orderMethods.BuilAdapterReturn(...)`                         |
-|                                    | `GET /order/validatecupon/{codigo}`          | `IHttpActionResult`             | 🔴 **SÍNCRONO**                                        | `orderMethods.HandlePromoCode(...)`                           |
-|                                    | `GET /order/checkDocument/{purchNoC}`        | `IHttpActionResult`             | 🔴 **SÍNCRONO**                                        | `SalesMethods.CheckDocumentExistsSD36Async` *(vía `.Result`)* |
-|                                    | `POST /order/cancelOrder` & `cancelInvoice`  | `IHttpActionResult`             | 🔴 **SÍNCRONO** *(puente `.GetAwaiter().GetResult()`)* | `ReverseGoodsIssueAsync` & `CancelInvoiceAsync`               |
-|                                    | `POST /order/getGuide`                       | `async Task<IHttpActionResult>` | 🟢 **ASYNC**                                           | `orderMethods.GetGuideWithNameAsync(...)`                     |
-| **`MovBitaController.cs`**         | `GET /movbita/events/{vbeln}`                | `async Task<IHttpActionResult>` | 🟢 **ASYNC**                                           | `movBitaMethods.GetMovBitaEventsAsync(...)`                   |
-| **`SepomexController.cs`**         | `GET /sepomex/validarcp`                     | `async Task<IHttpActionResult>` | 🟢 **ASYNC**                                           | `sepomexMethods.GetCodigosPostalesAsync(...)`                 |
-| **`EcommerceController.cs`**       | `GET /ecommerce/listado`                     | `IHttpActionResult`             | 🔴 **SÍNCRONO**                                        | `EcommerceMethods.CargarContextoProceso(...)`                 |
-| **`CustomersController.cs`**       | `POST /customer/setCustomerList`             | `async Task<IHttpActionResult>` | 🟢 **ASYNC**                                           | `CustomerMethods.blackwhitelistAsync(...)`                    |
-|                                    | `POST /customer/getCustomerList`             | `async Task<IHttpActionResult>` | 🟢 **ASYNC**                                           | `CustomerMethods.blackwhitelistAsync(...)`                    |
-|                                    | `POST /customer/deleteCustomerList`          | `async Task<IHttpActionResult>` | 🟢 **ASYNC**                                           | `CustomerMethods.blackwhitelistAsync(...)`                    |
-| **`ProductController.cs`**         | `GET /product/exportaart/{store}`            | `IHttpActionResult`             | 🔴 **SÍNCRONO**                                        | `EcommerceMethods.EjecutarProcesoCompleto(...)`               |
-|                                    | `GET /product/products` y 20 endpoints       | `IHttpActionResult`             | 🔴 **SÍNCRONO**                                        | `ProductMethods` (síncronos)                                  |
-| **`LoginController.cs`**           | `POST /login/auth`                           | `IHttpActionResult`             | 🔴 **SÍNCRONO**                                        | Verificación local de Salt + Hash                             |
+| Controlador | Endpoint | Firma HTTP C# | Estatus Async | Método Interno Invocado (`Methods/`) |
+| :--- | :--- | :--- | :--- | :--- |
+| **`BusinessPartnerController.cs`** | `GET /partner/client/{clientId}` | `async Task<IHttpActionResult>` | 🟢 **ASYNC** | `bpMethods.GetClientAsync(...)` |
+| | `POST /partner/client` | `async Task<IHttpActionResult>` | 🟢 **ASYNC** | `bpMethods.SubmitClientInfoAsync(...)` |
+| | `PATCH /partner/client` | `async Task<IHttpActionResult>` | 🟢 **ASYNC** | `bpMethods.SubmitClientInfoAsync(...)` |
+| | `PATCH /partner/client/unircuenta` | `async Task<IHttpActionResult>` | 🟢 **ASYNC** | `bpMethods.LinkMagentoAccountAsync(...)` |
+| | `GET /partner/client/filter/{f}` | `async Task<IHttpActionResult>` | 🟢 **ASYNC** | `bpMethods.GetFilterClientsAsync(...)` |
+| | `GET /partner/client/ma/{clientId}` | `async Task<IHttpActionResult>` | 🟢 **ASYNC** | `bpMethods.GetClientMaAsync(...)` |
+| | `GET /partner/successfactor/employee/{id}` | `async Task<IHttpActionResult>` | 🟢 **ASYNC** | `bpMethods.GetSuccessFactorEmployeeAsync(...)` |
+| | `GET /partner/ventadist/client/{id}` | `async Task<IHttpActionResult>` | 🟢 **ASYNC** | `bpMethods.GetCustomerSalesChannelsAsync(...)` |
+| | `GET /partner/ConsultaAnexos/{v}` | `async Task<IHttpActionResult>` | 🟢 **ASYNC** | `bpMethods.GetConsultaAnexosAsync(...)` |
+| | `POST /partner/testnew` | `async Task<IHttpActionResult>` | 🔴 **SÍNCRONO** | `bpMethods.TestCreateClientRaw(...)` *(vía Task.Wait)* |
+| **`PartnerAddressController.cs`** | `GET /partneraddress/partner/{bpId}` | `async Task<IHttpActionResult>` | 🟢 **ASYNC** | `deliveryMethods.GetBusinessPartnerAddressAsync(...)` |
+| | `POST /partneraddress/partner/{bpId}` | `async Task<IHttpActionResult>` | 🟢 **ASYNC** | `deliveryMethods.CreateBusinessPartnerAddressAsync(...)` |
+| | `PATCH /partneraddress/.../address/{id}` | `async Task<IHttpActionResult>` | 🟢 **ASYNC** | `deliveryMethods.UpdateBusinessPartnerAddressAsync(...)` |
+| | `PATCH /partneraddress/partner/phone` | `async Task<IHttpActionResult>` | 🟢 **ASYNC** | `deliveryMethods.UpdateAddressPhoneNumberAsync(...)` |
+| | `GET /partneraddress/salesdoc/{sd}/role/{r}` | `async Task<IHttpActionResult>` | 🟢 **ASYNC** | `deliveryMethods.GetSalesDocumentAddressAsync(...)` |
+| | `POST /partneraddress/salesdoc` | `async Task<IHttpActionResult>` | 🟢 **ASYNC** | `deliveryMethods.ChangeSalesDocumentAddressAsync(...)` |
+| **`AbonosController.cs`** | `POST /credit/GetAccountDebts` | `async Task<IHttpActionResult>` | 🟢 **ASYNC** | `_abonoMethods.GetDocumentosNoCompensadosAsync(...)` |
+| | `POST /credit/getClienteFactura/{c}/{f}` | `async Task<IHttpActionResult>` | 🟢 **ASYNC** | `_abonoMethods.GetParcialidadesAsync(...)` |
+| | `POST /credit/UpdateStatusPaymentNeko` | `async Task<IHttpActionResult>` | 🟢 **ASYNC** | `_abonoMethods.UpdatePaymentStatusNekoAsync(...)` |
+| | `POST /credit/ApplyPaymentNeko` | `IHttpActionResult` | 🔴 **SÍNCRONO** | `_abonoMethods.ApplyPaymentIntentNeko(...)` |
+| **`CreditController.cs`** | `POST /credit/SendSmsNewNumber` | `async Task<IHttpActionResult>` | 🟢 **ASYNC** | `CreditMethods.SendSmsNewNumberAsync(...)` |
+| | `POST /credit/GetCreditAmounts` | `async Task<IHttpActionResult>` | 🟢 **ASYNC** | `CredilanaMethods.GetCredilanaInfoAsync(...)` |
+| | `POST /credit/guardardocumento` | `async Task<IHttpActionResult>` | 🟢 **ASYNC** | `DocumentMethods.GuardarDocumentoAsync(...)` |
+| | `POST /credit/SaveImagesProductosMx` | `async Task<IHttpActionResult>` | 🟢 **ASYNC** | `DocumentMethods.SaveImagesProductosMxAsync(...)` |
+| **`SaleController.cs`** | `POST /sale` | `async Task<IHttpActionResult>` | 🟢 **ASYNC** | `SalesMethods.InsertDocumentAsync(...)` |
+| | `GET /sale/{documentId}` | `async Task<IHttpActionResult>` | 🟢 **ASYNC** | `SalesMethods.GetDocumentByIdAsync(...)` |
+| | `GET /sale/filter/{filters}` | `async Task<IHttpActionResult>` | 🟢 **ASYNC** | `SalesMethods.GetFilterDocumentsAsync(...)` |
+| **`WalletCustomerController.cs`** | `POST /customer/wallet/details` | `async Task<IHttpActionResult>` | 🟢 **ASYNC** | `walletMethods.GetCustomerWalletAsync(...)` |
+| **`ImagenController.cs`** | `GET /ma/imagenes/optimizadas` | `async Task<IHttpActionResult>` | 🟢 **ASYNC** | `ImagenMethods.GetArticulosConImagenOptimizadaAsync(...)` |
+| | `GET /ma/imagenes/refresh` | `async Task<IHttpActionResult>` | 🟢 **ASYNC** | `ImagenMethods.GetArticulosConImagenOptimizadaAsync(...)` |
+| **`EtiquetasController.cs`** | `GET /etiquetas` | `async Task<IHttpActionResult>` | 🟢 **ASYNC** | `ProductMethods.GetEtiquetasAsync(...)` |
+| **`AccountController.cs`** | `POST /account/bonus/async` | `async Task<IHttpActionResult>` | 🟢 **ASYNC** | `accountMethods.GetBonusAsync(...)` |
+| | `POST /account/bonus` | `IHttpActionResult` | 🔴 **SÍNCRONO** | `accountMethods.GetBonus(...)` |
+| **`OrderController.cs`** | `POST /order/new` | `IHttpActionResult` | 🔴 **SÍNCRONO** | `orderMethods.SetOrder(...)` |
+| | `POST /order/setreturn` | `IHttpActionResult` | 🔴 **SÍNCRONO** | `orderMethods.BuilAdapterReturn(...)` |
+| | `GET /order/validatecupon/{codigo}` | `IHttpActionResult` | 🔴 **SÍNCRONO** | `orderMethods.HandlePromoCode(...)` |
+| | `GET /order/checkDocument/{purchNoC}` | `IHttpActionResult` | 🔴 **SÍNCRONO** | `SalesMethods.CheckDocumentExistsSD36Async` *(vía `.Result`)* |
+| | `POST /order/cancelOrder` & `cancelInvoice` | `IHttpActionResult` | 🔴 **SÍNCRONO** *(puente `.GetAwaiter().GetResult()`)* | `ReverseGoodsIssueAsync` & `CancelInvoiceAsync` |
+| | `POST /order/getGuide` | `async Task<IHttpActionResult>` | 🟢 **ASYNC** | `orderMethods.GetGuideWithNameAsync(...)` |
+| **`MovBitaController.cs`** | `GET /movbita/events/{vbeln}` | `async Task<IHttpActionResult>` | 🟢 **ASYNC** | `movBitaMethods.GetMovBitaEventsAsync(...)` |
+| **`SepomexController.cs`** | `GET /sepomex/validarcp` | `async Task<IHttpActionResult>` | 🟢 **ASYNC** | `sepomexMethods.GetCodigosPostalesAsync(...)` |
+| **`EcommerceController.cs`** | `GET /ecommerce/listado` | `IHttpActionResult` | 🔴 **SÍNCRONO** | `EcommerceMethods.CargarContextoProceso(...)` |
+| **`CustomersController.cs`** | `POST /customer/setCustomerList` | `async Task<IHttpActionResult>` | 🟢 **ASYNC** | `CustomerMethods.blackwhitelistAsync(...)` |
+| | `POST /customer/getCustomerList` | `async Task<IHttpActionResult>` | 🟢 **ASYNC** | `CustomerMethods.blackwhitelistAsync(...)` |
+| | `POST /customer/deleteCustomerList` | `async Task<IHttpActionResult>` | 🟢 **ASYNC** | `CustomerMethods.blackwhitelistAsync(...)` |
+| **`ProductController.cs`** | `GET /product/exportaart/{store}` | `IHttpActionResult` | 🔴 **SÍNCRONO** | `EcommerceMethods.EjecutarProcesoCompleto(...)` |
+| | `GET /product/products` y 20 endpoints | `IHttpActionResult` | 🔴 **SÍNCRONO** | `ProductMethods` (síncronos) |
+| **`LoginController.cs`** | `POST /login/auth` | `IHttpActionResult` | 🔴 **SÍNCRONO** | Verificación local de Salt + Hash |
 
 ---
 
