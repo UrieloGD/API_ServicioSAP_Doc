@@ -81,8 +81,10 @@ Este Sprint **no lleva checklist de endpoints**. Corresponde a la fase de descub
 
 Endpoints que resuelven contra BP05, wrapper ya construido por Dev 1, más las dos partidas mixtas (SIGMAVI/Dev 3) que se unifican aquí.
 
-- [ ] ⏳ **S2-01** `customerService/LoginClienteCredito` — BP05 (En espera hasta que se tenga un cliente de Crédito para pruebas)
-- [ ] ⏳ **S2-02** `customerService/LoginClienteCreditoFechaN` — BP05 (En espera hasta que se tenga un cliente de Crédito para pruebas)
+- [x] ✅ **S2-01** `customerService/LoginClienteCredito` — BP05
+  - *Completado el 01/09/2026. Se implementó utilizando el wrapper `BP05` (`GetClientMaAsync`), extrayendo el correo y unificando el nombre completo del cliente.*
+- [x] ✅ **S2-02** `customerService/LoginClienteCreditoFechaN` — BP05
+  - *Completado el 01/09/2026. Se implementó la lógica de validación de `BirthDate` con soporte para timestamp de OData (`/Date(xxxxx)/`) sin sufrir desviaciones por TimeZone local, y string `YYYY-MM-DD`.*
 - [x] ✅ **S2-03** `company/wholesale-customer/{wholesaleAccount}` — BP05
   - *Completado el 26/08/2026. Orquestación local 100% probada. Se ajustó el Regex de DMZ para admitir cuentas numéricas SAP (ej. 1500008152) e IDs legados, y se transformó la petición a POST hacia el nuevo backend (ServicioSAP) que consume el wrapper BP05 de forma asíncrona.*
 - [x] ✅ **S2-04** `credit/getPlazos` — SIGMAVI `CondicionesCredVtaLinea` + SAP SD40. **Mixto: Dev 3 entrega SIGMAVI**
