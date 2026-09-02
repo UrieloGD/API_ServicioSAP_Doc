@@ -169,9 +169,13 @@ Diferencias de implementación, todas verificadas como equivalentes:
 
 ### Hueco de validación (heredado, no introducido)
 
-Un body `{}` devuelve **200 `{"result":1}`** y escribe dos filas basura con `Cliente` y `Telefono` vacíos. Comprobado el 5-ago-2026: generó `TcAAEA00030_EnvioMensajes.Id = 7972` / `VTASDCodigoVerificacioneCommerce.Id = 103369`.
+Ni ServicioSAP ni la DMZ validan campos, solo `request == null`. Un body al que le falte `Cliente` o `IdCarrito` escribe filas basura y devuelve **200 `{"result":1}`**. Comprobado el 5-ago-2026: generó `TcAAEA00030_EnvioMensajes.Id = 7972` / `VTASDCodigoVerificacioneCommerce.Id = 103369`.
 
-Ni ServicioSAP ni la DMZ validan campos, solo `request == null`, así que **el legado tiene exactamente el mismo hueco en producción**. Se documenta como está por paridad; corregirlo es una decisión aparte, y habría que hacerlo en los dos lados para no divergir.
+El legado tiene el mismo hueco en producción. Se documenta como está por paridad; corregirlo es una decisión aparte, y habría que hacerlo en los dos lados para no divergir.
+
+> 🔴 **Corregido el 31-ago: `NumeroTelefono` era la excepción, y ahí sí divergíamos.** Esta ficha afirmaba que el hueco era idéntico en los dos lados, y no lo era. El legado hace `Regex.Replace(request.NumeroTelefono, ...)` **fuera del `try`**, así que un teléfono nulo lanza `ArgumentNullException`, nadie la atrapa y sale un **500**. ServicioSAP tenía un `?? ""` que lo evitaba: seguía adelante, encolaba un SMS con el teléfono vacío y respondía 200.
+>
+> Se quita el `?? ""`. Ahora un body sin `NumeroTelefono` —incluido `{}`— responde **500** en los dos lados, y ya no se encola nada. El hueco sigue abierto para `Cliente` e `IdCarrito`, que son cadenas y no revientan.
 
 ## Rectificación: la corrida del 5 ago fue contra una copia de la base
 
