@@ -169,11 +169,9 @@ El grueso del trabajo real de la ola. Los ocho métodos viven en `Conn\Magento.c
 | E-22 | `magento/noImagenProduct/{store}` | `getNoImageProduct` | `no_imagen_product` |
 | E-23 | `magento/productWithWebsites/{page}/{size}` | `getProductWithWebsites` | `product_in_stores` |
 
-> ✅ **Script de las ocho tablas listo — 31 ago.** `ServicioSap\Scripts\SQLite\02_CrearTablas_Ola8.sql`. Las definiciones se sacaron del `sqlite_master` del `data.db` del legado y se verificaron columna por columna contra él: las ocho son idénticas en tipos, llaves y `UNIQUE`. El script corre y es idempotente. **Ya no bloquea a 8.1.**
+> ℹ️ **Las ocho tablas no se crean desde el repo — decisión del 2 sep.** Se descartó el script que las generaba; llegan por otra vía. Las definiciones están en el `data.db` del legado, en su `sqlite_master`, por si hicieran falta.
 >
 > Queda en pie lo otro: son cargas de catálogo que hoy agenda la LAN, así que al reconstruir los llamadores hay que reubicar **quién los dispara**.
-
-> ~~🔴 **Las ocho tablas no existen en nuestro `data.db`.**~~ Hoy solo están contempladas `servicio_guias` y `mavi_credilana_info`, las dos del script de la Ola 3. Hace falta **un segundo script** con estas ocho, y antes sacar su definición del `data.db` del legado. Con eso, los **2 días asignados a este sub-bloque se quedan cortos**: solo levantar las definiciones y escribir el script es una jornada larga.
 
 > ⚠️ **`sendAttributesToIntelisis` no escribe en Intelisis, escribe en SQLite.** Es la misma trampa de nombre que `intelisisConn` en E-09. Al portarlo conviene renombrarlo.
 
