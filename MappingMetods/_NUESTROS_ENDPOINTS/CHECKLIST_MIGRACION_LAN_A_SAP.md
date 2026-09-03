@@ -1,4 +1,4 @@
-﻿---
+---
 tags: [checklist, migracion, plan, sigmavi, mixtos]
 fuente: "_PLAN_MIGRACION_FECHAS.md"
 actualizado: 2026-08-25
@@ -8,6 +8,10 @@ agente: Nexo (con asistencia de Claude)
 # Checklist — Migración LAN → SAP
 
 Lista de control del plan de migración. La serie vigente es **H-01…H-04**, **E-01…E-50** y **M-01…M-15**: 69 entradas. **No todas son partidas de desarrollo:** 31 de ellas, `E-16`…`E-46`, son las rutas de reapunte de la Ola 8, y ahí lo que se reconstruye son los llamadores, no las rutas. Descontadas ésas, quedan **38 partidas medibles** — las que se promedian en [[ESTADO_PRUEBAS_Y_AVANCE]]. Se va marcando aquí conforme se completa cada una. Alcance: todo lo que **no es Intelisis** (ServicioAndroid, SQLite, SIGMAVI, DMZ/SMB); los mixtos (Intelisis + otros) quedan documentados pero pendientes de decisión de arquitectura. La única pieza que toca SAP directamente (E-47) se deja preparada para que el equipo de SAP la conecte.
+
+> 🎫 **El `#` de cada ola es su work item.** Van del **12551** al **12563**, más el **12550** del mapeo Android/SQLite/SigMavi, que no es una ola. Es el número que va en el `Refs` de los commits.
+>
+> ⚠️ **Los rangos que traen los work items usan la numeración vieja** y no coinciden con la serie de aquí. El work item de la Ola 6 dice *E-11 al E-13 y E-18*, el de la 7 *E-19 y E-20*, y el de la 8 *E-22 al E-52*. Manda este checklist.
 
 **Leyenda:** `[x]` hecho · `[ ]` pendiente · 🔒 bloqueado · ⏳ en definición · 🟠 destino de conexión sin definir
 
@@ -26,7 +30,7 @@ En la práctica esto recae sobre los mixtos `M-11`…`M-08` y sobre las partidas
 
 ---
 
-## Ola 0 — Habilitadores (4–7 ago)
+## Ola 0 — Habilitadores (4–7 ago) · #12551
 
 - [x] **H-01** `conexionSQL.obtenerConexionAdminDoc()` — hecho en `Helpers\ConexionDB\ConexionSQL.cs` (+ variante `obtenerConexionAdminDocAsync()`). Portado de APIMagento (`Conn\Connection.cs: sCadenaConexionAdminDoc`, mismo server que `ServicioAndroid`, base `AdminDoc`); cadena agregada como `ADMINDOC` en `Web.config`. Confirmado el 5 ago: `AdminDoc` se queda donde está, no requiere equivalencia.
 - [x] **H-02** Clase `Impersonation` (P/Invoke) — hecha en `Helpers\Impersonation\Impersonation.cs`. Portada de APIMagento (`Metodos\ProductImage\Methods.cs`): mismo `LOGON32_LOGON_INTERACTIVE`, credenciales reales portadas al `Web.config` (`SMB_IMPERSONATION_*`).
@@ -37,11 +41,11 @@ En la práctica esto recae sobre los mixtos `M-11`…`M-08` y sobre las partidas
 
 ---
 
-## Ola 1 — Piloto (10 ago)
+## Ola 1 — Piloto (10 ago) · #12552
 
 - [x] **E-01** `credit/SendSmsNewNumber` — **desarrollo al 100 %**, contrato y ambas ramas verificados el 6 ago contra la base real. ⚠️ **La generación del SMS no funcionó** (canal caído desde el 5-ago 23:04, falla igual para el legado): queda como pendiente de prueba a futuro. El cutover en la DMZ está **commiteado y subido (`c7d1d29`), pero sin desplegar**, así que en producción el tráfico sigue yendo al legado. Ver [[ESTADO_PRUEBAS_Y_AVANCE]] y [[E-01_SendSmsNewNumber]].
 
-## Ola 2 — SIGMAVI listas blanca/negra (11–13 ago)
+## Ola 2 — SIGMAVI listas blanca/negra (11–13 ago) · #12553
 
 - [x] **E-02** `customer/setCustomerList` — **90 %**. Alta verificada end-to-end el 10 ago contra SIGMAVI y SAP. Cutover commiteado y subido a `dbAndroid`, sin desplegar. Ver [[E-02_setCustomerList]].
 - [x] **E-03** `customer/getCustomerList` — **90 %**. Los tres valores de respuesta verificados con datos reales. Cutover commiteado y subido a `dbAndroid`, sin desplegar. Ver [[E-03_getCustomerList]].
@@ -51,7 +55,7 @@ En la práctica esto recae sobre los mixtos `M-11`…`M-08` y sobre las partidas
 
 > Los objetos de base (`ListaNegra`, `ListaBlanca`, `SpListaNBMagento`) **ya están desplegados en DEVMAVI** y verificados el 10 ago. Los scripts viven en el repo **MaviSAP**, rama `SpVTASListaNBMagento`.
 
-## Ola 3 — SQLite (14–17 ago)
+## Ola 3 — SQLite (14–17 ago) · #12554
 
 - [ ] **E-05** `order/getGuide` — **80 %**. Los 7 casos verificados el 19 ago sobre base simulada. Cutover commiteado y subido a `dbAndroid`, sin desplegar. Falta la validación contra la base real del servidor. Ver [[E-05_getGuide]].
 - [ ] **E-06** `credit/GetCreditAmounts` — **80 %**. Los 9 casos y las 3 ramas de campo verificados el 19 ago sobre base simulada. Cutover commiteado y subido a `dbAndroid`, sin desplegar. Falta el e2e real, que depende de que M-03 llene `mavi_credilana_info`. Ver [[E-06_GetCreditAmounts]].
@@ -60,7 +64,7 @@ En la práctica esto recae sobre los mixtos `M-11`…`M-08` y sobre las partidas
 
 > **Cinco divergencias contra el legado** se detectaron y corrigieron durante la corrida del 19 ago, todas en rutas de error. La más grave: E-06 respondía **200 con cuerpo `null`** donde el legado da 500. Detalle en [[ESTADO_PRUEBAS_Y_AVANCE]].
 
-## Ola 4 — AdminDoc (18–19 ago)
+## Ola 4 — AdminDoc (18–19 ago) · #12555
 
 - [x] **E-07** `credit/guardardocumento` — **100 %**. Los 9 casos verificados el 20 ago contra AdminDoc real, con las filas comprobadas por SELECT y borradas después. Cutover commiteado (`d933e44`); **pendiente de despliegue**. Ver [[E-07_guardardocumento]].
 - [x] **E-08** `credit/SaveImagesProductosMx` — **100 %**. Los 3 casos verificados el 20 ago: archivos en disco y fila de la selfie en AdminDoc. Cutover commiteado (`d933e44`); **pendiente de despliegue y de confirmar que el app pool pueda escribir en la carpeta de imágenes**. Ver [[E-08_SaveImagesProductosMx]]. Los límites de `httpRuntime`/`requestLimits` para envíos Base64 ya estaban en el `Web.config`.
@@ -71,7 +75,7 @@ En la práctica esto recae sobre los mixtos `M-11`…`M-08` y sobre las partidas
 
 > **Ruta de imágenes de E-08:** ServicioSAP usa su propia carpeta, configurable con `IMAGES_CREDIT_PATH` (hoy `C:\inetpub\wwwroot\sap\images\credit`), igual que se hizo con `data.db`.
 
-## Ola 5 — ServicioAndroid y SOAP externo (20–25 ago)
+## Ola 5 — ServicioAndroid y SOAP externo (20–25 ago) · #12556
 
 - [ ] **E-09** `customerService/obtenerQuejas` — ServicioAndroid. **90 %**: escrito el 21 ago en `Methods\CustomerService\CustomerServiceMethods.cs`, compila en 0 errores, cutover commiteado el 24 ago (`c695b2e` en APIMagentoDMZ) y subido el 31. Los 5 casos verificados el 23 ago contra servicios reales; ficha lista. Falta desplegar.
 - [ ] **E-10** `customerService/bbvaKeyAdvanced` — SOAP `WSeCommerceMX`. **90 %**: escrito el 21 ago, misma clase, cutover commiteado el 24 ago y subido el 31 (mismo commit que E-09). No toca base: es una llamada SOAP a `MULTIPAGOS_APIKEY_URL`, ya portada al `Web.config` junto con `CODIGO_ENT`. Falta probar y ficha. ✅ Verbo en paridad: la DMZ lo llama con `curl.GetSAP(...)`, entregado por Dev 1 el 21 ago.
@@ -91,7 +95,7 @@ En la práctica esto recae sobre los mixtos `M-11`…`M-08` y sobre las partidas
 - 🗑️ ~~`credit/ExistRFCAndPhoneCte`~~ — **descartado el 11 ago, sin ID.** Sus dos métodos de validación tienen un `return` incondicional en la primera línea: no consulta nada y siempre responde lo mismo. La validación real iría contra Intelisis.
 - 🗑️ ~~`status/getStatus`~~ — **descartado el 11 ago, sin ID.** Ping ICMP al servidor de Intelisis; no informa sobre la salud de ServicioSAP.
 
-## Ola 6 — SMB y DMZ (26–28 ago)
+## Ola 6 — SMB y DMZ (26–28 ago) · #12557
 
 > **Código commiteado el 26 ago y subido el 31**: `4315c50` en `dbAndroid` de ServicioSAP, con las cuatro partidas, sus modelos y las cuatro claves nuevas del `Web.config`. El cutover de E-13 va en `e403065` de APIMagentoDMZ. Los porcentajes no se mueven por esto: commitear no es una casilla de la rúbrica, y lo que falta en cada partida sigue siendo lo mismo que el 25 ago.
 
@@ -104,7 +108,7 @@ En la práctica esto recae sobre los mixtos `M-11`…`M-08` y sobre las partidas
 - [ ] **E-13** `customer/cashCustomerReport` — filesystem + SMB. **80 %**: escrito el 25 ago; validación y escritura local verificadas, cutover commiteado el 26 ago (`e403065`) y subido el 31. Fuente real: `CustomerMethods.CreateCashReport` en APIMagento, ya usa `Impersonation` (H-02) para escribir en `\\172.16.200.2\mavica\ecom\BaseWhatsapp\STAGE\`. **Se puede escribir ya**: la clase `Impersonation` está lista y el llamador le pasa las credenciales (`SMB_IMPERSONATION_*`, orden `usuario, dominio, password`). La copia al share no es verificable desde desarrollo; se valida en QA junto con H-02.
 - [ ] **E-14** `product/obtenerImagen` — filesystem + SMB. **55 %**: escrito el 25 ago, **con la diagonal del legado corregida**. Sin cutover: no existe ruta suya en la DMZ. 🔴 Bloqueado por H-02.
 
-## Ola 7 — SIGMAVI sin dependencia de SAP
+## Ola 7 — SIGMAVI sin dependencia de SAP · #12558
 
 - [ ] **E-15** `order/GetPickUpCode` — **35 %**: escrito el 31 ago en `Methods\Order\StorePickupMethods.cs`, commiteado y subido en `8cf2c52`,, compila en 0 errores, asíncrono. Solo la lectura; los tres escritores se quedan en el legado. Sin pruebas, sin cutover y sin ficha. No lee nada de SAP.
 
@@ -115,13 +119,13 @@ En la práctica esto recae sobre los mixtos `M-11`…`M-08` y sobre las partidas
 
 > ⚠️ No confundir con `order/createStorepickupCode`, que vive en el mismo archivo del legado pero **sí** cruza a `Venta` y `Cte`. Ése es de Dev 2.
 
-## Ola 8 — Reubicación de llamadores hacia la DMZ
+## Ola 8 — Reubicación de llamadores hacia la DMZ · #12559
 
 31 rutas de la DMZ, **E-16 a E-31**. No se portan: lo que se reubica son sus llamadores, que hoy viven en APIMagento. Doce se reconstruyen —ocho de catálogo hacia SQLite, tres reenvíos y un helper compartido para `order/setOrderStatus`—, ocho pasan sin cambio porque las atiende la herramienta de importación, seis solo se verifican y cuatro se dan de baja.
 
 > El desglose por identificador está en [[Checklists/CHECKLIST_DEV3_NOSAP_NOINTELISIS#Ola 8 — Reubicación de llamadores hacia la DMZ|el checklist de Dev 3]].
 
-## Ola 9 — Mixtos SAP
+## Ola 9 — Mixtos SAP · #12560
 
 - [ ] **E-47** `credit/SolicitudMercancia` — lee el Business Partner de SAP e inserta en `CRED_SOLICITUD_WEB_DATOS_TEMP` de `ServicioAndroid`. Requiere el helper de conversión de cuenta `C%` → BP.
 - [ ] **E-48** `credit/codigoPromocion` — tabla `VentaCupon` en SIGMAVI. **Ya construido** como `HandlePromoCode`; falta alinear el nombre de la tabla, que hoy es `VentasCupones`.
@@ -132,13 +136,13 @@ En la práctica esto recae sobre los mixtos `M-11`…`M-08` y sobre las partidas
 
 ## Olas 10–12 — Endpoints mixtos de Intelisis — fechas son marcador de posición
 
-### Ola 10 — bifurcados SQLite/Intelisis
+### Ola 10 — bifurcados SQLite/Intelisis · #12561
 
 - [ ] **M-01** `credit/CreditoWeb_FormDatos` — `SP_CREDITO_WEB_VALORES_FORM`
 - [ ] **M-02** `credit/CreditoWeb_Informacion` — `SPCREDICredilana`
 - [ ] **M-03** `credit/SaveCredilanaInfo` — `FnVTASListaCredilanas`
 
-### Ola 11 — otros mixtos
+### Ola 11 — otros mixtos · #12562
 
 - [ ] **M-06** `credit/getSms` — `VTASCodigoSMSEcommerce`
 - [ ] **M-13** `credit/CreditoWeb_SaveData_Articulos`
@@ -151,7 +155,7 @@ En la práctica esto recae sobre los mixtos `M-11`…`M-08` y sobre las partidas
 - [ ] **M-10** `order/insertPaymentData` — `CXCCMensajeWebHookOpenPay`
 - [ ] **➡️** `order/updateCreditOrderId` — `eCommerceDetPedidos`, `Venta`
 - [ ] **🗑️** `credit/codigoRecomendadoWithUen` — `CREDIDCodigoRecomendador`; el archivo maestro lo marca fuera de alcance, confirmar
-### Ola 12 — cruzan por linked server `ERPMAVI`
+### Ola 12 — cruzan por linked server `ERPMAVI` · #12563
 
 - [ ] **M-11** `credit/validateSms` — `SPVTASCodigoSeguridadeCommerce`
 - [ ] **M-12** `credit/CreditoWeb_SaveData` — `SP_CREDITO_WEB_DATOS`

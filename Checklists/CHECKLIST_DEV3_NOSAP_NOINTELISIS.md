@@ -1,4 +1,4 @@
-﻿---
+---
 tags: [checklist, migracion, dev3, plan, sigmavi, mixtos]
 fuente: "_PLAN_MIGRACION_FECHAS.md · MIGRATION_STATUS_MASTER_v2 FINAL.csv"
 actualizado: 2026-08-23
@@ -51,7 +51,7 @@ Se agota el bloque A antes de entrar al B. La razón es simple: el bloque A es e
 
 ---
 
-## Ola 0 — Habilitadores · cerrada como desarrollo
+## Ola 0 — Habilitadores · cerrada como desarrollo · #12551
 
 - [x] **H-01** `conexionSQL.obtenerConexionAdminDoc()` — en `Helpers\ConexionDB\ConexionSQL.cs`, con variante asíncrona. Portado de `Conn\Connection.cs`; cadena en `Web.config` como `ADMINDOC`.
 - [x] **H-02** Clase `Impersonation` (P/Invoke) — en `Helpers\Impersonation\Impersonation.cs`. Réplica literal de la de APIMagento; el llamador provee credenciales en orden `usuario, dominio, password`.
@@ -60,11 +60,11 @@ Se agota el bloque A antes de entrar al B. La razón es simple: el bloque A es e
 
 > **Cerrada el 6 ago.** H-02 y H-04 quedan con validación diferida a QA por depender de recursos que solo existen en el servidor.
 
-## Ola 1 — Piloto
+## Ola 1 — Piloto · #12552
 
 - [x] **E-01** `credit/SendSmsNewNumber` — **100 % de desarrollo**. Ambas ramas verificadas el 6 ago contra la base real. ⚠️ La entrega del SMS no se pudo comprobar: el canal lleva caído desde el 5-ago 23:04 y falla igual para el legado. Ver [[E-01_SendSmsNewNumber]].
 
-## Ola 2 — SIGMAVI · listas blanca y negra
+## Ola 2 — SIGMAVI · listas blanca y negra · #12553
 
 - [x] **E-02** `customer/setCustomerList` — **90 %**. Alta verificada end-to-end contra SIGMAVI y SAP. Ver [[E-02_setCustomerList]].
 - [x] **E-03** `customer/getCustomerList` — **90 %**. Los tres valores de respuesta verificados. Ver [[E-03_getCustomerList]].
@@ -78,7 +78,7 @@ Se agota el bloque A antes de entrar al B. La razón es simple: el bloque A es e
 
 **Se atiende primero, completo, antes de tocar nada que lea de SAP.** Estas partidas no dependen de que S/4 responda, ni de un wrapper, ni de una decisión de arquitectura: se pueden escribir, probar y cerrar de principio a fin con lo que hay hoy. Dejarlas para después sería regalar el único frente del proyecto que no tiene bloqueos externos.
 
-## Ola 3 — SQLite
+## Ola 3 — SQLite · #12554
 
 - [ ] **E-05** `order/getGuide` — tabla `servicio_guias`. **80 %**: los 7 casos verificados el 19 ago sobre base simulada, cutover commiteado y subido. Falta validar contra la base real del servidor. Ver [[E-05_getGuide]].
 - [ ] **E-06** `credit/GetCreditAmounts` — tabla `mavi_credilana_info`. **80 %**: los 9 casos y las 3 ramas de campo verificados el 19 ago, cutover commiteado y subido. ⚠️ Responderá **500 a todo** hasta que **M-03** llene la tabla. Ver [[E-06_GetCreditAmounts]].
@@ -89,7 +89,7 @@ Se agota el bloque A antes de entrar al B. La razón es simple: el bloque A es e
 
 > 🔴 **Pendiente en el servidor:** comprobar si `servicio_guias` existe en `C:\inetpub\wwwroot\sap\data.db`. `SaveGuide` lleva escribiendo ahí con tres capas de silencio; si la tabla no está, cada guía se pierde sin rastro.
 
-## Ola 4 — AdminDoc
+## Ola 4 — AdminDoc · #12555
 
 - [x] **E-07** `credit/guardardocumento` — `MAVI_DOC_CTE`. **100 %**. Conserva el `switch` de 10 casos y las ramas `Cliente`/`Token`/`Actualizar`. Los 9 casos verificados el 20 ago **contra AdminDoc real**, con las filas comprobadas por SELECT y borradas después. Cutover commiteado (`d933e44`), sin desplegar. Ver [[E-07_guardardocumento]].
 - [x] **E-08** `credit/SaveImagesProductosMx` — `MAVI_DOC_CTE` + filesystem. **100 %**. Los 3 casos verificados el 20 ago: archivos en disco y fila de la selfie en AdminDoc. Cutover commiteado (`d933e44`), sin desplegar. Ver [[E-08_SaveImagesProductosMx]].
@@ -102,7 +102,7 @@ Se agota el bloque A antes de entrar al B. La razón es simple: el bloque A es e
 
 > 🔴 **E-08 responde `true` antes de trabajar.** Verificado: contesta en 179 ms y guarda 10 segundos después, en un `Task` suelto. Un reciclado del app pool en esa ventana se lleva el lote sin rastro.
 
-## Ola 5 — ServicioAndroid y SOAP externo
+## Ola 5 — ServicioAndroid y SOAP externo · #12556
 
 - [ ] **E-09** `customerService/obtenerQuejas` — `ServicioAndroid`. **90 %**: escrito el 21 ago en `Methods\CustomerService\CustomerServiceMethods.cs`, compila en 0 errores, cutover commiteado el 24 ago (`c695b2e`) y subido el 31. Los 5 casos verificados el 23 ago contra servicios reales; ficha lista. Falta desplegar. ✅ Confirmado que `intelisisConn` **no toca Intelisis**: la cadena es `sCadenaConexionAndriod` (APIMagento: `Conn\Connection.cs:28`); la variable ya no se llama así en ServicioSAP.
 - [ ] **E-10** `customerService/bbvaKeyAdvanced` — SOAP `WSeCommerceMX`. **90 %**: escrito el 21 ago, misma clase, cutover commiteado el 24 ago y subido el 31 (mismo commit que E-09). `MULTIPAGOS_APIKEY_URL` y `CODIGO_ENT` ya portadas al `Web.config`. Los 5 casos verificados el 23 ago contra el SOAP real; ficha lista. Falta desplegar.
@@ -120,7 +120,7 @@ Se agota el bloque A antes de entrar al B. La razón es simple: el bloque A es e
 - 🗑️ ~~`credit/ExistRFCAndPhoneCte`~~ — **descartado el 11 ago**, sin ID. Código muerto; su validación real es contra Intelisis.
 - 🗑️ ~~`status/getStatus`~~ — **descartado el 11 ago**, sin ID. Ping al servidor de Intelisis, sin aporte funcional.
 
-## Ola 6 — SMB y DMZ
+## Ola 6 — SMB y DMZ · #12557
 
 > **Escrita y probada el 25 ago; commiteada el 26 y subida el 31** en `4315c50` de ServicioSAP, con el cutover de E-13 en `e403065` de APIMagentoDMZ. Nada desplegado.
 
@@ -131,7 +131,7 @@ Se agota el bloque A antes de entrar al B. La razón es simple: el bloque A es e
 
 > Conservar el `NullValueHandling.Ignore` y el doble desescapado de la respuesta en E-11 y E-12.
 
-## Ola 7 — SIGMAVI sin dependencia de SAP
+## Ola 7 — SIGMAVI sin dependencia de SAP · #12558
 
 La partida de SIGMAVI que resuelve contra una sola tabla y no lee nada de SAP. Verificado sobre el código el 12 ago.
 
@@ -148,7 +148,7 @@ La partida de SIGMAVI que resuelve contra una sola tabla y no lee nada de SAP. V
 
 > ⚠️ No confundir con `order/createStorepickupCode`, que vive en el mismo archivo del legado (`StorePickup\CodigoRecogerSucursal.cs`) pero **sí** cruza a `Venta` y `Cte`. Ése es de Dev 2.
 
-## Ola 8 — Reubicación de llamadores hacia la DMZ
+## Ola 8 — Reubicación de llamadores hacia la DMZ · #12559
 
 **Las 31 rutas de la DMZ no se tocan.** Lo que desaparece cuando se apague APIMagento no son ellas, sino **quién las llama**: 21 de las 31 las invoca hoy la propia LAN. La DMZ seguirá sirviendo a Magento; el hueco queda del lado del cliente, y ese cliente pasa a ser ServicioSAP, que es donde apuntará el servidor y donde vivirá la base SQLite.
 
@@ -251,7 +251,7 @@ Cuando un endpoint mezcla SAP y no-SAP, el corte es siempre el mismo:
 
 Lo que quede pendiente de SAP **se anota en la sección de entregas de abajo** conforme se cierre cada partida, y se le pasa a Dev 2 en bloque.
 
-## Ola 9 — Mixtos SAP
+## Ola 9 — Mixtos SAP · #12560
 
 | ID   | Endpoint                              | Lo que construye Dev 3                                                  | Lo que espera a Dev 2                         |
 | ---- | ------------------------------------- | ----------------------------------------------------------------------- | --------------------------------------------- |
@@ -332,7 +332,7 @@ Dev 3 resuelve la parte que va a Android, SQLite o SIGMAVI; **Dev 2 cierra la pa
 
 > 📌 **Orden del bloque, decidido el 12 ago:** los bifurcados van primero y los del linked server al final, porque estos últimos son los más complejos y los que más dependen de terceros. Un efecto secundario bueno: **M-03 desbloquea E-06**, y al adelantarse a la Ola 10 esa dependencia se resuelve antes.
 
-### Ola 10 — bifurcados SQLite / Intelisis · y el procedimiento `SPCREDICredilana`
+### Ola 10 — bifurcados SQLite / Intelisis · y el procedimiento `SPCREDICredilana` · #12561
 
 | ID | Endpoint | Objeto de Intelisis |
 |---|---|---|
@@ -352,7 +352,7 @@ Dev 3 resuelve la parte que va a Android, SQLite o SIGMAVI; **Dev 2 cierra la pa
 
 ---
 
-### Ola 11 — otros mixtos
+### Ola 11 — otros mixtos · #12562
 
 | ID | Endpoint | Destino / objeto |
 |---|---|---|
@@ -372,7 +372,7 @@ Dev 3 resuelve la parte que va a Android, SQLite o SIGMAVI; **Dev 2 cierra la pa
 
 ---
 
-### Ola 12 — cruzan por linked server `ERPMAVI`
+### Ola 12 — cruzan por linked server `ERPMAVI` · #12563
 
 > 📌 **Va al final del bloque por decisión del 12 ago:** es el grupo más complejo. Sus procedimientos hay que podarlos de referencias cruzadas y ninguno tiene definición todavía.
 
