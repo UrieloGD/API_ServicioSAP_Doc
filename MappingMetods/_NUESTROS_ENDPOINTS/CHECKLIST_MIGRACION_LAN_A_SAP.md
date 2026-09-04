@@ -132,7 +132,7 @@ En la práctica esto recae sobre los mixtos `M-11`…`M-08` y sobre las partidas
 
 ## Ola 8 — Reubicación de llamadores hacia la DMZ · #12559
 
-31 rutas de la DMZ, **E-16 a E-31**. No se portan: lo que se reubica son sus llamadores, que hoy viven en APIMagento. Doce se reconstruyen —ocho de catálogo hacia SQLite, tres reenvíos y un helper compartido para `order/setOrderStatus`—, ocho pasan sin cambio porque las atiende la herramienta de importación, seis solo se verifican y cuatro se dan de baja.
+31 rutas de la DMZ, **E-16 a E-46**. No se portan: lo que se reubica son sus llamadores, que hoy viven en APIMagento. Doce se reconstruyen —ocho de catálogo hacia SQLite, tres reenvíos y un helper compartido para `order/setOrderStatus`—, ocho pasan sin cambio porque las atiende la herramienta de importación, seis solo se verifican y cuatro se dan de baja.
 
 > El desglose por identificador está en [[Checklists/CHECKLIST_DEV3_NOSAP_NOINTELISIS#Ola 8 — Reubicación de llamadores hacia la DMZ|el checklist de Dev 3]].
 
