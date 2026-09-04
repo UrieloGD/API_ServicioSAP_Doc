@@ -1,7 +1,7 @@
 ---
 tags: [checklist, migracion, plan, sigmavi, mixtos]
 fuente: "_PLAN_MIGRACION_FECHAS.md"
-actualizado: 2026-08-25
+actualizado: 2026-09-03
 agente: Nexo (con asistencia de Claude)
 ---
 
@@ -14,6 +14,11 @@ Lista de control del plan de migración. La serie vigente es **H-01…H-04**, **
 > ⚠️ **Los rangos que traen los work items usan la numeración vieja** y no coinciden con la serie de aquí. El work item de la Ola 6 dice *E-11 al E-13 y E-18*, el de la 7 *E-19 y E-20*, y el de la 8 *E-22 al E-52*. Manda este checklist.
 
 **Leyenda:** `[x]` hecho · `[ ]` pendiente · 🔒 bloqueado · ⏳ en definición · 🟠 destino de conexión sin definir
+
+> ✅ **Barrido de paridad, 1-3 sep.** Las olas 1 a 7 se contrastaron con **los dos servicios
+> levantados a la vez** —legado y ServicioSAP sobre la misma base—, mandando el mismo cuerpo a
+> los dos y comparando respuesta carácter por carácter. **45 casos, dos divergencias**, en
+> E-01 y E-08, corregidas el mismo día. Detalle en [[ESTADO_PRUEBAS_Y_AVANCE]].
 
 > Este documento lleva **qué falta**. El avance por endpoint, el resultado de las pruebas y el informe de puntos a revisar viven en [[ESTADO_PRUEBAS_Y_AVANCE]]; los contratos de request/response, en [[Contratos/README|Contratos]].
 
@@ -64,10 +69,12 @@ En la práctica esto recae sobre los mixtos `M-11`…`M-08` y sobre las partidas
 
 > **Cinco divergencias contra el legado** se detectaron y corrigieron durante la corrida del 19 ago, todas en rutas de error. La más grave: E-06 respondía **200 con cuerpo `null`** donde el legado da 500. Detalle en [[ESTADO_PRUEBAS_Y_AVANCE]].
 
+> ✅ **Los 10 casos contrastados contra el legado el 3 sep, todos iguales.** Como el `data.db` de ServicioSAP no existe en desarrollo, se apuntó `SQLITE_DB_PATH` a una copia de la base del legado para que los dos leyeran los mismos datos. **Eso no cierra el pendiente**: sigue faltando validar contra la base real del servidor.
+
 ## Ola 4 — AdminDoc (18–19 ago) · #12555
 
 - [x] **E-07** `credit/guardardocumento` — **100 %**. Los 9 casos verificados el 20 ago contra AdminDoc real, con las filas comprobadas por SELECT y borradas después. Cutover commiteado (`d933e44`); **pendiente de despliegue**. Ver [[E-07_guardardocumento]].
-- [x] **E-08** `credit/SaveImagesProductosMx` — **100 %**. Los 3 casos verificados el 20 ago: archivos en disco y fila de la selfie en AdminDoc. Cutover commiteado (`d933e44`); **pendiente de despliegue y de confirmar que el app pool pueda escribir en la carpeta de imágenes**. Ver [[E-08_SaveImagesProductosMx]]. Los límites de `httpRuntime`/`requestLimits` para envíos Base64 ya estaban en el `Web.config`.
+- [x] **E-08** `credit/SaveImagesProductosMx` — **100 %**. Los 3 casos verificados el 20 ago: archivos en disco y fila de la selfie en AdminDoc. Paridad contra el legado verificada el 3 sep, tras **retirar el guardián de body nulo** (`2828618`), que era la única diferencia de contrato. Cutover commiteado (`d933e44`); **pendiente de despliegue y de confirmar que el app pool pueda escribir en la carpeta de imágenes**. Ver [[E-08_SaveImagesProductosMx]]. Los límites de `httpRuntime`/`requestLimits` para envíos Base64 ya estaban en el `Web.config`.
 
 > **Adaptación al formato de cuenta (20 ago).** E-07 decidía en qué columna guardar el documento preguntando si la cuenta empieza por `C` o `P`. Con el BP esa condición sería siempre falsa y los documentos caerían en `DIR` en vez de `CLAVE`, donde `SpMaviConsultaDoc` no los encontraría. La condición pasa a ser `StartsWith("15") && Length <= 10`.
 
@@ -77,8 +84,8 @@ En la práctica esto recae sobre los mixtos `M-11`…`M-08` y sobre las partidas
 
 ## Ola 5 — ServicioAndroid y SOAP externo (20–25 ago) · #12556
 
-- [ ] **E-09** `customerService/obtenerQuejas` — ServicioAndroid. **90 %**: escrito el 21 ago en `Methods\CustomerService\CustomerServiceMethods.cs`, compila en 0 errores, cutover commiteado el 24 ago (`c695b2e` en APIMagentoDMZ) y subido el 31. Los 5 casos verificados el 23 ago contra servicios reales; ficha lista. Falta desplegar.
-- [ ] **E-10** `customerService/bbvaKeyAdvanced` — SOAP `WSeCommerceMX`. **90 %**: escrito el 21 ago, misma clase, cutover commiteado el 24 ago y subido el 31 (mismo commit que E-09). No toca base: es una llamada SOAP a `MULTIPAGOS_APIKEY_URL`, ya portada al `Web.config` junto con `CODIGO_ENT`. Falta probar y ficha. ✅ Verbo en paridad: la DMZ lo llama con `curl.GetSAP(...)`, entregado por Dev 1 el 21 ago.
+- [ ] **E-09** `customerService/obtenerQuejas` — ServicioAndroid. **90 %**: escrito el 21 ago en `Methods\CustomerService\CustomerServiceMethods.cs`, compila en 0 errores, cutover commiteado el 24 ago (`c695b2e` en APIMagentoDMZ) y subido el 31. Los 5 casos verificados el 23 ago contra servicios reales; ficha lista. Contrastado contra el legado el 3 sep: el catálogo sale **byte por byte igual**, y con la base caída las dos devuelven el mismo 500. Falta desplegar.
+- [ ] **E-10** `customerService/bbvaKeyAdvanced` — SOAP `WSeCommerceMX`. **90 %**: escrito el 21 ago, misma clase, cutover commiteado el 24 ago y subido el 31 (mismo commit que E-09). No toca base: es una llamada SOAP a `MULTIPAGOS_APIKEY_URL`, ya portada al `Web.config` junto con `CODIGO_ENT`. Probado el 23 ago y contrastado contra el legado el 3 sep, con el SOAP real respondiendo y los cuerpos coincidiendo por SHA-256; ficha lista en [[E-10_bbvaKeyAdvanced]]. Falta desplegar. ✅ Verbo en paridad: la DMZ lo llama con `curl.GetSAP(...)`, entregado por Dev 1 el 21 ago.
 
 > **Falsa alarma resuelta:** `obtenerQuejas` nombra su conexión `intelisisConn`, pero la cadena que usa es `sCadenaConexionAndriod` → **ServicioAndroid** en mavicbosandroid (APIMagento: `Conn\Connection.cs:28`). No es IntelisisTmp; **no necesita equivalencia**. Engaña el nombre de la variable, no la conexión.
 
@@ -108,6 +115,8 @@ En la práctica esto recae sobre los mixtos `M-11`…`M-08` y sobre las partidas
 - [ ] **E-13** `customer/cashCustomerReport` — filesystem + SMB. **80 %**: escrito el 25 ago; validación y escritura local verificadas, cutover commiteado el 26 ago (`e403065`) y subido el 31. Fuente real: `CustomerMethods.CreateCashReport` en APIMagento, ya usa `Impersonation` (H-02) para escribir en `\\172.16.200.2\mavica\ecom\BaseWhatsapp\STAGE\`. **Se puede escribir ya**: la clase `Impersonation` está lista y el llamador le pasa las credenciales (`SMB_IMPERSONATION_*`, orden `usuario, dominio, password`). La copia al share no es verificable desde desarrollo; se valida en QA junto con H-02.
 - [ ] **E-14** `product/obtenerImagen` — filesystem + SMB. **55 %**: escrito el 25 ago, **con la diagonal del legado corregida**. Sin cutover: no existe ruta suya en la DMZ. 🔴 Bloqueado por H-02.
 
+> ✅ **Las cuatro partidas contrastadas contra el legado el 3 sep**, 14 casos idénticos, con **APIMagentoDMZ levantada en local** para que E-11 y E-12 recorrieran la cadena completa hasta Magento. E-13 y E-14 fallan la parte SMB **con el mismo mensaje en los dos servicios** (`LogonUser failed with error code: 1326`), que es H-02 y no una diferencia entre versiones. **E-12 sigue sin probarse escribiendo**: solo se ejercitaron sus rutas de error.
+
 ## Ola 7 — SIGMAVI sin dependencia de SAP · #12558
 
 - [ ] **E-15** `order/GetPickUpCode` — **35 %**: escrito el 31 ago en `Methods\Order\StorePickupMethods.cs`, commiteado y subido en `8cf2c52`,, compila en 0 errores, asíncrono. Solo la lectura; los tres escritores se quedan en el legado. Sin pruebas, sin cutover y sin ficha. No lee nada de SAP.
@@ -115,6 +124,8 @@ En la práctica esto recae sobre los mixtos `M-11`…`M-08` y sobre las partidas
 > 📌 **La tabla ya existe en SIGMAVI: `BpRecogePedidos`**, no `TrWDM0285_CteRecoge`. Mismas columnas, `MaviSAP: Tables\BpRecogePedidos.sql`, de abril de 2025. **No hay que crearla.**
 
 > ⏳ **Sin probar:** la tabla está vacía porque los escritores siguen en Intelisis, y dos de ellos son partidas de Dev 2 con fecha 10-11 sep y feb 2027.
+
+> ⛔ **El 3 sep solo se contrastaron las dos rutas que no tocan base** (`IdEcommerce` nulo → 404; body nulo → 400), iguales en las dos versiones. La comparación real está bloqueada por **los dos lados a la vez**: la tabla migrada está vacía, y el legado lee `TrWDM0285_CteRecoge` con `sCadenaConexion`, que es **IntelisisTmp en MAVICUBOS** — consultarlo va contra la regla de destinos del 5 ago, así que no se ejecutó ningún caso con un `IdEcommerce` real.
 - 🗑️ ~~`recommender/setRecommenderList`~~ — **descartado el 31 ago, sin ID.** Obsoleto en la LAN, no se migra. Pierde su identificador; los posteriores se reindexan una posición. Al revisarlo se vio además que su método abre `sCadenaConexion`, que es **IntelisisTmp en MAVICUBOS** (`Conn\Connection.cs:26`), no SIGMAVI como decía esta línea.
 
 > ⚠️ No confundir con `order/createStorepickupCode`, que vive en el mismo archivo del legado pero **sí** cruza a `Venta` y `Cte`. Ése es de Dev 2.
@@ -185,7 +196,8 @@ En la práctica esto recae sobre los mixtos `M-11`…`M-08` y sobre las partidas
 - [ ] 🔴 **E-08 responde `true` antes de trabajar.** Verificado el 20 ago: contesta en 179 ms y guarda 10 segundos después, en un `Task` suelto. Un reciclado del app pool en esa ventana se lleva el lote sin rastro, y el `true` sale igual. Mitigado con `sap.log`; corregirlo de verdad cambia el contrato.
 - [ ] 🟡 **Confirmar en el servidor que la carpeta de imágenes de E-08 exista y sea escribible.** El código la crea si falta, pero si el app pool no tiene permiso, las imágenes se pierden en silencio. En desarrollo no se pudo crear `C:\inetpub\wwwroot\sap`.
 - [ ] 🟡 **Averiguar quién consume `C:\inetpub\wwwroot\api\images\credit`** antes de desplegar E-08. Nada en los dos repos legados vuelve a leer esa carpeta, así que cualquier consumidor está fuera de ellos y dejaría de encontrar los archivos nuevos.
-- [ ] 🟡 **`CLAVE` de `MAVI_DOC_CTE` es `varchar(10)` y un BP mide 10.** Sin margen: un identificador más largo empezaría a fallar con truncamiento.
+- [ ] 🟡 **`CLAVE` de `MAVI_DOC_CTE` es `varchar(10)` y un BP mide 10.** Sin margen: un identificador más largo empezaría a fallar con truncamiento. Comprobado el 3 sep: en el legado una cuenta `C`/`P` de **11 caracteres** entra por la rama `Cliente` y tumba el INSERT con 500, porque su condición acepta `Length <= 11` contra una columna de 10. La condición migrada usa `<= 10` y no puede caer ahí.
+- [ ] 🟡 **E-14 sobrescribe el destino y el legado no.** Detectado el 3 sep por lectura: el legado usa `File.Copy(origen, destino)` de dos argumentos, que lanza `IOException` si el archivo ya está y devuelve ese mensaje; ServicioSAP abre con `FileMode.Create` y responde `"Ok"`. Probablemente sea lo deseable para refrescar imágenes, pero **cambia la respuesta y hay que decidirlo**. No verificable en desarrollo: H-02 revienta antes.
 - [ ] 🟡 **`AVAL` es `bit` pero el parámetro va como `VarChar`** en E-07. Cualquier valor no numérico tumba el INSERT con 500. Deuda heredada, verificada idéntica en APIMagento.
 - [ ] Decidir si se corrigen los dos huecos heredados de E-01 (sin validación de campos; reutilización de `IdRef` sin mirar expiración). Corregirlos exige tocar también la DMZ.
 - [ ] Decidir si se corrige el **404 inalcanzable de `order/getGuide`**: el `throw` está dentro del `try` y el `catch` lo convierte en 500, así que "sin guía" y "consulta rota" son indistinguibles. El legado es idéntico.
@@ -227,4 +239,8 @@ Todos los cutovers de las olas 1 a 6 están **commiteados y subidos** a `dbAndro
 > 🔴 **Orden de despliegue: ServicioSAP primero, la DMZ después.** El constructor de `Curl` en la DMZ autentica contra la LAN de forma incondicional y fuera de un `try`, así que toda ruta ya migrada sigue dependiendo de que APIMagento responda aunque los datos ya no vayan para allá.
 
 E-01 queda marcada como desarrollo terminado. Lo que falta para que esté **en producción** es desplegar el cutover de la DMZ y confirmar la entrega del SMS.
+
+**El barrido de paridad del 1-3 sep no mueve ningún porcentaje**, y eso es lo que se esperaba: comprueba lo que ya estaba medido. Lo que aporta es otra cosa — hasta ahora cada ola se había probado contra su servicio real comprobando que ServicioSAP hiciera lo que su ficha decía; el barrido levanta **los dos servicios a la vez** y compara. De 45 casos salieron **dos divergencias**, en E-01 y E-08, las dos en el manejo de un campo nulo y las dos corregidas el mismo día.
+
+> 📌 **El patrón vale para lo que queda.** Ninguna de las dos estaba en el camino feliz, que es donde las pruebas por ola ya habían mirado. El hueco está en **qué pasa cuando falta un dato**: E-01 convertía un 500 en un 200 con efecto externo —un SMS a un número vacío—, y E-08 convertía un 200 en un 400. Conviene entrar con esa lente a las olas que aún no se barren.
 

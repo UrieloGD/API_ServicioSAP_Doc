@@ -1,7 +1,7 @@
 ---
 tags: [checklist, migracion, dev3, plan, sigmavi, mixtos]
 fuente: "_PLAN_MIGRACION_FECHAS.md · MIGRATION_STATUS_MASTER_v2 FINAL.csv"
-actualizado: 2026-08-23
+actualizado: 2026-09-03
 rol: "Dev 3 — todo lo que no va a SAP ni se queda en Intelisis"
 agente: Nexo (con asistencia de Claude)
 ---
@@ -92,7 +92,7 @@ Se agota el bloque A antes de entrar al B. La razón es simple: el bloque A es e
 ## Ola 4 — AdminDoc · #12555
 
 - [x] **E-07** `credit/guardardocumento` — `MAVI_DOC_CTE`. **100 %**. Conserva el `switch` de 10 casos y las ramas `Cliente`/`Token`/`Actualizar`. Los 9 casos verificados el 20 ago **contra AdminDoc real**, con las filas comprobadas por SELECT y borradas después. Cutover commiteado (`d933e44`), sin desplegar. Ver [[E-07_guardardocumento]].
-- [x] **E-08** `credit/SaveImagesProductosMx` — `MAVI_DOC_CTE` + filesystem. **100 %**. Los 3 casos verificados el 20 ago: archivos en disco y fila de la selfie en AdminDoc. Cutover commiteado (`d933e44`), sin desplegar. Ver [[E-08_SaveImagesProductosMx]].
+- [x] **E-08** `credit/SaveImagesProductosMx` — `MAVI_DOC_CTE` + filesystem. **100 %**. Los 3 casos verificados el 20 ago: archivos en disco y fila de la selfie en AdminDoc. Paridad verificada el 3 sep tras retirar el guardián de body nulo (`2828618`). Cutover commiteado (`d933e44`), sin desplegar. Ver [[E-08_SaveImagesProductosMx]].
 
 > ✅ **La Ola 4 es la primera que cierra completa.** Lo que le queda ya no depende de desarrollo: es despliegue, y en E-08 confirmar que el app pool pueda escribir en la carpeta de imágenes.
 
@@ -131,6 +131,8 @@ Se agota el bloque A antes de entrar al B. La razón es simple: el bloque A es e
 
 > Conservar el `NullValueHandling.Ignore` y el doble desescapado de la respuesta en E-11 y E-12.
 
+> ✅ **Las cuatro contrastadas contra el legado el 3 sep**, 14 casos idénticos, con APIMagentoDMZ levantada en local para recorrer la cadena completa hasta Magento en E-11 y E-12. E-13 y E-14 fallan la parte SMB con el **mismo mensaje en los dos servicios** (`LogonUser failed with error code: 1326`): es H-02, no una diferencia entre versiones. El archivo local que E-13 escribe antes del SMB salió con el mismo SHA-256 en ambos. **E-12 sigue sin probarse escribiendo.**
+
 ## Ola 7 — SIGMAVI sin dependencia de SAP · #12558
 
 La partida de SIGMAVI que resuelve contra una sola tabla y no lee nada de SAP. Verificado sobre el código el 12 ago.
@@ -140,6 +142,8 @@ La partida de SIGMAVI que resuelve contra una sola tabla y no lee nada de SAP. V
 > 📌 **La tabla ya existe en SIGMAVI y se llama `BpRecogePedidos`**, no `TrWDM0285_CteRecoge` — mismas columnas, `MaviSAP: Tables\BpRecogePedidos.sql`, creada en abril de 2025. **Dev 3 no tiene que crearla.** Ese es el nombre contra el que quedó programado E-15, y conviene avisar a Dev 2, cuyo checklist todavía dice el nombre viejo.
 
 > ⏳ **E-15 no se puede probar todavía.** Solo lee; los tres flujos que llenan la tabla siguen escribiendo en Intelisis. Dos son de Dev 2 —`createStorepickupCode` (feb 2027) y `generateNewStorepickupCode` (10-11 sep)— y el tercero, `crearPrimerCodigoRecogerSucbanktransfer`, apareció el 20 ago con el work item 8600 y **no está en ningún checklist**. Mientras tanto el endpoint responde 404 siempre. Se puede adelantar la prueba insertando una fila a mano.
+
+> ⛔ **El 3 sep solo se contrastaron las dos rutas que no tocan base** (`IdEcommerce` nulo → 404; body nulo → 400), iguales en las dos versiones. La comparación real está bloqueada por los dos lados: la tabla migrada está vacía, y el legado lee `TrWDM0285_CteRecoge` con `sCadenaConexion`, que es **IntelisisTmp en MAVICUBOS**, prohibido por la regla de destinos del 5 ago.
 
 > 🗺️ **El flujo completo está mapeado** en [[FLUJO_RECOGER_EN_SUCURSAL]]: los seis procesos que tocan la tabla, sus equivalencias en SIGMAVI y SAP, el orden de migración y los riesgos. Son **cuatro** los procesos que escriben, no tres: además de los dos de Dev 2 y el de banktransfer, `setOrder` siembra la fila sin clave al crear la orden (`OrderMethods.cs:659`).
 

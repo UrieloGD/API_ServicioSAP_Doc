@@ -1,7 +1,7 @@
 ---
 tags: [contrato, endpoint, migracion, ola-1]
 partida: E-01
-actualizado: 2026-08-05
+actualizado: 2026-09-03
 ---
 
 # E-01 — credit/SendSmsNewNumber
@@ -127,6 +127,12 @@ Escribe en dos tablas de `ServicioAndroid`:
 > 🔴 **Corregido el 31-ago: el formato del código había divergido.** ServicioSAP insertaba `LEFT(NEWID(), 8)` —ocho caracteres alfanuméricos— porque así estaba el legado cuando se migró E-01. La LAN lo cambió a seis dígitos numéricos el 24 ago (`970d5b1`, *"SmsNewNumber Alfanumerico a Numerico 6 digitos"*), después de nuestra migración. Se alinea antes de desplegar; de haber salido así, el cliente habría recibido un código con letras donde la pantalla espera números.
 >
 > Conviene revisar si hay más partidas ya migradas donde el legado se movió después.
+
+> 🔴 **Corregido el 3-sep: un `?? ""` convertía un 500 del legado en un 200.** ServicioSAP
+> normalizaba el teléfono con `Regex.Replace(request.NumeroTelefono ?? "", "[^0-9]", "")`.
+> Con `NumeroTelefono` nulo, el legado revienta y devuelve 500; ServicioSAP respondía **200 y
+> encolaba un SMS a un número vacío**. Se retiró el `?? ""` (`6669ba9`, `Refs: 12552`) y las
+> dos versiones vuelven a dar 500.
 2. **`TcAAEA00030_EnvioMensajes`** — la fila que el módem consume: `IdRegistro` = el `IdRef` anterior, `EstatusEnvio = 1`, `Telefono` ya normalizado.
 
 ## Las dos ramas del método

@@ -1,7 +1,7 @@
 ---
 tags: [contrato, endpoint, migracion, ola-6]
 partida: E-14
-actualizado: 2026-08-25
+actualizado: 2026-09-03
 ---
 
 # E-14 — `product/obtenerImagen`
@@ -122,10 +122,34 @@ nada. En ServicioSAP ambas rutas salen de la misma clave de configuración.
 
 Artefacto reproducible: `ServicioSap\ServicioSap\Tests\ServicioSap.Ola6.http`.
 
+## Comparación contra el legado — 3 sep 2026
+
+Tres casos, todos iguales, con los dos servicios levantados a la vez:
+
+| # | Caso | Legado | ServicioSAP | |
+|---|---|---|---|---|
+| 1 | `magentoName` y `originalName` válidos | `200 "LogonUser failed with error code: 1326"` | idéntico | ✅ |
+| 2 | Campos nulos | `200 "LogonUser failed with error code: 1326"` | idéntico | ✅ |
+| 3 | Body nulo | `500 NullReferenceException` | `500 NullReferenceException` | ✅ |
+
+Los dos fallan en el mismo punto y con el mismo texto: **es H-02, no una diferencia entre
+versiones**. Sigue sin poder ejercitarse la copia real.
+
 ## Diferencias contra el legado
 
 **Una, deliberada:** la ruta de origen del `File.Copy` usa la UNC correcta. Sin ella el
 endpoint no copia nada.
+
+> 🟡 **Una segunda, detectada el 3-sep por lectura y todavía sin verificar: el destino que ya
+> existe.** El legado usa `File.Copy(origen, destino)` con la sobrecarga de dos argumentos,
+> que **lanza `IOException` si el archivo de destino ya está**; el método lo atrapa y devuelve
+> el mensaje de error. ServicioSAP abre el destino con `FileMode.Create`, que **sobrescribe** y
+> devuelve `"Ok"`.
+>
+> No se pudo comprobar por ejecución porque H-02 revienta antes de llegar ahí. Como el endpoint
+> se usa para refrescar imágenes de producto, sobrescribir es casi seguro lo que se quiere —
+> pero es un cambio de respuesta observable y hay que decidirlo, no heredarlo por accidente.
+> **Comprobarlo en QA junto con la corrección de la diagonal.**
 
 ## Deuda heredada
 
