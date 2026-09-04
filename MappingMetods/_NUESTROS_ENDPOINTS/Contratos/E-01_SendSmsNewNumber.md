@@ -1,7 +1,7 @@
 ---
 tags: [contrato, endpoint, migracion, ola-1]
 partida: E-01
-actualizado: 2026-08-05
+actualizado: 2026-09-03
 ---
 
 # E-01 — credit/SendSmsNewNumber
@@ -116,7 +116,23 @@ Es decir: la conmutación está escrita pero no está en vigor. Y aun cuando se 
 
 Escribe en dos tablas de `ServicioAndroid`:
 
-1. **`VTASDCodigoVerificacioneCommerce`** — solo si no existe ya un `IdRef` para ese par `Cliente`/`IdCarrito`. Inserta `Codigo = LEFT(NEWID(),8)`, `FechaExpira = GETDATE() + 2 minutos`, `Estatus = 1`.
+1. **`VTASDCodigoVerificacioneCommerce`** — solo si no existe ya un `IdRef` para ese par `Cliente`/`IdCarrito`. Inserta `FechaExpira = GETDATE() + 2 minutos`, `Estatus = 1` y el `Codigo`, que lo genera SQL Server:
+
+   ```sql
+   RIGHT('000000' + CAST(ABS(CHECKSUM(NEWID())) % 1000000 AS VARCHAR(6)), 6)
+   ```
+
+   **Seis dígitos numéricos** con ceros a la izquierda.
+
+> 🔴 **Corregido el 31-ago: el formato del código había divergido.** ServicioSAP insertaba `LEFT(NEWID(), 8)` —ocho caracteres alfanuméricos— porque así estaba el legado cuando se migró E-01. La LAN lo cambió a seis dígitos numéricos el 24 ago (`970d5b1`, *"SmsNewNumber Alfanumerico a Numerico 6 digitos"*), después de nuestra migración. Se alinea antes de desplegar; de haber salido así, el cliente habría recibido un código con letras donde la pantalla espera números.
+>
+> Conviene revisar si hay más partidas ya migradas donde el legado se movió después.
+
+> 🔴 **Corregido el 3-sep: un `?? ""` convertía un 500 del legado en un 200.** ServicioSAP
+> normalizaba el teléfono con `Regex.Replace(request.NumeroTelefono ?? "", "[^0-9]", "")`.
+> Con `NumeroTelefono` nulo, el legado revienta y devuelve 500; ServicioSAP respondía **200 y
+> encolaba un SMS a un número vacío**. Se retiró el `?? ""` (`6669ba9`, `Refs: 12552`) y las
+> dos versiones vuelven a dar 500.
 2. **`TcAAEA00030_EnvioMensajes`** — la fila que el módem consume: `IdRegistro` = el `IdRef` anterior, `EstatusEnvio = 1`, `Telefono` ya normalizado.
 
 ## Las dos ramas del método
@@ -159,9 +175,13 @@ Diferencias de implementación, todas verificadas como equivalentes:
 
 ### Hueco de validación (heredado, no introducido)
 
-Un body `{}` devuelve **200 `{"result":1}`** y escribe dos filas basura con `Cliente` y `Telefono` vacíos. Comprobado el 5-ago-2026: generó `TcAAEA00030_EnvioMensajes.Id = 7972` / `VTASDCodigoVerificacioneCommerce.Id = 103369`.
+Ni ServicioSAP ni la DMZ validan campos, solo `request == null`. Un body al que le falte `Cliente` o `IdCarrito` escribe filas basura y devuelve **200 `{"result":1}`**. Comprobado el 5-ago-2026: generó `TcAAEA00030_EnvioMensajes.Id = 7972` / `VTASDCodigoVerificacioneCommerce.Id = 103369`.
 
-Ni ServicioSAP ni la DMZ validan campos, solo `request == null`, así que **el legado tiene exactamente el mismo hueco en producción**. Se documenta como está por paridad; corregirlo es una decisión aparte, y habría que hacerlo en los dos lados para no divergir.
+El legado tiene el mismo hueco en producción. Se documenta como está por paridad; corregirlo es una decisión aparte, y habría que hacerlo en los dos lados para no divergir.
+
+> 🔴 **Corregido el 31-ago: `NumeroTelefono` era la excepción, y ahí sí divergíamos.** Esta ficha afirmaba que el hueco era idéntico en los dos lados, y no lo era. El legado hace `Regex.Replace(request.NumeroTelefono, ...)` **fuera del `try`**, así que un teléfono nulo lanza `ArgumentNullException`, nadie la atrapa y sale un **500**. ServicioSAP tenía un `?? ""` que lo evitaba: seguía adelante, encolaba un SMS con el teléfono vacío y respondía 200.
+>
+> Se quita el `?? ""`. Ahora un body sin `NumeroTelefono` —incluido `{}`— responde **500** en los dos lados, y ya no se encola nada. El hueco sigue abierto para `Cliente` e `IdCarrito`, que son cadenas y no revientan.
 
 ## Rectificación: la corrida del 5 ago fue contra una copia de la base
 

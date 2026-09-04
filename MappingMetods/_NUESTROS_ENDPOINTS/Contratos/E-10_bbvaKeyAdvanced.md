@@ -1,7 +1,7 @@
 ---
 tags: [contrato, endpoint, migracion, ola-5]
 partida: E-10
-actualizado: 2026-08-23
+actualizado: 2026-09-03
 ---
 
 # E-10 — `customerService/bbvaKeyAdvanced`
@@ -102,11 +102,24 @@ no verificados por ejecución.
 
 Artefacto reproducible: `ServicioSap\ServicioSap\Tests\ServicioSap.Ola5.http`.
 
+## Comparación contra el legado — 3 sep 2026
+
+Los dos servicios levantados en paralelo (legado en 8098, ServicioSAP en 8099), los dos
+contra el SOAP real de Multipagos.
+
+| # | Caso | Legado | ServicioSAP | |
+|---|---|---|---|---|
+| 1 | GET con la llave maestra | `200`, 194 bytes | `200`, 194 bytes | ✅ |
+
+Los cuerpos se compararon por **SHA-256** para no manipular la credencial: coinciden. La
+prueba del 23 ago solo había ejercitado ServicioSAP; ésta es la primera vez que se contrasta
+contra el legado ejecutando los dos.
+
 ## Diferencias contra el legado
 
 Ninguna en el contrato. Una sola diferencia interna: el legado usa `client.Execute`
 (síncrono) y aquí se usa `client.ExecuteAsync`, por la regla de endpoints asíncronos. Misma
-librería, mismo request, misma respuesta.
+librería, mismo request, misma respuesta — verificado por ejecución el 3-sep.
 
 ## Deuda heredada
 
