@@ -1,0 +1,35 @@
+[
+  {
+    "name": "Servicio SAP (Desarrollo)",
+    "variables": [
+      {
+        "key": "SAP",
+        "value": "https://localhost:44399"
+      },
+      {
+        "key": "DMZ",
+        "value": "https://localhost:44302"
+      },
+      {
+        "key": "SAPDirect",
+        "value": "https://vhmvods4ci.sap.svrwes4h.com:44300"
+      },
+      {
+        "key": "jwt_token",
+        "value": ""
+      },
+      {
+        "key": "LogonUser",
+        "value": "magalindo"
+      },
+      {
+        "key": "LogonPass",
+        "value": "SNDiros260308729de380c48.."
+      },
+      {
+        "key": "csrf_token",
+        "value": ""
+      }
+    ]
+  }
+]

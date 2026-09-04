@@ -1,7 +1,7 @@
 ---
 tags: [contrato, endpoint, migracion, ola-4]
 partida: E-07
-actualizado: 2026-08-20
+actualizado: 2026-09-03
 ---
 
 # E-07 — `credit/guardardocumento`
@@ -201,13 +201,41 @@ no revienta con cadenas cortas y que lo que no parece BP sigue yendo a Token.
 
 Artefacto reproducible: `ServicioSap\ServicioSap\Tests\ServicioSap.Ola4.http`.
 
+## Comparación contra el legado — 3 sep 2026
+
+Ocho casos con los dos servicios levantados a la vez sobre el mismo AdminDoc. **Siete
+idénticos**, incluidos los `500`, donde coinciden `Message`, `ExceptionType` y
+`ExceptionMessage` —solo difiere el `StackTrace`, que lleva los nombres de cada ensamblado.
+
+Se comprobaron las filas insertadas, no solo el HTTP, y la adaptación al formato BP funciona
+en las dos direcciones, espejo exacto:
+
+| Cuenta enviada | Legado escribe en | ServicioSAP escribe en |
+|---|---|---|
+| `C099999999` | `CLAVE` | `DIR` |
+| `1599999999` | `DIR` | **`CLAVE`** |
+
+`FORMATO`, `ID_FOTO`, `ID_EXTERNO`, `IDAPLICACION` y el tamaño del documento salieron iguales
+en ambas. Las filas de prueba se borraron al terminar.
+
+### El octavo caso: una cuenta de 11 caracteres
+
+Único resultado distinto — **legado `500`, ServicioSAP `200`** — y es consecuencia de la misma
+adaptación. Desnuda un defecto del legado: `CLAVE` es `varchar(10)` pero su condición acepta
+`Cliente?.Length <= 11`, así que **cualquier cuenta `C`/`P` de exactamente 11 caracteres está
+garantizada a fallar** con *"String or binary data would be truncated"*. La condición migrada
+usa `<= 10`, el ancho real de la columna, y esa cuenta cae en `DIR` (`varchar(255)`).
+
+Con formato BP el caso no existe: un Business Partner mide siempre 10 dígitos. De hecho,
+enviando `15999999991` —11 dígitos, formato nuevo— **las dos responden `200` idéntico**.
+
 ## Diferencias contra el legado
 
 Una, deliberada y ya descrita: **la detección de cuenta acepta el formato BP en vez de
 `C`/`P`**. Sin ella la migración rompería la consulta de documentos.
 
 El resto es paridad literal, incluidos el `switch`, el SQL con sus tres ramas, el tipado de
-los parámetros y los códigos HTTP.
+los parámetros y los códigos HTTP — contrastado por ejecución el 3-sep.
 
 ## Deuda heredada
 

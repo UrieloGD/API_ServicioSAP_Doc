@@ -4,11 +4,11 @@
     "type": "split",
     "children": [
       {
-        "id": "9add0881516c918b",
+        "id": "f1fbbaf97d422ab3",
         "type": "tabs",
         "children": [
           {
-            "id": "cb9fcd7bb31b1e18",
+            "id": "3ce67b631f9b9aba",
             "type": "leaf",
             "state": {
               "type": "empty",
@@ -184,8 +184,10 @@
       "bases:Crear nueva base": false
     }
   },
-  "active": "cb9fcd7bb31b1e18",
+  "active": "3ce67b631f9b9aba",
   "lastOpenFiles": [
+    "Manual Tecnico Servicio SAP 01092026.md",
+    "Manual Tecnico Servicio SAP 31082026.md",
     "_NUESTROS_ENDPOINTS/CHECKLIST_DEV3_NOSAP_NOINTELISIS.md",
     "Manual Tecnico Servicio SAP 26082026.md",
     "Manual tecnico Servicio SAP/Manual TecnicoServicio SAP 31082026.md",
@@ -220,8 +222,6 @@
     "_NUESTROS_ENDPOINTS/CHECKLIST_MIGRACION_LAN_A_SAP.md",
     "_NUESTROS_ENDPOINTS/CHECKLIST_DEV3_NOSAP_NOINTELISIS.md.tmp.10508.27c64ec25c5c",
     "_NUESTROS_ENDPOINTS/ESTADO_PRUEBAS_Y_AVANCE.md.tmp.10508.6056489d6a91",
-    "_NUESTROS_ENDPOINTS/GANTT_~1.md",
-    "_NUESTROS_ENDPOINTS/_ALCANCE_MIGRACION_LAN_a_SAP.md",
     "Sin título.canvas"
   ]
 }
