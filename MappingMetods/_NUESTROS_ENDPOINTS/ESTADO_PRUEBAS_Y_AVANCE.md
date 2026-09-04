@@ -1,7 +1,7 @@
 ---
 tags: [pruebas, avance, migracion, estado]
 fuente: "CHECKLIST_MIGRACION_LAN_A_SAP.md"
-actualizado: 2026-08-25
+actualizado: 2026-09-03
 ---
 
 # Estado de pruebas y avance por endpoint
@@ -69,6 +69,13 @@ Para que el número signifique algo y no sea una impresión, cada partida se mid
 | E-50    | `customerService/obtenerTipoGarantia` | 8   | 0 %      | —                       | 🔒 Estructura de Miguel Marín     |
 | ➡️ | ~~`credit/GetUnificationWalletStatus`~~ | — | — | — | **Reasignado a Dev 2** el 12 ago |
 | ➡️ | ~~`credit/SetUnificationWalletData`~~ | — | — | — | **Reasignado a Dev 2** el 12 ago |
+
+> ✅ **Paridad contra el legado verificada por ejecución simultánea (1-3 sep)** en **E-01 a
+> E-14**, con los dos servicios levantados a la vez sobre la misma base. Aparecieron **dos
+> divergencias**, en E-01 y E-08, corregidas el mismo día. E-15 solo pudo contrastarse en las
+> rutas que no tocan base. Los porcentajes no se mueven: el barrido confirma lo que ya estaba
+> medido, y lo que falta en cada partida sigue siendo lo mismo. Detalle en el
+> [barrido de paridad](#barrido-de-paridad--olas-1-a-7-1-3-sep).
 
 ⁽¹⁾ **E-01 al 100 % = desarrollo terminado**, por decisión del 6 ago. El código está completo y verificado contra la base real en todo lo que depende de nosotros. Quedan dos cosas fuera de nuestro control, que no descuentan del porcentaje pero **no están hechas**:
 
@@ -924,6 +931,152 @@ Asíncrono, con `obtenerConexionSigMaviAsync`.
 > procedimiento `SpWDM0285_CteRecoge`, que tampoco está en `MaviSAP\StoreProcedure`.
 
 **Sólo se migró la lectura**, por decisión del 31 ago. Los escritores se quedan donde están.
+
+### Barrido de paridad — olas 1 a 7, 1-3 sep
+
+Hasta aquí cada ola se había probado **contra su servicio real**, comprobando que ServicioSAP
+respondiera lo que la ficha decía. Este barrido es otra cosa: **los dos servicios levantados
+al mismo tiempo**, el legado en el puerto 8098 y ServicioSAP en el 8099, apuntando a la misma
+base y al mismo destino, mandando el mismo cuerpo a los dos y comparando código HTTP y
+respuesta carácter por carácter.
+
+Es la comprobación que faltaba. Una ficha puede describir bien lo que hace el endpoint
+migrado y aun así no notar que el legado hace otra cosa.
+
+| Ola | Partidas | Casos | Resultado |
+|---|---|---|---|
+| 1 | E-01 | 4 | 🔴 **1 divergencia**, corregida (`6669ba9`) |
+| 2 | E-02, E-03, E-04 | — | ✅ idénticas |
+| 3 | E-05, E-06 | 10 | ✅ idénticas |
+| 4 | E-07, E-08 | 12 | 🟠 **1 divergencia**, corregida (`2828618`) + 1 desviación aprobada |
+| 5 | E-09, E-10 | 3 | ✅ idénticas |
+| 6 | E-11, E-12, E-13, E-14 | 14 | ✅ idénticas |
+| 7 | E-15 | 2 | ⏳ solo las rutas que no tocan base |
+
+#### Ola 1 — E-01
+
+Cuatro casos con el número de prueba `3321332415`. **Divergencia encontrada:** ServicioSAP
+normalizaba el teléfono con `Regex.Replace(request.NumeroTelefono ?? "", ...)`. Con el campo
+nulo el legado devuelve 500, y ServicioSAP devolvía **200 tras encolar un SMS a un número
+vacío**. Se retiró el `?? ""`; las dos vuelven a dar 500. Detalle en [[E-01_SendSmsNewNumber]].
+
+#### Ola 2 — E-02, E-03, E-04
+
+Las tres rutas de listas blanca/negra contra SIGMAVI, con las mismas respuestas en los dos
+servicios.
+
+#### Ola 3 — E-05 y E-06
+
+Diez casos, todos idénticos. Como el `data.db` de ServicioSAP no existe en el equipo de
+desarrollo, se apuntó `SQLITE_DB_PATH` temporalmente a una copia de la base del legado para
+que los dos leyeran exactamente los mismos datos; el `Web.config` se restauró al terminar.
+
+| Endpoint | Caso | Los dos |
+|---|---|---|
+| E-05 | Guía existente | `200 {"IdEcommerce":"2000045299","FullName":"DÍAZ MEZA ABEL"}` |
+| E-05 | Guía inexistente | `500` |
+| E-05 | `IdEcommerce` vacío | `404` |
+| E-05 | Body vacío | `500` |
+| E-06 | `nuevo`+`CREDITO`, `nuevo`+otro, `casa` | `200` con los mismos montos |
+| E-06 | Artículo desconocido | `400` |
+| E-06 | UEN inexistente | `500` |
+| E-06 | Body vacío | `500` |
+
+Confirma de paso el **404 inalcanzable** de `order/getGuide`: solo sale con cadena vacía, y
+una guía que no existe da 500 en las dos versiones.
+
+#### Ola 4 — E-07 y E-08
+
+**E-07** — siete de ocho casos idénticos, incluidos los `500` (mismo `Message`,
+`ExceptionType` y `ExceptionMessage`; solo difiere el `StackTrace`, que lleva los nombres de
+cada ensamblado). Se comprobaron además las filas en AdminDoc, no solo el HTTP: la rama que
+elige cada servicio es la esperada y espejo exacto.
+
+| Cuenta | Legado | ServicioSAP |
+|---|---|---|
+| `C099999999` | `CLAVE` | `DIR` |
+| `1599999999` | `DIR` | **`CLAVE`** |
+
+Es la adaptación al formato BP del 20-ago funcionando en las dos direcciones. El octavo caso
+—una cuenta de **11 caracteres**— es consecuencia de esa misma adaptación: el legado devuelve
+`500` por truncamiento y ServicioSAP `200`. No es un fallo de la migración sino un bug del
+legado que sale a la luz: `CLAVE` es `varchar(10)` pero su condición acepta `Length <= 11`,
+así que **cualquier cuenta `C`/`P` de 11 caracteres está garantizada a fallar**. La condición
+migrada usa `<= 10`, el ancho real de la columna. Con formato BP el caso no existe.
+
+**E-08** — **divergencia encontrada:** con el body nulo el legado devolvía `200 true` y
+ServicioSAP `400 Datos incompletos.`. Se retiró el guardián (`2828618`); los cuatro casos
+quedan idénticos. Hacia el cliente final no cambia nada, porque la DMZ valida antes y sigue
+cortando con su propio 400. Los archivos en disco salieron con **hash SHA-256 idéntico** en
+los dos servicios y las filas de selfie coinciden en todas sus columnas.
+
+Las 12 filas de prueba en `MAVI_DOC_CTE` se borraron al terminar.
+
+#### Ola 5 — E-09 y E-10
+
+**E-09** — el catálogo completo salió **byte por byte igual** (510 bytes, mismo orden de
+filas), pese a que el legado arma una `List<Object>` de objetos anónimos y ServicioSAP una
+`List<QuejaResponse>` tipada.
+
+Para el camino de error se apuntaron las dos cadenas a un servidor inexistente: las dos
+devolvieron `500` con el mismo `ExceptionType` (`JsonReaderException`) y hasta el mismo
+`ExceptionMessage`. Confirma la cadena de comportamientos heredados: con error el método
+devuelve **el texto de la excepción**, no un JSON, y el `DeserializeObject` del controlador
+revienta.
+
+**E-10** — primera vez que se contrasta ejecutando los dos. El SOAP de Multipagos responde
+desde el equipo de desarrollo, así que la prueba fue contra el servicio real: `200` y 194
+bytes en ambos, con **SHA-256 coincidente**. No se reprodujo el valor: es una credencial.
+
+#### Ola 6 — E-11, E-12, E-13 y E-14
+
+Catorce casos, todos idénticos. Para E-11 y E-12 se levantó además **APIMagentoDMZ en local**
+(puerto 44302), que es a donde apuntan los dos servicios: la cadena completa
+`legado / ServicioSAP → DMZ → Magento` se ejerció de verdad.
+
+| Endpoint | Casos | Los dos |
+|---|---|---|
+| E-11 | correo inexistente, correo vacío | `200 "[]"` |
+| E-11 | body nulo | `200` con el error de Magento pidiendo `correoCuenta` |
+| E-12 | `idCliente` inexistente | `200 {"message":"Customer does not exist."}` |
+| E-12 | sin `idCliente`, body nulo | `200` con los errores de validación de Magento |
+| E-13 | body nulo, sin `fileName`, sin `fileContent` | `200` con `status:400` dentro del cuerpo |
+| E-13 | Base64 inválido | `200` con `status:500` y el mismo texto |
+| E-13 | archivo válido | `200` con `status:500` — **`LogonUser failed with error code: 1326`** |
+| E-14 | nombres válidos, campos nulos | `200 "LogonUser failed with error code: 1326"` |
+| E-14 | body nulo | `500 NullReferenceException` |
+
+**E-12 no se probó escribiendo.** Solo se ejercitaron sus rutas de error, que no modifican
+nada; sigue faltando un id de cliente de Magento acordado para la escritura real.
+
+El archivo local que E-13 escribe **antes** del paso SMB sí se comparó: mismo nombre, mismo
+tamaño y mismo SHA-256 en los dos. Lo que falla en los dos por igual es la copia al share, y
+falla con el mismo mensaje — que es exactamente H-02, no una diferencia entre versiones.
+
+#### Ola 7 — E-15
+
+**Solo se probaron las dos rutas que no tocan base**, y las dos salieron iguales:
+`IdEcommerce` nulo → `404` sin cuerpo; body nulo → `400` con el mensaje del
+`NullReferenceException`.
+
+> ⛔ **La comparación real no se puede hacer, por dos motivos a la vez.** Del lado migrado, la
+> tabla `BpRecogePedidos` está vacía hasta que Dev 2 mueva los escritores. Del lado del
+> legado, `GetPickUpCode` lee `TrWDM0285_CteRecoge` con `sCadenaConexion`, que es
+> **IntelisisTmp en MAVICUBOS**: la regla de destinos del 5-ago prohíbe consultarlo. Cualquier
+> caso con un `IdEcommerce` real habría golpeado ese servidor, así que no se ejecutó.
+
+#### Qué deja el barrido
+
+**Dos divergencias reales en 45 casos**, las dos en el manejo de un campo nulo y las dos
+corregidas el mismo día. Ninguna estaba en el camino feliz, que es justo donde las pruebas
+por ola ya habían mirado.
+
+El patrón se repite: **el hueco está en lo que pasa cuando falta un dato**. E-01 convertía un
+500 en un 200 con efecto externo; E-08 convertía un 200 en un 400. Conviene mirar con esa
+lente las olas que aún no se han barrido.
+
+Queda pendiente de comparar **E-12 escribiendo** —falta el id de cliente— y **E-15 completo**,
+que depende de Dev 2 y de resolver la equivalencia de IntelisisTmp.
 
 ### Refactor transversal — endpoints a asíncrono, 20 ago
 
