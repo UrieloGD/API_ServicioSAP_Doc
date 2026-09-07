@@ -95,7 +95,11 @@ Endpoints que resuelven contra BP05, wrapper ya construido por Dev 1, más las d
 - [x] ✅ **S2-07** `prospecto/recuperarcuenta` — BP05 
       Para probar el estatus 1 se requiere conocer los datos personales y RFC de un Business Partner existente en SAP.
 - [x] ✅ **S2-08** `recommender/getRecommender` — BP05; falta obtener `znipventa` y confirmar si la API lo expone **Endpoint Deprecado**
-- [ ] **S2-09** `customer/wallet/getMinimumCostToRedeem` — configuracionescatalgo(fasAPI), SD52
+- [x] ✅ **S2-09** `customer/wallet/getMinimumCostToRedeem` — configuracionescatalgo(fasAPI), SD52
+  - *Completado el 03/09/2026. Se implementó unificando las reglas desde FastAPI (Catálogos de AWS) para los montos mínimos y SAP OData (`ZAPI_ARTICULOS_SRV`) para consultar familia y estatus (ALTA o BLOQUEADO).*
+  - **Servicios Consumidos:** 
+    - AWS API Gateway (FastAPI) para `AI_GET_CatalogoConfiguracion` (catálogos `MINIMO PARA REDIMIR MONEDERO`, `FAMILIAS ESTATUS BLOQUEADO REDIMEN MONEDERO`, `VENTASCANALMAVI`).
+    - SAP OData (`ZAPI_ARTICULOS_SRV`) para extracción de familias y estatus de artículos.
 
 > ⚠️ **S2-04 es el único punto de este Sprint con dependencia externa** (Dev 3 / SIGMAVI). El resto se puede terminar y probar de principio a fin sin esperar a nadie.
 

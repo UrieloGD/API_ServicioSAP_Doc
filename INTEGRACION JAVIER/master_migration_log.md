@@ -173,3 +173,24 @@ curl --request POST \
   - Para el S2-02 (`LoginClienteCreditoFechaN`) se incluyó un parseo robusto para soportar diferentes formatos de fechas que puede devolver SAP (e.g. `/Date(...)/`, o `YYYY-MM-DD`) y verificar contra la fecha solicitada.
   - Se crearon los Request Models respectivos.
 
+### 2026-09-03: S2-09 customer/wallet/getMinimumCostToRedeem
+- **Estado**: Migrado a S/4HANA y AWS API Gateway (FastAPI).
+- **Servicios AWS y SAP consumidos**:
+  - `AI_GET_CatalogoConfiguracion` (AWS API Gateway): Extrae catálogos legacy (`MINIMO PARA REDIMIR MONEDERO`, `FAMILIAS ESTATUS BLOQUEADO REDIMEN MONEDERO`, `VENTASCANALMAVI`).
+  - `ZAPI_ARTICULOS_SRV` (SAP OData): Extrae datos maestros de artículos (Estatus y Familia).
+- **Situaciones superadas (Debugging)**:
+  1. **Parsing de JSON Array:** El catálogo en AWS no devolvía el clásico formato con propiedad `"value"`, sino un Array directo de objetos JSON. Esto bloqueaba la deserialización devolviendo arreglos vacíos (por ende el cálculo quedaba en `0.0`). Se aplicó una validación `JsonValueKind.Array` sobre el `RootElement` solucionando la extracción de rangos.
+  2. **URL Encoding de SKUs hacia OData:** SKUs con signos especiales (e.g. `KUK+00090`) provocaban fallas silenciosas en OData porque el símbolo `+` se traducía como espacio en la petición GET, resultando en que SAP no encontrara el producto. Se protegió con `Uri.EscapeDataString(sku)`, logrando asignar correctamente las variables `estatus`, `familia` y `procesado`.
+  3. **Mapeo de Propiedades de Catálogo:** Se actualizó `CatalogoConfiguracion.cs` para capturar explícitamente los campos aplanados (`VALOR1`, `VALOR2`, etc.) que FastAPI devuelve, enlazándolos exitosamente con el viejo modelo `tablarangostd`.
+- **Código y Documentación**:
+  - `WalletMethods.cs` quedó comentado con tags `<summary>` XML detallando su uso (listo para producción).
+  - El backend `APIMagentoDMZ` redirecciona el endpoint con `curl.PostSAP`.
+
+**Prueba Exitosa Magento hacia DMZ (Ruta Pública POST)**
+```bash
+curl --request POST \
+  --url https://localhost:44302/customer/wallet/getMinimumCostToRedeem \
+  --header 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInwczovL2tkbGwzZmhjeW8ubWF2aS5teC8ifQ.KTnL5xNbuunl08Z-q0-SaXEj4IZIO01KURtqI5Q9S-Q' \
+  --header 'content-type: application/json' \
+  --data '{"uen":1,"categoria":"credito menudeo","articulos":[{"sku":"CENSO00075","cantidad":"4","precio":"331","descuento":0}]}'
+```

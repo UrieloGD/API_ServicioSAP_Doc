@@ -1,7 +1,7 @@
 ---
 tags: [contrato, endpoint, migracion, ola-4]
 partida: E-08
-actualizado: 2026-08-20
+actualizado: 2026-09-03
 ---
 
 # E-08 — `credit/SaveImagesProductosMx`
@@ -81,16 +81,15 @@ Un **string**, no un booleano: el legado hace `Ok(JsonConvert.SerializeObject(fa
 y el malo el string `"false"`. En la práctica casi inalcanzable, porque el método atrapa sus
 propias excepciones.
 
-### 400 — body nulo
+### 200 con body nulo — alineado con el legado el 3-sep
 
-```json
-{ "Message": "Datos incompletos." }
-```
+Un body nulo devuelve **`200 true`**, igual que el legado, y el `NullReferenceException`
+ocurre dentro del `Task`.
 
-Guardián propio: replica el 400 que la DMZ ya devuelve
-(`APIMagentoDMZ\Controllers\CreditController.cs:215`). **El legado de la LAN no valida**: con
-un null devolvería `200 true` y reventaría dentro del `Task`. Como la DMZ corta antes, hacia
-el cliente el sistema completo ya respondía 400.
+Hasta el 3-sep ServicioSAP tenía aquí un guardián propio que devolvía
+`400 {"Message":"Datos incompletos."}`. Se retiró: era la única diferencia de contrato que
+quedaba en la Ola 4. **Hacia el cliente final no cambia nada**, porque la DMZ valida antes
+(`APIMagentoDMZ\Controllers\CreditController.cs:215`) y sigue cortando con su propio 400.
 
 ### 401 — sin token
 
@@ -185,13 +184,36 @@ normalización del mime, la numeración con la selfie al final, y que `PruebaDeV
 
 Artefacto reproducible: `ServicioSap\ServicioSap\Tests\ServicioSap.Ola4.http`.
 
+## Comparación contra el legado — 3 sep 2026
+
+Los dos servicios levantados en paralelo (legado en 8098, ServicioSAP en 8099) contra el
+mismo AdminDoc. **Los cuatro casos idénticos:**
+
+| # | Caso | Legado | ServicioSAP | |
+|---|---|---|---|---|
+| 1 | Body nulo | `200 true` | `200 true` | ✅ |
+| 2 | Lote completo (2 INE + selfie) | `200 true` | `200 true` | ✅ |
+| 3 | `Ine` nulo | `200 true` | `200 true` | ✅ |
+| 4 | `Selfie` nulo | `200 true` | `200 true` | ✅ |
+
+Los efectos secundarios también coinciden. Las dos carpetas quedaron con los mismos cuatro
+archivos y **hash SHA-256 idéntico**, y en `MAVI_DOC_CTE` cayó una fila de selfie por
+servicio con los mismos `TIPO_DOC`, `IDAPLICACION`, `FORMATO` y tamaño. Las filas de prueba
+se borraron al terminar.
+
+El caso 1 es el que motivó el cambio del guardián; los casos 3 y 4 confirman que un nulo
+aborta el lote igual en las dos versiones.
+
 ## Diferencias contra el legado
 
-Ninguna en el contrato observable. Dos añadidos que no cambian ninguna respuesta:
+Ninguna en el contrato observable. Tres añadidos que no cambian ninguna respuesta:
 
 - **Un `try/catch` dentro del `Task`**, que el legado no tiene. Allá una excepción moría como
   *unobserved task exception* sin dejar rastro; aquí el motivo va a `sap.log`. El cliente ve
   lo mismo, porque ya recibió su `true`.
+- **`request?.Account` al construir esa línea de log.** Con el body nulo el propio `catch`
+  reventaba al armar el mensaje y la excepción volvía a perderse; con el `?.` sí queda
+  registrada. Se corrigió el 3-sep junto con el retiro del guardián.
 - **`Directory.CreateDirectory` si la carpeta no existe.** El legado daba por hecha la suya;
   como el fallo es silencioso, un directorio ausente equivalía a perder el lote entero sin
   aviso.
