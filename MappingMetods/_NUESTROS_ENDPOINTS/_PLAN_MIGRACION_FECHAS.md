@@ -15,7 +15,7 @@ Listado de control de **40 partidas**: 4 habilitadores y 36 endpoints. Incluye l
 
 > 🗑️ **Descartados el 11 ago, de 37 partidas originales a 35.** `credit/ExistRFCAndPhoneCte` y `status/getStatus` salen del alcance de migración: **pierden su identificador** y quedan registrados en la Ola 5 sin ID, tachados, con el motivo del descarte. Los endpoints posteriores se reindexaron dos posiciones. Tras reasignar el monedero a Dev 2 el 12 ago quedó sin huecos, más **M-11 a 🗑️**.
 
-> 🗑️ **Descartado el 31 ago: `recommender/setRecommenderList`.** Mismo criterio — pierde su identificador y los posteriores se reindexan una posición. La serie vigente es **E-01 a E-50** sin huecos.
+> 🗑️ **Descartado el 31 ago: `recommender/setRecommenderList`.** Mismo criterio — pierde su identificador y los posteriores se reindexan una posición. La serie vigente es **E-01 a E-49** sin huecos.
 
 **Listado en CSV para seguimiento:** [[_CONTROL_MIGRACION.csv]]
 **Detalle de tablas antes y después:** [[_ALCANCE_MIGRACION_LAN_a_SAP]]
@@ -212,16 +212,16 @@ Cierran el trabajo de Dev 3 que **necesita una lectura previa contra SAP** antes
 
 | ID | Endpoint | Lee de SAP | Escribe en | Días | Fecha |
 |---|---|---|---|---:|---|
-| E-47 | `credit/SolicitudMercancia` | `partner/client/{clientId}` | `ServicioAndroid` | 1.0 | — |
-| E-48 | `credit/codigoPromocion` | SuccessFactors + BP05 | **SIGMAVI** `VentaCupon` | 1.5 | — |
-| E-49 | `credit/getPlazos` | TZ01 | **SIGMAVI** `CondicionesCredVtaLinea` | 1.5 | — |
-| E-50 | `customerService/obtenerTipoGarantia` ⏳ | `Art` — maestro de materiales | **SIGMAVI** tabla nueva | 1.5 | — |
+| E-46 | `credit/SolicitudMercancia` | `partner/client/{clientId}` | `ServicioAndroid` | 1.0 | — |
+| E-47 | `credit/codigoPromocion` | SuccessFactors + BP05 | **SIGMAVI** `VentaCupon` | 1.5 | — |
+| E-48 | `credit/getPlazos` | TZ01 | **SIGMAVI** `CondicionesCredVtaLinea` | 1.5 | — |
+| E-49 | `customerService/obtenerTipoGarantia` ⏳ | `Art` — maestro de materiales | **SIGMAVI** tabla nueva | 1.5 | — |
 
-> **E-47** parte en dos el `INSERT ... SELECT` único del legado: leer el Business Partner en C# y luego insertar. Requiere el **helper de conversión de cuenta `C%` → BP**, que no existe y lo van a necesitar E-48, E-49 y varios mixtos.
+> **E-46** parte en dos el `INSERT ... SELECT` único del legado: leer el Business Partner en C# y luego insertar. Requiere el **helper de conversión de cuenta `C%` → BP**, que no existe y lo van a necesitar E-47, E-48 y varios mixtos.
 
-> ⛔ **E-48 depende del wrapper de SuccessFactors** que construye Dev 1. El de TZ01 que usa E-49 ya existe.
+> ⛔ **E-47 depende del wrapper de SuccessFactors** que construye Dev 1. El de TZ01 que usa E-48 ya existe.
 
-> 🔒 **E-50 está bloqueado.** La tabla la alimenta PCP y **Miguel Marín** debe entregar la estructura. Al recibirla, verificar que conserve `TipoGarantia`, `Marca`, `Telefono`, `Proveedor`, `Linea`.
+> 🔒 **E-49 está bloqueado.** La tabla la alimenta PCP y **Miguel Marín** debe entregar la estructura. Al recibirla, verificar que conserve `TipoGarantia`, `Marca`, `Telefono`, `Proveedor`, `Linea`.
 
 ---
 
@@ -286,7 +286,7 @@ Requieren **decisión de arquitectura previa**. Las fechas son un marcador de po
 
 | # | Riesgo | Impacto | Mitigación |
 |---|---|---|---|
-| 1 | **Estructura de garantías (Miguel Marín)** | E-50 no arranca | Solicitar antes del 1 de septiembre |
+| 1 | **Estructura de garantías (Miguel Marín)** | E-49 no arranca | Solicitar antes del 1 de septiembre |
 | 2 | ~~**Definición de monedero (Valentin)**~~ | ➡️ Reasignado a Dev 2 el 12 ago | — |
 | 3 | ~~**Alcance de red a los shares SMB**~~ | ~~E-13 y la ola 6 completa~~ | ✅ Cerrado: red validada el 5 ago y permisos confirmados en el servidor el 11 ago |
 | 4 | **Medición de `op` sin caché** | Ola 10 oscila entre 2 y 13 días | Extraer logs de 30 días esta semana |

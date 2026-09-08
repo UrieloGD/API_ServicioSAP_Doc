@@ -12,7 +12,7 @@ Contexto general en [[ESTADO_PRUEBAS_Y_AVANCE]].
 
 ## Para qué sirve
 
-ServicioSAP corre bajo la identidad del app pool de IIS, que no tiene permiso sobre los shares de red. Para escribir ahí, el código adopta temporalmente una cuenta de servicio de Windows (`LogonUser` + `Impersonate`), hace la operación de archivo y revierte. Lo necesitan **E-49** (`cashCustomerReport`) y **E-08** (`SaveImagesProductosMx`).
+ServicioSAP corre bajo la identidad del app pool de IIS, que no tiene permiso sobre los shares de red. Para escribir ahí, el código adopta temporalmente una cuenta de servicio de Windows (`LogonUser` + `Impersonate`), hace la operación de archivo y revierte. Lo necesitan **E-48** (`cashCustomerReport`) y **E-08** (`SaveImagesProductosMx`).
 
 ## Credenciales que usa la LAN
 
@@ -34,7 +34,7 @@ Los tres valores están **idénticos byte a byte** entre `APIMagento\Conn\Connec
 
 | Ruta UNC | Servidor | Quién la usa |
 |---|---|---|
-| `\\172.16.200.2\mavica\ecom\BaseWhatsapp\STAGE\` | `MAVI02.grupomavi.com` | `CustomerMethods.cs:214` → **E-49** |
+| `\\172.16.200.2\mavica\ecom\BaseWhatsapp\STAGE\` | `MAVI02.grupomavi.com` | `CustomerMethods.cs:214` → **E-48** |
 | `\\172.16.202.4\ecom\Desarollo\Imagenes Optimizadas WEB\` | `MAVI04.grupomavi.com` | `ProductImage\Methods.cs:395` → **E-08** |
 | `\\172.16.200.60\ImagenesWEBMagento\` | `caov.grupomavi.com` | Otro flujo de imágenes del legado |
 

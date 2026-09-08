@@ -1,13 +1,13 @@
 ---
 tags: [checklist, migracion, plan, sigmavi, mixtos]
 fuente: "_PLAN_MIGRACION_FECHAS.md"
-actualizado: 2026-09-03
+actualizado: 2026-09-08
 agente: Nexo (con asistencia de Claude)
 ---
 
 # Checklist — Migración LAN → SAP
 
-Lista de control del plan de migración. La serie vigente es **H-01…H-04**, **E-01…E-50** y **M-01…M-15**: 69 entradas. **No todas son partidas de desarrollo:** 31 de ellas, `E-16`…`E-46`, son las rutas de reapunte de la Ola 8, y ahí lo que se reconstruye son los llamadores, no las rutas. Descontadas ésas, quedan **38 partidas medibles** — las que se promedian en [[ESTADO_PRUEBAS_Y_AVANCE]]. Se va marcando aquí conforme se completa cada una. Alcance: todo lo que **no es Intelisis** (ServicioAndroid, SQLite, SIGMAVI, DMZ/SMB); los mixtos (Intelisis + otros) quedan documentados pero pendientes de decisión de arquitectura. La única pieza que toca SAP directamente (E-47) se deja preparada para que el equipo de SAP la conecte.
+Lista de control del plan de migración. La serie vigente es **H-01…H-04**, **E-01…E-49** y **M-01…M-15**: 68 entradas. **No todas son partidas de desarrollo:** 30 de ellas, `E-16`…`E-45`, son las rutas de reapunte de la Ola 8, y ahí lo que se reconstruye son los llamadores, no las rutas. Descontadas ésas, quedan **38 partidas medibles** — las que se promedian en [[ESTADO_PRUEBAS_Y_AVANCE]]. Se va marcando aquí conforme se completa cada una. Alcance: todo lo que **no es Intelisis** (ServicioAndroid, SQLite, SIGMAVI, DMZ/SMB); los mixtos (Intelisis + otros) quedan documentados pero pendientes de decisión de arquitectura. La única pieza que toca SAP directamente (E-46) se deja preparada para que el equipo de SAP la conecte.
 
 > 🎫 **El `#` de cada ola es su work item.** Van del **12551** al **12563**, más el **12550** del mapeo Android/SQLite/SigMavi, que no es una ola. Es el número que va en el `Refs` de los commits.
 >
@@ -31,7 +31,7 @@ La nueva API **no va a seguir apuntando a IntelisisTmp**. Criterio acordado:
 
 Las partidas afectadas quedan marcadas 🟠. No se escriben ni se prueban contra el origen viejo mientras el destino no esté definido: probar contra IntelisisTmp da un verde que no significa nada.
 
-En la práctica esto recae sobre los mixtos `M-11`…`M-08` y sobre las partidas que hoy cruzan a Intelisis (`E-47`, `E-48`, `E-49`), que ya estaban fuera de la ruta principal.
+En la práctica esto recae sobre los mixtos `M-11`…`M-08` y sobre las partidas que hoy cruzan a Intelisis (`E-46`, `E-47`, `E-48`), que ya estaban fuera de la ruta principal.
 
 ---
 
@@ -132,16 +132,26 @@ En la práctica esto recae sobre los mixtos `M-11`…`M-08` y sobre las partidas
 
 ## Ola 8 — Reubicación de llamadores hacia la DMZ · #12559
 
-31 rutas de la DMZ, **E-16 a E-46**. No se portan: lo que se reubica son sus llamadores, que hoy viven en APIMagento. Doce se reconstruyen —ocho de catálogo hacia SQLite, tres reenvíos y un helper compartido para `order/setOrderStatus`—, ocho pasan sin cambio porque las atiende la herramienta de importación, seis solo se verifican y cuatro se dan de baja.
+30 rutas de la DMZ, **E-16 a E-45**. No se portan: lo que se reubica son sus llamadores, que hoy viven en APIMagento. Once se reconstruyen —siete de catálogo hacia SQLite, tres reenvíos y un helper compartido para `order/setOrderStatus`—, ocho pasan sin cambio porque las atiende la herramienta de importación, seis solo se verifican y cuatro se dan de baja.
+
+> 🗑️ **`magento/noImagenProduct/{store}` dada de baja el 8 sep, sin ID.** No tiene llamador en APIMagento y su resultado depende por completo de la tienda —`all` devuelve 1 producto, `viu` 1 704, `muebles_america` 1 784, `mavi` 14—, así que sin llamador que copiar no hay forma de saber con cuál se llamaba. Se escribió y probó antes de retirarla. **Pierde su identificador y los posteriores se reindexan una posición**, igual que se hizo con `setRecommenderList` el 31 ago: la serie pasa de 69 entradas a 68 y termina en E-49.
+
+> ✅ **Once de los doce llamadores escritos el 7 sep.** Las siete cargas de catálogo (E-16…E-22) verificadas contra la cadena completa DMZ → Magento → SQLite, sin perder filas y con las diferencias explicadas por catálogo vivo. También el helper compartido **E-28** —el que bloqueaba a Dev 2— y los tres reenvíos **E-24**, **E-25** y **E-30**. Falta solo **E-23** (`getOrderId`), cuyo llamador escribe en IntelisisTmp con `SpVTASeCommerceDetPedidos`.
+
+> ⏸️ **E-19 a medias por dependencia.** Su tramo de SQLite está en paridad; los de **MySQL `aplicaciones_web`** e **IntelisisTmp** esperan a que se cierre la exportación de artículos (Dev 2, Sprint 9). Decisión de magalindo el 7 sep: la migración de `SPexportaArt` está incompleta —la validación de atributos aún no está en `EcommerceMethods.cs`— así que esas tablas **todavía hacen falta** y no se dan de baja.
+
+> ⏳ **Quién agenda las cargas es partida posterior — decisión del 7 sep.** El disparador de hoy vive fuera de los tres repos y desaparece con la LAN. La ola entrega los llamadores, no su agenda.
+
+> 🗺️ **El flujo completo está mapeado** en [[FLUJO_OLA8_REUBICACION_LLAMADORES]]; la ficha de E-19, en [[E-19_attributeSetChildren]].
 
 > El desglose por identificador está en [[Checklists/CHECKLIST_DEV3_NOSAP_NOINTELISIS#Ola 8 — Reubicación de llamadores hacia la DMZ|el checklist de Dev 3]].
 
 ## Ola 9 — Mixtos SAP · #12560
 
-- [ ] **E-47** `credit/SolicitudMercancia` — lee el Business Partner de SAP e inserta en `CRED_SOLICITUD_WEB_DATOS_TEMP` de `ServicioAndroid`. Requiere el helper de conversión de cuenta `C%` → BP.
-- [ ] **E-48** `credit/codigoPromocion` — tabla `VentaCupon` en SIGMAVI. **Ya construido** como `HandlePromoCode`; falta alinear el nombre de la tabla, que hoy es `VentasCupones`.
-- [ ] **E-49** `credit/getPlazos` — tabla `CondicionesCredVtaLinea` en SIGMAVI + condiciones contra TZ01.
-- [ ] **E-50** `customerService/obtenerTipoGarantia` — tabla `DM0415` en SIGMAVI, poblada exportando desde Intelisis, + artículo contra DM01. Estructura pendiente de **Valentin y Humberto**.
+- [ ] **E-46** `credit/SolicitudMercancia` — lee el Business Partner de SAP e inserta en `CRED_SOLICITUD_WEB_DATOS_TEMP` de `ServicioAndroid`. Requiere el helper de conversión de cuenta `C%` → BP.
+- [ ] **E-47** `credit/codigoPromocion` — tabla `VentaCupon` en SIGMAVI. **Ya construido** como `HandlePromoCode`; falta alinear el nombre de la tabla, que hoy es `VentasCupones`.
+- [ ] **E-48** `credit/getPlazos` — tabla `CondicionesCredVtaLinea` en SIGMAVI + condiciones contra TZ01.
+- [ ] **E-49** `customerService/obtenerTipoGarantia` — tabla `DM0415` en SIGMAVI, poblada exportando desde Intelisis, + artículo contra DM01. Estructura pendiente de **Valentin y Humberto**.
 
 > Regla de reparto: Dev 3 construye la tabla en SIGMAVI, el método y la conexión a nuestras bases; **las conexiones a SAP que no existan se anotan y se entregan a Dev 2**.
 
@@ -210,7 +220,7 @@ En la práctica esto recae sobre los mixtos `M-11`…`M-08` y sobre las partidas
 
 ### Del plan original
 
-- [ ] Estructura de `DM0415`, garantías — **Valentin y Humberto** (corregido el 12 ago) — bloquea E-50
+- [ ] Estructura de `DM0415`, garantías — **Valentin y Humberto** (corregido el 12 ago) — bloquea E-49
 - [x] ~~Definición de monedero (Valentin)~~ — ya no nos bloquea: reasignado a Dev 2 el 12 ago
 - [x] ~~Validar alcance de red a los shares SMB (`\\172.16.200.2`, `\\172.16.202.4`) antes de integrar E-13~~ — cerrado el 5 ago, ambos responden en el puerto 445
 - [ ] Medir en producción el uso real de los `op` sin caché (afecta el tamaño de la Ola 10)
@@ -234,7 +244,9 @@ La Ola 6 quedó escrita y probada el 25 ago, y **commiteada el 26 ago y subida e
 
 La Ola 7 arrancó el 31 ago con E-15 al **35 %** —escrito y compilando, sin probar— tras descartar `setRecommenderList`. Es la primera partida cuyo bloqueo no es de entorno ni de arquitectura, sino de secuencia: lee una tabla que otro desarrollador todavía no llena.
 
-Todos los cutovers de las olas 1 a 6 están **commiteados y subidos** a `dbAndroid` de APIMagentoDMZ, pero **ninguno desplegado**: en producción el tráfico sigue yendo al legado. E-15 aún no lleva cutover.
+La Ola 8 arrancó y cerró casi entera el 7 sep: **once de los doce llamadores escritos**, las siete cargas de catálogo verificadas contra la cadena real y los cuatro reenvíos entregados. **No mueve el contador** porque estas entradas no son partidas medibles — son llamadores reubicados, no endpoints migrados. Falta **E-23**, bloqueado por la equivalencia de `SpVTASeCommerceDetPedidos`, y quedan dos dependencias ajenas: el destino de MySQL en E-19 y quién agenda las cargas.
+
+Todos los cutovers de las olas 1 a 6 están **commiteados y subidos** a `dbAndroid` de APIMagentoDMZ, pero **ninguno desplegado**: en producción el tráfico sigue yendo al legado. E-15 aún no lleva cutover, y la Ola 8 no lo necesita: sus rutas se quedan en la DMZ.
 
 > 🔴 **Orden de despliegue: ServicioSAP primero, la DMZ después.** El constructor de `Curl` en la DMZ autentica contra la LAN de forma incondicional y fuera de un `try`, así que toda ruta ya migrada sigue dependiendo de que APIMagento responda aunque los datos ya no vayan para allá.
 
