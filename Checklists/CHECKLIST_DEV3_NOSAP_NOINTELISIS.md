@@ -250,9 +250,17 @@ No guardan nada, solo devuelven a quien preguntó. El patrón ya está resuelto 
 
 > ✅ **Decisión del 12 ago: pasan tal cual.** Las consume la **herramienta de importación de productos**, que es otro proyecto, y la lógica que hoy vive en un procedimiento almacenado **la migra a C# otro equipo**. Esa herramienta seguirá siendo su cliente. Para nosotros no hay desarrollo: es una dependencia externa que solo hay que no romper.
 
-### 8.5 · Sin llamador identificado — 6 rutas, se conservan - 1 día
+### 8.5 · Sin llamador identificado — 3 rutas, se conservan - 1 día
 
-`E-39 order/authorizationResult`, `E-40 order/sendStorePickupEmail`, `E-41 order/getOrderInfo/{incrementId}` y las tres de producto sin llamador en la LAN. No aparece ninguna invocación en los tres repositorios, así que lo más probable es que sean entrada desde Magento hacia la DMZ.
+| ID | Ruta |
+|---|---|
+| E-39 | `order/authorizationResult` |
+| E-40 | `order/sendStorePickupEmail` |
+| E-41 | `order/getOrderInfo/{incrementId}` |
+
+No aparece ninguna invocación en los tres repositorios, así que lo más probable es que sean entrada desde Magento hacia la DMZ.
+
+> 🔴 **Corregido el 9 sep: eran tres, no seis.** Esta sección decía "6 rutas" y añadía *"y las tres de producto sin llamador en la LAN"*. **Esas tres no existen**: las ocho rutas de producto de la DMZ están todas en 8.4. Verificado enumerando `APIMagentoDMZ\Controllers\`: `MagentoController` declara 13 rutas, `ProductsController` 8, y de `OrdersController` y `CustomerServiceController` salen las 9 restantes. **7 + 5 + 3 + 8 + 3 + 4 = 30**, que es el total de la ola.
 
 > **Decisión del 12 ago: se conservan**, por si se requieren más adelante. No hay llamador que reconstruir; el trabajo se limita a verificar que siguen operando tras el apagado.
 
@@ -542,7 +550,7 @@ Ningún cutover está desplegado: los de las olas 1 a 6 están commiteados y sub
 
 > ⚙️ **Criterio nuevo del 20 ago: todos los endpoints migrados se escriben asíncronos**, aunque el legado sea síncrono. Se aplicó retroactivamente a las ocho partidas de las olas 0 a 4 (commit `e20033b`) y rige de aquí en adelante. Es la única desviación de la regla de paridad aprobada de antemano, porque cambia cómo espera el hilo, no qué responde el endpoint.
 
-**Las 30 entradas de la Ola 8 no son 30 partidas de desarrollo.** Tras el análisis del 12 ago se reparten así: **12 llamadores a reconstruir** —8 de catálogo hacia SQLite, 3 reenvíos y 1 helper compartido—, 8 rutas sin cambio que atiende la herramienta de importación, 6 que solo se verifican y 4 que se dan de baja. Contarlas todas como partidas infla el alcance y distorsiona el porcentaje de avance.
+**Las 30 entradas de la Ola 8 no son 30 partidas de desarrollo.** Tras el análisis del 12 ago se reparten así: **12 llamadores a reconstruir** —8 de catálogo hacia SQLite, 3 reenvíos y 1 helper compartido—, 8 rutas sin cambio que atiende la herramienta de importación, 3 que solo se verifican, 2 ya cubiertas por la Ola 6 y 4 que se dan de baja. Contarlas todas como partidas infla el alcance y distorsiona el porcentaje de avance.
 
 > Tras la baja de `magento/noImagenProduct` el 8 sep quedan **11 llamadores a reconstruir**, 7 de ellos de catálogo. **Diez están escritos**; falta E-23.
 

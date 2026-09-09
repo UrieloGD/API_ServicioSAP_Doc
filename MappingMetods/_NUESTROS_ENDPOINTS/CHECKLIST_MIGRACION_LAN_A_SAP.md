@@ -132,7 +132,7 @@ En la práctica esto recae sobre los mixtos `M-11`…`M-08` y sobre las partidas
 
 ## Ola 8 — Reubicación de llamadores hacia la DMZ · #12559
 
-30 rutas de la DMZ, **E-16 a E-45**. No se portan: lo que se reubica son sus llamadores, que hoy viven en APIMagento. Once se reconstruyen —siete de catálogo hacia SQLite, tres reenvíos y un helper compartido para `order/setOrderStatus`—, ocho pasan sin cambio porque las atiende la herramienta de importación, seis solo se verifican y cuatro se dan de baja.
+30 rutas de la DMZ, **E-16 a E-45**. No se portan: lo que se reubica son sus llamadores, que hoy viven en APIMagento. Once se reconstruyen —siete de catálogo hacia SQLite, tres reenvíos y un helper compartido para `order/setOrderStatus`—, ocho pasan sin cambio porque las atiende la herramienta de importación, tres solo se verifican, dos ya están cubiertas por la Ola 6 y cuatro se dan de baja.
 
 > 🗑️ **`magento/noImagenProduct/{store}` dada de baja el 8 sep, sin ID.** No tiene llamador en APIMagento y su resultado depende por completo de la tienda —`all` devuelve 1 producto, `viu` 1 704, `muebles_america` 1 784, `mavi` 14—, así que sin llamador que copiar no hay forma de saber con cuál se llamaba. Se escribió y probó antes de retirarla. **Pierde su identificador y los posteriores se reindexan una posición**, igual que se hizo con `setRecommenderList` el 31 ago: la serie pasa de 69 entradas a 68 y termina en E-49.
 
@@ -143,6 +143,48 @@ En la práctica esto recae sobre los mixtos `M-11`…`M-08` y sobre las partidas
 > ⏳ **Quién agenda las cargas es partida posterior — decisión del 7 sep.** El disparador de hoy vive fuera de los tres repos y desaparece con la LAN. La ola entrega los llamadores, no su agenda.
 
 > 🗺️ **El flujo completo está mapeado** en [[FLUJO_OLA8_REUBICACION_LLAMADORES]]; la ficha de E-19, en [[E-19_attributeSetChildren]].
+
+### Las 30 rutas, una por una
+
+Se listan aquí para que la serie se pueda verificar sin abrir otro documento. El desglose con motivos y estimaciones sigue en [[Checklists/CHECKLIST_DEV3_NOSAP_NOINTELISIS#Ola 8 — Reubicación de llamadores hacia la DMZ|el checklist de Dev 3]].
+
+| ID | Ruta de la DMZ | Grupo | Qué se hace |
+|---|---|---|---|
+| E-16 | `magento/attributes` | 8.1 | ✅ llamador reconstruido |
+| E-17 | `magento/general/attributes` | 8.1 | ✅ llamador reconstruido |
+| E-18 | `magento/attributeSets` | 8.1 | ✅ llamador reconstruido |
+| E-19 | `magento/attributeSetChildren/{id}` | 8.1 | ⏸️ SQLite hecho; MySQL e Intelisis en espera |
+| E-20 | `magento/categories` | 8.1 | ✅ llamador reconstruido |
+| E-21 | `magento/children/{page}/{size}/{store}` | 8.1 | ✅ llamador reconstruido |
+| E-22 | `magento/productWithWebsites/{page}/{size}` | 8.1 | ✅ llamador reconstruido |
+| 🗑️ | ~~`magento/noImagenProduct/{store}`~~ | — | baja el 8 sep, **sin ID** |
+| E-23 | `magento/getOrderId/{incrementId}` | 8.2 | 🔒 su llamador ejecuta `SpVTASeCommerceDetPedidos` |
+| E-24 | `magento/deletePromociones` | 8.2 | ✅ escrito, sin ejecutar |
+| E-25 | `magento/deleteReservations` | 8.2 | ✅ escrito, sin ejecutar |
+| E-26 | `magento/getCuenta` | 8.2 | ya cubierta como **E-11** en la Ola 6 |
+| E-27 | `magento/setCuenta` | 8.2 | ya cubierta como **E-12** en la Ola 6 |
+| E-28 | `order/setOrderStatus` | 8.3 | ✅ helper compartido, lo consume Dev 2 |
+| E-29 | `order/jsonOrders/{incrementId}` | 8.3 | lo reconstruye **Dev 2** dentro de `getOrderInfoAndSet` |
+| E-30 | `order/setCAccount` | 8.3 | ✅ escrito, sin ejecutar |
+| E-31 | `product/updateProduct/{store}` | 8.4 | sin cambio — herramienta de importación |
+| E-32 | `product/updateConfigurableProduct/{store}` | 8.4 | sin cambio |
+| E-33 | `product/updateConfigurableProductLink/{sku}` | 8.4 | sin cambio |
+| E-34 | `product/updateStock` | 8.4 | sin cambio |
+| E-35 | `product/getStockByStore` | 8.4 | sin cambio |
+| E-36 | `product/updatePrice` | 8.4 | sin cambio |
+| E-37 | `product/uploadImage` | 8.4 | sin cambio |
+| E-38 | `product/uploadImagesToMagento` | 8.4 | sin cambio |
+| E-39 | `order/authorizationResult` | 8.5 | solo verificar tras el apagado |
+| E-40 | `order/sendStorePickupEmail` | 8.5 | solo verificar tras el apagado |
+| E-41 | `order/getOrderInfo/{incrementId}` | 8.5 | solo verificar tras el apagado |
+| E-42 | `customerService/ActualizarCamposConfigurables` | 8.6 | 🗑️ baja — proxy colgante |
+| E-43 | `customerService/InsertarDesdeTablerateNativo` | 8.6 | 🗑️ baja — proxy colgante |
+| E-44 | `customerService/InsertarDesdeTablerateCustom` | 8.6 | 🗑️ baja — proxy colgante |
+| E-45 | `order/getprueba` | 8.6 | 🗑️ baja — stub de diagnóstico |
+
+**7 + 5 + 3 + 8 + 3 + 4 = 30.** Verificado el 9 sep contra las rutas declaradas en `APIMagentoDMZ\Controllers\`: `MagentoController` (13), `ProductsController` (8), `OrdersController` (7 de las suyas) y `CustomerServiceController` (3 de las suyas).
+
+> 🔴 **Corrección del 9 sep: el grupo 8.5 tiene tres rutas, no seis.** Los dos checklists decían "6 rutas" y su texto añadía *"y las tres de producto sin llamador en la LAN"*. **Esas tres no existen**: las ocho rutas de producto de la DMZ están todas en 8.4. El rango de identificadores solo da para tres —E-39, E-40 y E-41— y la enumeración de arriba lo confirma.
 
 > El desglose por identificador está en [[Checklists/CHECKLIST_DEV3_NOSAP_NOINTELISIS#Ola 8 — Reubicación de llamadores hacia la DMZ|el checklist de Dev 3]].
 
