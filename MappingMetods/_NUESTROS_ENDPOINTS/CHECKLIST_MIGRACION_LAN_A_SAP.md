@@ -1,7 +1,7 @@
 ---
 tags: [checklist, migracion, plan, sigmavi, mixtos]
 fuente: "_PLAN_MIGRACION_FECHAS.md"
-actualizado: 2026-09-08
+actualizado: 2026-09-09
 agente: Nexo (con asistencia de Claude)
 ---
 
@@ -184,6 +184,45 @@ Se listan aquí para que la serie se pueda verificar sin abrir otro documento. E
 
 **7 + 5 + 3 + 8 + 3 + 4 = 30.** Verificado el 9 sep contra las rutas declaradas en `APIMagentoDMZ\Controllers\`: `MagentoController` (13), `ProductsController` (8), `OrdersController` (7 de las suyas) y `CustomerServiceController` (3 de las suyas).
 
+### Cómo se cuentan — criterio propio de la Ola 8 (9 sep)
+
+La rúbrica de seis hitos que se usa en las demás olas **no aplica aquí**: dos de ellos,
+*cutover DMZ* y *ficha de contrato*, son inalcanzables por definición. No hay cutover porque
+la ruta de la DMZ no cambia de destino, y no hay ficha porque el contrato no se toca. Medirlas
+con esa vara las dejaba con un techo del 80 % aunque estuvieran perfectas.
+
+**Criterio para la Ola 8: una entrada está completa cuando su llamador queda resuelto.**
+Da igual si eso costó trabajo o no — resuelto es resuelto:
+
+| Situación | Cuándo cierra |
+|---|---|
+| Llamador reconstruido en ServicioSAP | escrito, compilando y verificado |
+| Pasa sin cambio | confirmado que su cliente es la herramienta de importación, no la LAN |
+| Sin llamador identificado | confirmado que no hay ninguno que reconstruir |
+| Ya cubierta por otra ola | la partida equivalente está cerrada |
+| **Dada de baja** | **no se cuenta** — sale del denominador |
+
+Las cuatro bajas quedan fuera, así que el denominador de la ola es **26**.
+
+| Grupo | Entradas | Completas | Qué falta |
+|---|---|---|---|
+| 8.1 · catálogo | 7 | **6** | E-19: MySQL e Intelisis en espera |
+| 8.2 · reenvíos | 5 | **4** | E-23: bloqueado por `SpVTASeCommerceDetPedidos` |
+| 8.3 · órdenes | 3 | **2** | E-29: lo reconstruye Dev 2 |
+| 8.4 · importación | 8 | **8** | — sin trabajo, su cliente no cambia |
+| 8.5 · sin llamador | 3 | **3** | verificación diferida al apagado |
+| 8.6 · bajas | 4 | — | fuera del conteo |
+| **Total** | **26** | **23** | **88 %** |
+
+> Igual que en el resto del plan, **completa significa desarrollo terminado, no en producción**.
+> Las tres de 8.5 cierran con una validación diferida —comprobar que siguen operando tras el
+> apagado—, el mismo trato que reciben H-02 y H-04 esperando QA.
+
+> ✅ **Desde el 9 sep este 88 % entra en el total del plan.** No se promedia con el 44,7 %:
+> se suman **partidas equivalentes**. `38 × 44,7 % = 17,0` más `26 × 88,5 % = 23,0`, sobre
+> **64 entradas** —las cuatro bajas quedan fuera—, da **62,5 %**. Cada entrada pesa lo mismo,
+> así que una ruta que no requirió trabajo cuenta igual que un endpoint migrado.
+
 > 🔴 **Corrección del 9 sep: el grupo 8.5 tiene tres rutas, no seis.** Los dos checklists decían "6 rutas" y su texto añadía *"y las tres de producto sin llamador en la LAN"*. **Esas tres no existen**: las ocho rutas de producto de la DMZ están todas en 8.4. El rango de identificadores solo da para tres —E-39, E-40 y E-41— y la enumeración de arriba lo confirma.
 
 > El desglose por identificador está en [[Checklists/CHECKLIST_DEV3_NOSAP_NOINTELISIS#Ola 8 — Reubicación de llamadores hacia la DMZ|el checklist de Dev 3]].
@@ -272,7 +311,19 @@ Se listan aquí para que la serie se pueda verificar sin abrir otro documento. E
 
 **10 / 38** partidas marcadas como completadas (H-01, H-02, H-03, H-04, E-01, E-02, E-03, E-04, E-07, E-08). `[x]` aquí significa **desarrollo terminado**; varias tienen validaciones diferidas anotadas en su línea: H-02 y H-04 esperan QA, E-01 espera el canal de SMS, y las cuatro partidas de endpoints esperan el despliegue del cutover.
 
-El contador solo cuenta partidas cerradas, así que esconde el trabajo a medias. El avance ponderado real es **44,7 %** sobre 38 partidas; el desglose por endpoint, con el criterio de cálculo y el estado de pruebas de cada uno, está en [[ESTADO_PRUEBAS_Y_AVANCE]].
+El contador solo cuenta partidas cerradas, así que esconde el trabajo a medias. El avance ponderado de esas 38 es **44,7 %**; el desglose por endpoint, con el criterio de cálculo y el estado de pruebas de cada uno, está en [[ESTADO_PRUEBAS_Y_AVANCE]].
+
+**Sumando las rutas de la Ola 8, el avance del plan es 62,5 %.**
+
+| | Entradas | Avance |
+|---|---:|---:|
+| Partidas medibles | 38 | 44,7 % |
+| Rutas de la Ola 8, sin las bajas | 26 | 88,5 % |
+| **Total** | **64** | **62,5 %** |
+
+> ⚙️ **Cambio de criterio del 9 sep.** Hasta ahora las 30 rutas de la Ola 8 quedaban fuera del promedio porque se miden con otra vara — completas cuando su llamador queda resuelto, sin hitos de cutover ni de ficha. Dejarlas fuera escondía trabajo real: once llamadores escritos y probados que no movían el porcentaje. Ahora se suman como **partidas equivalentes**, `38 × 44,7 % + 26 × 88,5 % = 40,0` sobre **64**.
+>
+> El denominador excluye las **cuatro bajas**. Y cada entrada pesa lo mismo, así que las ocho rutas que pasan sin cambio cuentan igual que un endpoint migrado con sus pruebas — es lo que implica contarlas.
 
 > 🔴 **Ese 44,7 % sustituye al 49,0 % del 25 ago, y no es un retroceso.** El denominador de los mixtos estaba mal —decía 12 y son **15**, contados uno a uno en la tabla—, lo que inflaba el promedio. Corregido eso, entró además E-15 al 35 %, por debajo de la media. El trabajo hecho es el mismo; lo que cambió es sobre cuántas partidas se promedia.
 

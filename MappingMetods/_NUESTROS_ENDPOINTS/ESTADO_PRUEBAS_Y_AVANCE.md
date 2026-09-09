@@ -1,7 +1,7 @@
 ---
 tags: [pruebas, avance, migracion, estado]
 fuente: "CHECKLIST_MIGRACION_LAN_A_SAP.md"
-actualizado: 2026-09-08
+actualizado: 2026-09-09
 ---
 
 # Estado de pruebas y avance por endpoint
@@ -125,7 +125,27 @@ Es decir: si en QA falla, será porque el archivo no está en esa ruta o por per
 | Habilitadores (4) | **4 al 100 %** | **100 %** |
 | Endpoints en alcance (19) | 3 al 100 %, 6 al 90 %, 4 al 80 %, 1 al 55 %, 1 al 35 %, 4 sin iniciar | 65,8 % |
 | Mixtos (15) | 2 al 25 %, 13 sin iniciar | 3,3 % |
-| **Total (38)** | | **44,7 %** |
+| **Subtotal partidas medibles (38)** | | **44,7 %** |
+| Rutas de la Ola 8 (26) | **23 completas**, 3 pendientes | 88,5 % |
+| **Total (64)** | | **62,5 %** |
+
+> ⚙️ **Las rutas de la Ola 8 entran en el total desde el 9 sep.** Antes se reportaban aparte
+> porque se miden con otra vara —completa cuando su llamador queda resuelto, sin hitos de
+> cutover ni de ficha—, pero dejarlas fuera escondía trabajo real: once llamadores escritos y
+> probados que no movían el porcentaje ni una décima.
+>
+> El total se compone sumando **partidas equivalentes**, no promediando porcentajes:
+>
+> ```
+> 38 medibles × 44,7 %  =  17,0 equivalentes
+> 26 rutas    × 88,5 %  =  23,0 equivalentes
+> ────────────────────────────────────────────
+>              40,0 ÷ 64  =  62,5 %
+> ```
+>
+> El denominador es **64**, no 68: las **cuatro bajas** de la Ola 8 salen del conteo. Cada
+> entrada pesa lo mismo, así que una ruta que no requirió trabajo cuenta igual que un endpoint
+> migrado — es la consecuencia de contarlas, y conviene tenerla presente al leer el número.
 
 > 🔴 **El total baja del 49,0 % al 44,7 %, y casi todo es una corrección, no un retroceso.**
 > Dos cosas a la vez, el 31 ago:
@@ -1145,6 +1165,26 @@ E-28 y en el de E-30.**
 `SpVTASeCommerceDetPedidos` en IntelisisTmp, mapeado en [[SP_VTASeCommerceDetPedidos]].
 
 Se dio de baja `magento/noImagenProduct` y la serie se reindexó: **68 entradas, hasta E-49**.
+
+#### Cómo se mide esta ola — 23 de 26
+
+La rúbrica de seis hitos no aplica: *cutover DMZ* y *ficha de contrato* son inalcanzables
+porque la ruta de la DMZ no cambia de destino ni de contrato, así que una entrada perfecta
+tendría techo del 80 %. **Criterio propio: completa cuando su llamador queda resuelto**, haya
+costado trabajo o no. Las cuatro bajas salen del denominador.
+
+| Grupo | Entradas | Completas |
+|---|---|---|
+| 8.1 · catálogo | 7 | 6 — falta E-19 |
+| 8.2 · reenvíos | 5 | 4 — falta E-23 |
+| 8.3 · órdenes | 3 | 2 — E-29 es de Dev 2 |
+| 8.4 · importación | 8 | 8 |
+| 8.5 · sin llamador | 3 | 3 |
+| **Total** | **26** | **23 · 88 %** |
+
+**Este 88 % sí entra en el total desde el 9 sep.** Sumado a las 38 partidas medibles —que
+siguen en 44,7 %— da **62,5 % sobre 64 entradas**; la composición está en el Resumen. Las dos
+varas se mantienen separadas para calcular, y se juntan solo al totalizar.
 
 ### Refactor transversal — endpoints a asíncrono, 20 ago
 

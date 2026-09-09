@@ -1,7 +1,7 @@
 ---
 tags: [checklist, migracion, dev3, plan, sigmavi, mixtos]
 fuente: "_PLAN_MIGRACION_FECHAS.md · MIGRATION_STATUS_MASTER_v2 FINAL.csv"
-actualizado: 2026-09-08
+actualizado: 2026-09-09
 rol: "Dev 3 — todo lo que no va a SAP ni se queda en Intelisis"
 agente: Nexo (con asistencia de Claude)
 ---
@@ -529,20 +529,55 @@ Sus estimaciones se sostienen. Las que dependen de conseguir definiciones son la
 
 ## Progreso
 
-**10 / 70** partidas terminadas: los cuatro habilitadores, E-01 a E-04 y E-07 a E-08. `[x]` significa **desarrollo terminado**, no en producción.
+### El alcance, y con qué vara se mide cada parte
 
-| Bloque | Partidas | Estado |
+La serie completa son **68 entradas** —`H-01…H-04`, `E-01…E-49` y `M-01…M-15`—, pero no todas
+se miden igual:
+
+| Qué | Entradas | Cómo se mide |
 |---|---:|---|
-| Cerradas — habilitadores, E-01…E-04, E-07, E-08 y E-20 | 11 | ✅ desarrollo terminado |
-| **Bloque A** — sin conexión a SAP | 42 | 🎯 frente activo |
-| **Bloque B** — mixtos SAP | 4 | tras cerrar el bloque A |
+| Habilitadores `H-01…H-04` | 4 | código 40 %, compila 20 %, verificación 40 % |
+| Partidas migradas `E-01…E-15`, `E-46…E-49`, `M-01…M-15` | 34 | rúbrica de seis hitos |
+| Rutas de reapunte de la Ola 8 `E-16…E-45` | 30 | criterio propio — ver abajo |
+| **Total** | **68** | |
 
-| **Bloque C** — mixtos Intelisis | 15 | 🟠 espera arquitectura |
-| **Total** | **70** | |
+Las dos primeras filas son las **38 partidas medibles** que se promedian en
+[[ESTADO_PRUEBAS_Y_AVANCE]].
 
-El contador solo cuenta partidas cerradas, así que esconde el trabajo a medias: el avance ponderado real sobre el alcance original está en [[ESTADO_PRUEBAS_Y_AVANCE]], hoy en **37,0 %**.
+### Por bloque
 
-**Estado del bloque A al 7 sep.** La Ola 4 cerró completa y la 5 quedó probada contra servicios reales. La Ola 3 sigue al 80 %, a falta de validar contra la base real del servidor. La Ola 6 está escrita y probada, con E-12 pendiente de un id de cliente y E-13/E-14 esperando H-02. La Ola 7 no avanza: lee una tabla que otro desarrollador todavía no llena. **La Ola 8 cerró once de sus doce llamadores**, con las siete cargas de catálogo verificadas contra la cadena DMZ → Magento → SQLite.
+| Bloque | Olas | Entradas | Estado |
+|---|---|---:|---|
+| Cerradas | 0 – 2 | 8 | ✅ desarrollo terminado |
+| **A** — sin conexión a SAP | 3 – 8 | 41 | 🎯 frente activo |
+| **B** — mixtos SAP | 9 | 4 | tras cerrar el bloque A |
+| **C** — mixtos Intelisis | 10 – 12 | 15 | 🟠 espera arquitectura |
+| **Total** | | **68** | |
+
+**El 60 % del alcance de Dev 3 está en el bloque A**, que no depende de nadie. Es el argumento para agotarlo antes de tocar el bloque B.
+
+### Dónde va el avance
+
+| | Terminadas | Total | Avance |
+|---|---:|---:|---:|
+| Partidas medibles | 10 | 38 | 44,7 % |
+| Rutas de la Ola 8 | 23 | 26 | 88,5 % |
+| **Total** | | **64** | **62,5 %** |
+
+El contador de terminadas solo cuenta las cerradas del todo, así que esconde el trabajo a medias; el ponderado es el que manda. El desglose por endpoint está en [[ESTADO_PRUEBAS_Y_AVANCE]].
+
+**Las rutas de la Ola 8 entran en el total desde el 9 sep.** Se suman como **partidas equivalentes**, no promediando porcentajes: `38 × 44,7 % = 17,0` más `26 × 88,5 % = 23,0`, sobre 64 entradas. El denominador excluye las cuatro bajas.
+
+> ⚠️ **Cada entrada pesa lo mismo.** Una ruta que no requirió trabajo —las ocho de 8.4— cuenta igual que un endpoint migrado con sus pruebas y su cutover. Es la consecuencia de contarlas, y conviene tenerla presente al leer el 62,5 %.
+
+> 📌 **Recompuesto el 9 sep.** La tabla anterior no cerraba: sumaba 72 con un total de 70, y su
+> fila de cerradas incluía un `E-20` que no corresponde a ninguna partida terminada en ninguna
+> de las numeraciones que ha tenido el plan —hoy es `magento/categories`, una ruta de la Ola 8—.
+> Venía así desde `ab9b193`, la reestructuración de los checklists, y no lo introdujo ningún
+> reindexado. Los bloques se recalcularon desde la serie y ahora suman 68 exactos. También se
+> retira el **37,0 %**, que se promediaba sobre un denominador de 71 que ya no existe.
+
+**Estado del bloque A al 7 sep.** La Ola 4 cerró completa y la 5 quedó probada contra servicios reales. La Ola 3 sigue al 80 %, a falta de validar contra la base real del servidor. La Ola 6 está escrita y probada, con E-12 pendiente de un id de cliente y E-13/E-14 esperando H-02. La Ola 7 no avanza: lee una tabla que otro desarrollador todavía no llena. **La Ola 8 va en 23 de 26**: diez de los once llamadores escritos, con las siete cargas de catálogo verificadas contra la cadena DMZ → Magento → SQLite.
 
 Además, las **olas 1 a 7 se barrieron contra el legado** el 1-3 sep levantando los dos servicios a la vez: 45 casos, dos divergencias —E-01 y E-08—, corregidas el mismo día.
 
@@ -554,5 +589,32 @@ Ningún cutover está desplegado: los de las olas 1 a 6 están commiteados y sub
 
 > Tras la baja de `magento/noImagenProduct` el 8 sep quedan **11 llamadores a reconstruir**, 7 de ellos de catálogo. **Diez están escritos**; falta E-23.
 
-**El 57 % del alcance de Dev 3 está en el bloque A**, que no depende de nadie. Es el argumento para agotarlo antes de tocar el bloque B.
+### Cómo se cuentan — criterio propio de la Ola 8 (9 sep)
+
+Contarlas con la rúbrica de seis hitos las dejaba con un techo del 80 %: *cutover DMZ* y
+*ficha de contrato* no aplican, porque la ruta no cambia de destino ni de contrato. Y dejarlas
+fuera del todo escondía las once que sí son desarrollo.
+
+**Criterio: una entrada está completa cuando su llamador queda resuelto**, haya costado
+trabajo o no. Las cuatro bajas salen del denominador.
+
+| Grupo | Entradas | Completas | Qué falta |
+|---|---|---|---|
+| 8.1 · catálogo | 7 | **6** | E-19: MySQL e Intelisis en espera |
+| 8.2 · reenvíos | 5 | **4** | E-23: bloqueado por `SpVTASeCommerceDetPedidos` |
+| 8.3 · órdenes | 3 | **2** | E-29: lo reconstruye Dev 2 |
+| 8.4 · importación | 8 | **8** | — sin trabajo, su cliente no cambia |
+| 8.5 · sin llamador | 3 | **3** | verificación diferida al apagado |
+| 8.6 · bajas | 4 | — | fuera del conteo |
+| **Total** | **26** | **23** | **88 %** |
+
+Las de 8.4 y 8.5 cuentan como completas **aunque no hayan requerido una línea de código**: lo
+que la ola pide de ellas es determinar quién las llama, y eso está determinado. Las de 8.5
+cierran con validación diferida al apagado, el mismo trato que H-02 y H-04 esperando QA.
+
+> ✅ **Desde el 9 sep este 88 % entra en el total.** Se suma como partidas equivalentes junto
+> a las 38 medibles: 62,5 % sobre 64 entradas. Las dos varas siguen separadas para calcular y
+> solo se juntan al totalizar.
+
+
 
