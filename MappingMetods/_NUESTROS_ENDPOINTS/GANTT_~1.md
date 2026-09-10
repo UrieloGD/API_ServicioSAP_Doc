@@ -10,7 +10,7 @@ agente: Nexo
 Orden solicitado: primero lo que conecta directo a **ServicioAndroid / SQLite / SIGMAVI** (no-Intelisis), después lo que **migra de Intelisis a SIGMAVI**, y al final lo **mixto** (Intelisis + otros). Se agregan dos secciones adicionales para que el alcance quede explícito:
 
 - **Habilitadores (Ola 0)**: van primero porque bloquean todo lo demás, sin ser parte de ninguno de los tres grupos.
-- **SAP — conexión preparada**: aquí solo aislamos E-50 (el único endpoint que ya apunta a un servicio SAP). Nuestro alcance es dejar el puente listo; la conexión final a los servicios SAP la decide y ejecuta el equipo de SAP, no nosotros.
+- **SAP — conexión preparada**: aquí solo aislamos E-49 (el único endpoint que ya apunta a un servicio SAP). Nuestro alcance es dejar el puente listo; la conexión final a los servicios SAP la decide y ejecuta el equipo de SAP, no nosotros.
 
 `crit` (rojo) = bloqueado o en riesgo · `active` = pieza de preparación para SAP.
 
@@ -38,13 +38,13 @@ gantt
     E-11 ExistRFCAndPhoneCte         :crit, e11, 2026-08-24, 1d
     E-12 status/getStatus            :e12, 2026-08-25, 1d
     E-13 getCuenta (DMZ→Magento)     :e13, 2026-08-26, 1d
-    E-48 setCuenta (DMZ→Magento)     :e14, 2026-08-27, 1d
-    E-49 cashCustomerReport (SMB)    :crit, e15, 2026-08-28, 1d
+    E-47 setCuenta (DMZ→Magento)     :e14, 2026-08-27, 1d
+    E-48 cashCustomerReport (SMB)    :crit, e15, 2026-08-28, 1d
     E-16 GetUnificationWalletStatus  :crit, e20, 2026-09-09, 2026-09-10
     E-21 SetUnificationWalletData    :crit, e21, 2026-09-11, 2026-09-14
 
     section SAP — conexión preparada
-    E-50 SolicitudMercancia → SAP    :active, e16, 2026-08-31, 1d
+    E-49 SolicitudMercancia → SAP    :active, e16, 2026-08-31, 1d
 
     section 2. Migración Intelisis → SIGMAVI
     E-02 setCustomerList             :e02, 2026-08-11, 1d
@@ -74,8 +74,8 @@ gantt
 - **E-06** depende de M-07 (su tabla SQLite la alimenta un proceso que lee Intelisis) — queda en el grupo 1 porque el endpoint en sí solo toca SQLite, pero el caché se congela si M-07 no se resuelve.
 - **E-14** migra a SIGMAVI pero también toca SAP SD40 — se dejó en el grupo 2 porque su tabla de origen/destino es la misma lógica que el resto de la ola SIGMAVI.
 - **E-16 / E-21 (Monedero)**: el SP `SpVTASUnificacionMonedero` sigue el patrón de nombres de Intelisis visto en los mixtos, pero el documento no confirma su origen. Los dejé en el grupo 1 de forma provisional — hay que validar con Valentin si en realidad son mixtos y moverlos al grupo 3.
-- **Ola 7 (E-50)** es la única pieza que toca SAP directamente hoy. Por el alcance que definiste ("nosotros migramos todo lo no-Intelisis, pero dejamos la conexión lista para SAP"), la aislé como su propia sección — es el entregable que el equipo de SAP debería tomar para conectar sus servicios.
-- Los bloqueos reales (🔒) son solo tres: estructura de garantías (E-15, Miguel Marín), definición de monedero (E-16/E-21, Valentin) y el riesgo de alcance de red SMB (E-49) — todos marcados `crit`.
+- **Ola 7 (E-49)** es la única pieza que toca SAP directamente hoy. Por el alcance que definiste ("nosotros migramos todo lo no-Intelisis, pero dejamos la conexión lista para SAP"), la aislé como su propia sección — es el entregable que el equipo de SAP debería tomar para conectar sus servicios.
+- Los bloqueos reales (🔒) son solo tres: estructura de garantías (E-15, Miguel Marín), definición de monedero (E-16/E-21, Valentin) y el riesgo de alcance de red SMB (E-48) — todos marcados `crit`.
 
 ## Pendiente
 
