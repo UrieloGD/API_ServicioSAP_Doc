@@ -1,6 +1,6 @@
 ---
 tags: [contratos, endpoints, migracion, indice]
-actualizado: 2026-08-31
+actualizado: 2026-09-08
 ---
 
 # Contratos de endpoints — Migración LAN → SAP
@@ -39,6 +39,12 @@ en producción.
 | E-13 | `customer/cashCustomerReport` | 6 | ✅ subido (`e403065`), sin desplegar | [[E-13_cashCustomerReport]] |
 | E-14 | `product/obtenerImagen` | 6 | — sin cutover, no existe en la DMZ | [[E-14_obtenerImagen]] |
 | E-15 | `order/GetPickUpCode` | 7 | 🔴 **no aplicar todavía** — dejaría sin clave a todos los pedidos | sin ficha; ver [[FLUJO_RECOGER_EN_SUCURSAL]] |
+| E-19 | `magento/attributeSetChildren/{id}` | 8 | — la ruta se queda en la DMZ | [[E-19_attributeSetChildren]] |
+
+> **La Ola 8 no lleva ficha por partida.** Sus entradas no son endpoints migrados sino
+> llamadores reubicados: la ruta de la DMZ no cambia, así que no hay contrato nuevo que
+> documentar. La excepción es E-19, que sí tiene ficha porque su lógica es propia y quedó a
+> medias. El resto está en el mapa de flujo de la ola.
 
 > Todos los cutovers están subidos a `dbAndroid` desde el 31 ago. **Ninguno desplegado**, y
 > el orden cuando toque es **ServicioSAP primero, la DMZ después**.
@@ -52,6 +58,8 @@ Cuando una partida es una pieza de algo más grande, el flujo entero va aparte:
 | [[FLUJO_RECOGER_EN_SUCURSAL]] | los seis procesos del código de recogida, sus tablas y equivalencias en SIGMAVI y SAP | E-15 y cinco partidas de Dev 2 |
 | [[PLAN_RECOGER_EN_SUCURSAL]] | qué se construye para cada rama, y el análisis de `SpCodigoRecogeSucursal` | idem |
 | [[FLUJO_GETAPIKEY]] | obtención de la llave de Multipagos | E-10 |
+| [[FLUJO_OLA8_REUBICACION_LLAMADORES]] | las dos entradas de la Ola 8, sus 17 pasos, y qué base y tabla toca cada uno | E-16…E-45 |
+| [[SP_VTASeCommerceDetPedidos]] | las 3 ramas del SP de Intelisis, con sus tablas temporales y permanentes | E-23 |
 
 ## Los dos patrones de la DMZ, uno al lado del otro
 

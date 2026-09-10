@@ -1,7 +1,7 @@
 ---
 tags: [pruebas, avance, migracion, estado]
 fuente: "CHECKLIST_MIGRACION_LAN_A_SAP.md"
-actualizado: 2026-09-03
+actualizado: 2026-09-09
 ---
 
 # Estado de pruebas y avance por endpoint
@@ -63,10 +63,10 @@ Para que el número signifique algo y no sea una impresión, cada partida se mid
 | E-13 | `customer/cashCustomerReport` | 6 | **80 %** | 🔶 Validación y escritura local verificadas el 25 ago. **La copia al share no es verificable desde desarrollo** | Se valida en QA |
 | E-14 | `product/obtenerImagen` | 6 | **55 %** ⁽⁵⁾ | 🔶 Solo el 401. **No es verificable desde desarrollo**: la impersonación falla antes de la copia | Se valida en QA |
 | E-15 | `order/GetPickUpCode` | 7 | **35 %** ⁽⁶⁾ | ⏳ Sin probar: la tabla en SIGMAVI está vacía hasta que Dev 2 mueva los escritores | Depende de Dev 2 (10-11 sep) |
-| E-47    | `credit/SolicitudMercancia`           | 7   | 0 %      | —                       | Conexión a definir por equipo SAP |
-| E-48    | `credit/codigoPromocion`              | 8   | 0 %      | —                       | 🟠 Origen IntelisisTmp            |
-| E-49    | `credit/getPlazos`                    | 8   | 0 %      | —                       | 🟠 Origen IntelisisTmp            |
-| E-50    | `customerService/obtenerTipoGarantia` | 8   | 0 %      | —                       | 🔒 Estructura de Miguel Marín     |
+| E-46    | `credit/SolicitudMercancia`           | 7   | 0 %      | —                       | Conexión a definir por equipo SAP |
+| E-47    | `credit/codigoPromocion`              | 8   | 0 %      | —                       | 🟠 Origen IntelisisTmp            |
+| E-48    | `credit/getPlazos`                    | 8   | 0 %      | —                       | 🟠 Origen IntelisisTmp            |
+| E-49    | `customerService/obtenerTipoGarantia` | 8   | 0 %      | —                       | 🔒 Estructura de Miguel Marín     |
 | ➡️ | ~~`credit/GetUnificationWalletStatus`~~ | — | — | — | **Reasignado a Dev 2** el 12 ago |
 | ➡️ | ~~`credit/SetUnificationWalletData`~~ | — | — | — | **Reasignado a Dev 2** el 12 ago |
 
@@ -125,7 +125,27 @@ Es decir: si en QA falla, será porque el archivo no está en esa ruta o por per
 | Habilitadores (4) | **4 al 100 %** | **100 %** |
 | Endpoints en alcance (19) | 3 al 100 %, 6 al 90 %, 4 al 80 %, 1 al 55 %, 1 al 35 %, 4 sin iniciar | 65,8 % |
 | Mixtos (15) | 2 al 25 %, 13 sin iniciar | 3,3 % |
-| **Total (38)** | | **44,7 %** |
+| **Subtotal partidas medibles (38)** | | **44,7 %** |
+| Rutas de la Ola 8 (26) | **23 completas**, 3 pendientes | 88,5 % |
+| **Total (64)** | | **62,5 %** |
+
+> ⚙️ **Las rutas de la Ola 8 entran en el total desde el 9 sep.** Antes se reportaban aparte
+> porque se miden con otra vara —completa cuando su llamador queda resuelto, sin hitos de
+> cutover ni de ficha—, pero dejarlas fuera escondía trabajo real: once llamadores escritos y
+> probados que no movían el porcentaje ni una décima.
+>
+> El total se compone sumando **partidas equivalentes**, no promediando porcentajes:
+>
+> ```
+> 38 medibles × 44,7 %  =  17,0 equivalentes
+> 26 rutas    × 88,5 %  =  23,0 equivalentes
+> ────────────────────────────────────────────
+>              40,0 ÷ 64  =  62,5 %
+> ```
+>
+> El denominador es **64**, no 68: las **cuatro bajas** de la Ola 8 salen del conteo. Cada
+> entrada pesa lo mismo, así que una ruta que no requirió trabajo cuenta igual que un endpoint
+> migrado — es la consecuencia de contarlas, y conviene tenerla presente al leer el número.
 
 > 🔴 **El total baja del 49,0 % al 44,7 %, y casi todo es una corrección, no un retroceso.**
 > Dos cosas a la vez, el 31 ago:
@@ -1078,6 +1098,94 @@ lente las olas que aún no se han barrido.
 Queda pendiente de comparar **E-12 escribiendo** —falta el id de cliente— y **E-15 completo**,
 que depende de Dev 2 y de resolver la equivalencia de IntelisisTmp.
 
+### Ola 8 — cargas de catálogo y reenvíos, 7 sep
+
+Once de los doce llamadores escritos. **No son endpoints migrados sino llamadores
+reubicados**, así que no entran en el promedio de las 38 partidas medibles; se registran aquí
+porque sí se ejecutaron contra servicios reales.
+
+#### Las siete cargas de catálogo — verificadas
+
+Contra la cadena completa **DMZ → Magento → SQLite**, con APIMagentoDMZ levantada en local y
+el `data.db` del servidor como referencia (estado del 1-sep).
+
+| Carga | Filas | Referencia | Diferencia | Tiempo |
+|---|---|---|---|---|
+| E-16 `attribute_options` | 2 581 | 2 580 | +1 | 17 s |
+| E-17 `attributes` | 761 | 761 | — | 47 s |
+| E-18 `attribute_sets` | 446 | 446 | — | 13 s |
+| E-19 `atributos_de_magento` | 24 092 | 24 076 | +16 | 595 s |
+| E-20 `categories` | 791 | 791 | — | 10 s |
+| E-21 `children` | 11 265 | 11 265 | — | 646 s |
+| E-22 `product_in_stores` | 32 548 | 32 546 | +2 | 861 s |
+
+**Ninguna perdió filas.** Las diferencias son catálogo vivo entre el 1 y el 7 sep: el +16 de
+E-19 es un set de atributos nuevo entero, `BATERIAS PARA AUTO`, y los +1 y +2 son altas
+sueltas. Se comprobó además que los `rowid` reinician en 1, o sea que el borrado y la recarga
+ocurren de verdad.
+
+> **El cuello no son los `INSERT`, es Magento.** E-16 hizo 2 581 inserciones en 17 s y E-17
+> solo 761 en 47 s: la consulta de `general/attributes` pide todos los atributos sin filtro y
+> es la cara. E-19 tarda 595 s por sus **446 llamadas HTTP**, una por set, no por sus 24 000
+> filas.
+
+#### El incidente de `ignoreAttributes.txt`
+
+La primera corrida de E-19 escribió **72 706 filas**, tres veces la referencia — 163 atributos
+por set en vez de 54. No era la migración: **el archivo de filtro estaba vacío**, 0 bytes, en
+la copia local de `C:\inetpub\wwwroot\api\`.
+
+Se reconstruyó la lista restando los atributos de la corrida sin filtro contra los del
+`data.db` del servidor, y con ella la carga bajó a 24 091. Al llegar el archivo real —**114
+atributos, 2 000 bytes**— la corrida definitiva dio 24 092.
+
+La reconstrucción acertó **109 de 114**. Los 5 que faltaron —`credit_condition`,
+`credit_type_fee`, `credit_days_to_pay`, `sp_credit_price_pp`, `descuento`— están en la lista
+pero ya no existen en Magento, así que la resta no podía verlos; y sobró uno,
+`capacidad_arranque_frio`, atributo legítimo de un set posterior al 1-sep. **El método sirve
+para diagnosticar, no para reponer el archivo.**
+
+#### Los cuatro reenvíos
+
+| ID | Estado | Por qué |
+|---|---|---|
+| E-24 `deletePromociones` | escrito, **sin ejecutar** | Vacía las categorías OUTLET en Magento |
+| E-25 `deleteReservations` | escrito, **sin ejecutar** | Vacía las reservas de inventario |
+| E-28 `setOrderStatus` | escrito, **payload verificado** | El helper compartido |
+| E-30 `setCAccount` | escrito, **payload verificado** | Modifica una orden real |
+
+Los dos primeros escriben en Magento y no son cargas de lectura, así que no se dispararon. Los
+dos últimos se verificaron **sin HTTP**: cargando el ensamblado compilado y comparando el JSON
+que producen contra las cadenas que el legado arma a mano. **Idéntico en los tres casos de
+E-28 y en el de E-30.**
+
+#### Qué queda
+
+**E-23** (`getOrderId`) es el único llamador sin escribir: su llamador ejecuta
+`SpVTASeCommerceDetPedidos` en IntelisisTmp, mapeado en [[SP_VTASeCommerceDetPedidos]].
+
+Se dio de baja `magento/noImagenProduct` y la serie se reindexó: **68 entradas, hasta E-49**.
+
+#### Cómo se mide esta ola — 23 de 26
+
+La rúbrica de seis hitos no aplica: *cutover DMZ* y *ficha de contrato* son inalcanzables
+porque la ruta de la DMZ no cambia de destino ni de contrato, así que una entrada perfecta
+tendría techo del 80 %. **Criterio propio: completa cuando su llamador queda resuelto**, haya
+costado trabajo o no. Las cuatro bajas salen del denominador.
+
+| Grupo | Entradas | Completas |
+|---|---|---|
+| 8.1 · catálogo | 7 | 6 — falta E-19 |
+| 8.2 · reenvíos | 5 | 4 — falta E-23 |
+| 8.3 · órdenes | 3 | 2 — E-29 es de Dev 2 |
+| 8.4 · importación | 8 | 8 |
+| 8.5 · sin llamador | 3 | 3 |
+| **Total** | **26** | **23 · 88 %** |
+
+**Este 88 % sí entra en el total desde el 9 sep.** Sumado a las 38 partidas medibles —que
+siguen en 44,7 %— da **62,5 % sobre 64 entradas**; la composición está en el Resumen. Las dos
+varas se mantienen separadas para calcular, y se juntan solo al totalizar.
+
 ### Refactor transversal — endpoints a asíncrono, 20 ago
 
 Criterio nuevo del equipo: **todos los endpoints migrados se escriben asíncronos**, aunque el
@@ -1323,9 +1431,9 @@ montos de préstamo **menores**, sin error ni aviso. Verificado en APIMagento
 
 | Tema | Bloquea | Quién decide |
 |---|---|---|
-| Equivalencia de `IntelisisTmp` | E-48, E-49 y los 12 mixtos | Arquitectura |
+| Equivalencia de `IntelisisTmp` | E-47, E-48 y los 12 mixtos | Arquitectura |
 | Convención de conexiones: fábricas estáticas del stash vs métodos de instancia de la Ola 0 | Integrar el stash del 29-jul (M-14, M-08) | Líder técnico |
-| Estructura de garantías | E-50 | Miguel Marín (PCP) |
+| Estructura de garantías | E-49 | Miguel Marín (PCP) |
 | ~~Definición de monedero~~ | ➡️ Dev 2 desde el 12 ago | — |
 | ~~¿Se elimina `ExistRFCAndPhoneCte`?~~ | — | ✅ Descartado el 11 ago |
 
