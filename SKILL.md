@@ -65,7 +65,35 @@ Para comportarte como el experto absoluto en este proyecto, debes memorizar y re
 25. **Pruebas End-to-End Obligatorias:** Siempre que termines la migración de un endpoint, método o ruta en general, DEBERÁS hacer pruebas end-to-end (E2E) para verificar que todo funcione perfectamente. Deberás indicar de manera explícita y documentada qué información enviaste en el Request de prueba y cuál fue el Response exacto que te devolvió el servicio.
 26. **Prohibición Estricta de Entity Framework:** Está estrictamente prohibido utilizar Entity Framework (EF) o cualquier ORM pesado para la persistencia o consulta de datos. Todo acceso a datos debe realizarse a través de ADO.NET clásico (clases `SqlConnection`, `SqlCommand`, `SqlDataReader`, etc.) o los helpers ya existentes.
 27. **Gestión Centralizada de Conexiones DB:** Los métodos para obtener las conexiones a las bases de datos DEBEN consumirse exclusivamente de las clases centralizadas en el proyecto. Para bases de datos SQL Server, se deben invocar los métodos de la clase `ServicioSap\Helpers\ConexionDB\ConexionSQL.cs` (ej. `obtenerConexionSigMavi()`, `obtenerConexionAndroid()`, etc.). Para operaciones con SQLite, se debe utilizar `ServicioSap\Helpers\ConexionDB\SQLiteDb.cs`. No se deben inicializar conexiones crudas en ninguna otra parte del código.
+28. **Nomenclatura Trazable DMZ → ServicioSAP (dos niveles):** El nombre del método debe permitir seguir el flujo desde el DMZ sin abrir el cuerpo del código. Se aplican dos niveles:
+    * **Orquestador** (el que invoca el controlador): se nombra igual que **la ruta que el DMZ consume**. Ejemplos correctos: la ruta `order/cancelOrder` la atiende `CancelOrderAsync`; `order/setreturn` la atiende `SetReturnAsync`; `order/new` la atiende `SetOrderAsync`.
+    * **Pasos internos** (por debajo del orquestador): se nombran por **la operación SAP** que ejecutan, para que el mapeo con RSG sea evidente. Ejemplos correctos: `PostCancelInvoiceAsync` (SD48), `PostReverseGoodsIssueAsync` (SD46).
+    * **Prohibido** que el orquestador lleve un nombre técnico de SAP que no exista como concepto en el DMZ. Un nombre como `FullCancelAsync` o `ReverseGoodsIssueAsync` colgado directamente de una ruta rompe la trazabilidad: quien valide el DMZ buscará *cancelOrder* y no lo encontrará.
+    * **Prohibido** reutilizar un orquestador para dos rutas distintas mediante un flag de modo. Si `order/setreturn` y `order/new` comparten `SetOrderAsync(request, "return")`, el nombre miente sobre lo que hace: hay que separar el orquestador de devolución.
 
+29. **Resolución de URLs por tipo de destino. CPI y ABAP directo están prohibidos.**
+    El proyecto tiene **varios destinos legítimos**, no solo SAP. Cada uno tiene su forma de resolverse y **nunca se hardcodea host, IP ni puerto**.
+
+    **Catálogo oficial de destinos:**
+
+    | Constante / Configuración | Destino real | Cómo se resuelve |
+    |---|---|---|
+    | S/4HANA (OData) | `https://vhmvods4ci.sap.svrwes4h.com:44300/sap/opu/odata/sap` | `Conexion.Data.obtenerUrl(Nodos.ENVIROMENT_DEV, Nodos.SERVICE_URL)` |
+    | `URL_ANDROID_API` | `https://android-api.mavi.fun` | `ConfigurationManager.AppSettings` |
+    | `URL_BP_API` | `https://businesspartner-api.mavi.fun` | `ConfigurationManager.AppSettings` |
+    | `URL_SALES_DISTRIBUTION_API` | `https://salesanddistribution-api.mavi.fun` | `ConfigurationManager.AppSettings` |
+    | `VETA_URL_LIBERADOR` | `http://172.16.215.51:3026/api/venta` | `ConfigurationManager.AppSettings` |
+    | `AwsBaseUrl` | `https://54wblyc2h6.execute-api.us-east-1.amazonaws.com/` | `ConfigurationManager.AppSettings` |
+    | `SQLITE_DB_PATH` | `C:\inetpub\wwwroot\sap\` | `ConfigurationManager.AppSettings` |
+    | `IMAGES_CREDIT_PATH` | `C:\inetpub\wwwroot\sap\images\credit` | `ConfigurationManager.AppSettings` |
+    | Servidor (IIS) | `172.16.215.64` (on-premise) | — |
+    | Ambiente (mandante) | **110** (QA / `SAP_STAGE`) | `sap-client=110` |
+
+    * **Web.config es la fuente correcta** para todos los destinos **que no son S/4HANA**: se lee la AppSetting del tipo de API que corresponda. Esto es diseño, no deuda.
+    * **S/4HANA es la excepción:** su base **no** sale de Web.config sino de `obtenerUrl` (`ConexionSap.dll`, nunca `conf.ini`). Esa llamada ya devuelve host **y** el prefijo `/sap/opu/odata/sap`; el método solo concatena `/<SERVICIO>/<EntitySet>?...`. Para **OData v4** se cambia el segmento con `.Replace("/odata/sap", "/odata4/sap")`; nunca se escribe el prefijo a mano.
+    * **Prohibido CPI y ABAP directo.** Las URLs de **CPI** (SAP BTP, `*.hana.ondemand.com`, `[URL_CPI]`) y de **ABAP/Gateway directo** (`host:8000`) que aparecen en la documentación de RSG **no se usan**: son el modelo de integración del POS (`POS → BAS → CPI → CAR → S/4HANA`), no el nuestro. Las APIs propias de MAVI (`*.mavi.fun`), AWS y el liberador **no son CPI**: son destinos legítimos.
+    * **Autenticación por destino.** S/4HANA usa **`Authorization: Basic`** vía `TokenGenerator.CreateClientS4()` (credenciales de `ConexionSap.dll`). Un `Bearer` apuntando a una URL de S4 es un **defecto**. El `Bearer` sí es correcto hacia el **DMZ/Magento** y hacia el **liberador**, que son otros sistemas.
+    * **Al leer una ficha de RSG:** `https://[URL_CPI]/...` y `http://host:8000/...` son ruido de la documentación. Quédate **solo** con el nombre del servicio y del EntitySet (ej. `ZCDS_DIM11_EXISTENCIA_CDS/zcds_dim11_existencia`) y con la equivalencia de campos de la OData; el host y el prefijo los pone `obtenerUrl`. Concuerda con la regla de que **las tablas de SAP de la documentación se ignoran**.
 
 ## Decision Trees (Árboles de Decisión Lógica)
 

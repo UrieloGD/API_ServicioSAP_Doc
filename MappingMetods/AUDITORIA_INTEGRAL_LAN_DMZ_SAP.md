@@ -397,31 +397,42 @@ Y la brecha no es de matiz. Difieren en el contrato, en el efecto y en el alcanc
 3. **Definir el equivalente SAP de la rama facturada** (Reporte de Servicio + Solicitud de Devolución `VTAS.SD`). Si el negocio la necesita, `cancelOrder` no puede ser la única puerta.
 4. **Dejar de usar cadenas mágicas como contrato** entre DMZ y ServicioSAP: propagar el status HTTP y un cuerpo tipado `{status, message}`. Mientras `Curl.cs:130-146` devuelva los errores como si fueran respuestas válidas, el DMZ no puede distinguir "no existe" de "SAP caído" (R-03).
 
-#### El flujo de anulación que el ToBe sí define — y que `FullCancelAsync` cumple a medias
+#### El flujo de anulación: SD48 + SD46, y eso es todo
 
-`RSG\Arquitectura_POS_Credito_MAVI_v060325.md:364` fija el orden canónico:
+> [!warning] RETRACTACIÓN — una versión anterior afirmaba que faltaban SD47 y SD37
+> Se dijo que el flujo de anulación tenía cuatro pasos (SD48 → SD46 → SD47 → SD37) y que
+> `FullCancelAsync` lo ejecutaba incompleto. **Era falso.** Confirmado con el equipo:
+> * **SD47 "Borrar Entrega" no existe.** En SAP una entrega **no se borra, se cancela** — y esa
+>   cancelación *es* la reversión de la salida de mercancías (SD46). No hay un paso aparte.
+> * **SD37 "Modificar estatus" no existe.** No hay ningún estatus del pedido que haya que modificar.
+>
+> **Conclusión corregida: la cadena de anulación es SD48 (anular factura) + SD46 (anular salida de
+> mercancías), y `FullCancelAsync` la implementa completa.** No falta ninguna API por pedir.
 
-> *"La anulación logística respeta el orden inverso al de creación: primero **anular factura** ([[SD48]]), luego **anular salida de mercancías** ([[SD46]]), después **borrar entrega** ([[SD47]]), y sólo entonces modificar el estatus de los documentos comerciales con [[SD37]]."*
-
-| Paso | API | ¿Implementado? |
+| Paso | API | Estado |
 |---|---|---|
 1 | [[SD48]] Anular factura | ✅ `PostCancelInvoiceAsync` |
-2 | [[SD46]] Anular salida de mercancías | ✅ `PostReverseGoodsIssueAsync` |
-3 | **[[SD47]] Borrar entrega** | ❌ **falta** |
-4 | **[[SD37]] Modificar estatus / rechazar pedido** | ❌ **falta** |
-— | [[SD42]] Tablas Z Venta Contado/Crédito, [[SD34]], [[TZ01]] sobre ZSPLITS | ❌ faltan |
+2 | [[SD46]] Anular salida de mercancías — *es* la cancelación de la entrega | ✅ `PostReverseGoodsIssueAsync` |
 
-**`FullCancelAsync` ejecuta solo los pasos 1 y 2.** Consecuencia concreta: tras una cancelación "exitosa" **la entrega queda viva y el pedido en `ZIDSTATUS=01`, es decir refacturable**.
+#### Cómo se produjo el error, para no repetirlo
 
-> [!tip] SD37 existe — responde la pregunta que estaba pendiente de consultar
-> Se había concluido que "no hay API de anulación de pedido en el catálogo RSG". **Es falso.**
-> [[SD37]] — *"Modifica estatus de Pedido / Oferta / Consulta; rechazar pedido"* — está nombrada en
-> `Arquitectura_POS_Credito_MAVI_v060325.md:332, :356, :364, :1108` (diaps. 37, 38 y 90).
-> **Es la API que escribe el equivalente de `ZIDSTATUS = 03` y desbloquea la rama de pedido no facturado.**
-> Lo que falta no es la API: es su **ficha técnica** en `RSG\`. El pendiente cambia de
-> *"levantar un requerimiento nuevo"* a *"solicitar la spec de SD37"*, que es muchísimo más barato.
-> Lo mismo aplica a [[SD47]] (`:1116`, diap. 38) y a [[SD08]] *Consulta de factura* (`:1094`, diap. 35),
-> que es el equivalente honesto de `estaFacturado()` de LAN.
+> [!danger] Regla de evidencia: una API existe **solo si tiene ficha en `RSG\` con su URL OData**
+> El error vino de tratar como catálogo de APIs lo que en el pptx son **etiquetas de diagrama**.
+> Verificado contra el volcado crudo del original (`Arquitectura Sistema POS Credito MAVI-v060325.pptx`):
+>
+> * `SD37 @(50,43)` — caja suelta de un diagrama, junto a `Pedido @(108,43)` y `Oferta @(108,50)`,
+>   con notas asteriscadas `*Modifica estatus` y `* Rechazar pedido`.
+> * `SD47 @(92,39)` — etiqueta junto a `Entrega @(121,40)` bajo el título *Anulación Documentos Logísticos*.
+> * `SD08 @(57,19)` — etiqueta junto a `Consulta de factura @(95,19)`.
+>
+> **El deck tiene solo 2 bloques de tabla en 178 diapositivas, y ninguno es un catálogo de APIs.**
+> La "tabla catálogo de APIs" que se citaba era una **síntesis del resumen en Markdown**, no una tabla
+> del original. Y la frecuencia no distingue: SD37 aparece 7 veces, SD01 7 veces y SD09 solo 2 — pero
+> SD01 y SD09 sí tienen ficha con URL, y SD37/SD47/SD08 no.
+>
+> **Criterio a aplicar de aquí en adelante:** un código SDxx mencionado en un deck es un *concepto de
+> proceso*. Solo es una API consumible si existe `RSG\sdXX_*.md` con su URL OData y su equivalencia
+> de campos. No pedir "la ficha que falta" de algo que nunca fue una API.
 
 #### Corrección al encuadre de la divergencia
 
@@ -430,7 +441,7 @@ Se dijo antes que ServicioSAP "hace algo distinto de LAN" en el caso facturado. 
 Los hechos verificados siguen en pie: LAN aplica el flujo de **devolución** ante un pedido facturado, y `FullCancelAsync` aplica el de **anulación**. Pero SD48 y SD46 **no son un excedente**: son los dos primeros pasos de un flujo legítimo y documentado. Los dos errores reales son:
 
 1. Aplicar el flujo de **anulación** donde LAN aplica el de **devolución**, y
-2. ejecutar ese flujo de anulación **incompleto** (faltan SD47, SD37, SD42, SD34 y TZ01).
+2. ~~ejecutar ese flujo de anulación incompleto~~ — **retirado:** la cadena es SD48 + SD46 y está completa (ver la retractación arriba). Lo que queda por confirmar es si SD42 / SD34 / TZ01 son pasos reales o también etiquetas de diagrama; con el criterio de evidencia vigente, ninguno tiene ficha en `RSG\`.
 
 > [!warning] Decisión de negocio pendiente, no deducible del código
 > ¿Una cancelación de ecommerce sobre un pedido **ya facturado** debe seguir la política de LAN
@@ -1127,8 +1138,8 @@ Requieren decisión humana. **No se asumió ninguna.**
 | 18 | **Con Valentín:** equivalencias en SAP de `CteTel`, `TablaStD` y `CREDICCondicionArt` — la lógica de validación telefónica de `SP_CREDITO_WEB_DATOS` | R-07 · todo el flujo de crédito |
 | 19 | **Con Valentín:** cómo queda el liberador de crédito y el `CallMagentoAuthorizationCallbackAsync` | R-07 · `order/validateCredit` |
 | 20 | ¿Se migran las operaciones `InsertReferencia` (avales) y `Update` (dos solicitudes) del SP, o quedan fuera de alcance? | R-07 |
-| 21 | **Solicitar la ficha técnica de [[SD37]]** (*Modifica estatus / rechazar pedido*). Es la API que cierra la cancelación de pedido no facturado. Ya está nombrada en el deck de arquitectura; solo falta su spec | R-07 · `cancelOrder` rama no facturada |
-| 22 | Solicitar la ficha técnica de [[SD47]] (*Borrar Entrega*) y de [[SD08]] (*Consulta de factura*) | Flujo de anulación completo y bifurcación correcta |
+| 21 | ~~Solicitar la ficha de SD37~~ — **retirada:** SD37 no existe como API (ver la retractación en R-07) | — |
+| 22 | ~~Solicitar la ficha de SD47 y SD08~~ — **retiradas:** son etiquetas de diagrama, no APIs | — |
 | 23 | **Decisión de negocio:** ante un pedido ya facturado, ¿cancelación de ecommerce aplica la política de LAN (no anular, abrir reporte + devolución) o la anulación dura del ToBe? El RSG contempla ambas | `cancelOrder` completo |
 | 24 | ¿El **Reporte de Servicio** (módulo ST) tiene destino en SAP? No aparece en ningún RSG ni en código | Rama facturada de `cancelOrder` |
 | 14 | ¿Cómo se selecciona el entorno para el pase a producción? Hoy solo existe `ENVIROMENT_DEV` en el código | R-12 · los 64 puntos de llamada |

@@ -4,8 +4,25 @@ proyecto: Migracion SAP
 fuente: Arquitectura Sistema POS Credito MAVI-v060325.pptx
 diapositivas: 178
 fecha_documento: Febrero 2025
-actualizado: 2026-09-08
+actualizado: 2026-09-09
 ---
+
+> [!danger] Leer esto antes de usar este resumen como evidencia técnica
+> Este documento es un **resumen generado** del pptx, no el original. Las tablas que contiene —en
+> particular cualquier cosa que parezca un **catálogo de APIs**— son una **síntesis**: el pptx tiene
+> solo 2 bloques de tabla en sus 178 diapositivas, y ninguno es un catálogo de APIs. Los códigos
+> `SDxx` del original son en su mayoría **etiquetas de cajas en diagramas de flujo**, no
+> especificaciones de servicios.
+>
+> **Un código `SDxx` mencionado aquí NO implica que exista una API consumible.** Una API existe para
+> este proyecto solo si hay una ficha `RSG/sdXX_*.md` con su **URL OData** y su **equivalencia de
+> campos**. Confirmado con el equipo el 2026-09-09: **SD37, SD47 y SD08 no existen como APIs** — en
+> SAP una entrega no se borra sino que se cancela, y eso *es* SD46; y no hay ningún "estatus del
+> pedido" que modificar. Tratarlos como APIs pendientes de ficha produjo una conclusión errónea en
+> la auditoría, ya retractada.
+>
+> Úsese este resumen para entender **procesos y reglas de negocio**. Para contratos técnicos, ir
+> siempre a la ficha `RSG/` correspondiente.
 
 # Arquitectura Sistema POS / Crédito MAVI — Proyecto SAP S/4HANA
 
