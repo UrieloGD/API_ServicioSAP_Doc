@@ -404,3 +404,18 @@ curl --request POST \
 curl --request GET \
   --url https://localhost:44399/generateNewStorepickupCode/123456789
 ```
+
+### 2026-09-11: S3-02 order/createStorepickupCode/{idEcommerce}/{idOrder}
+- **Estado**: Migrado a `ServicioSAP`. Lógica interna para la orquestación directa con SAP y DMZ.
+- **Detalles**:
+  - Al igual que S3-01, este endpoint maneja la persistencia en `BpRecogePedidos` (SIGMAVI).
+  - Se implementó como `[HttpGet]` puro en `OrderController.cs` (`ServicioSAP`), recibiendo `idEcommerce` e `idOrder` en la ruta.
+  - La lógica de recolección de datos extrae el Customer ID mediante `CheckDocumentExistsSD36Async` (SD36), luego invoca `BusinessPartnerMethods.GetClientAsync` (BP05) para obtener correo, teléfono y nombre.
+  - Genera el código Hash/CRC, e inserta o actualiza la base local `BpRecogePedidos`.
+  - Finalmente, utiliza `Curl.cs` (conector DMZ) para enviar las peticiones a Magento de `order/setOrderStatus` y `order/sendStorePickupEmail` (endpoints a cargo de Dev 2), devolviendo un estado final e ignorando fallos silenciosos de Magento para garantizar la entrega del código al cliente. Se limpió el código de comentarios innecesarios y quedó listo para producción.
+
+**Curl de Prueba Local (ServicioSAP)**:
+```bash
+curl --request GET \
+  --url https://localhost:44399/order/createStorepickupCode/123456789/000000123
+```

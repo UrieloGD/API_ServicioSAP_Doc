@@ -111,7 +111,8 @@ Mismo criterio de riesgo que en Dev 3: más APIs por endpoint significa más for
 
 - [x] ✅ **S3-01** `order/generateNewStorepickupCode/{idEcommerce}` — actualiza `TrWDM0285_CteRecoge`(BPRecogePedidos), tabla que Dev 3 crea en SIGMAVI. **Coordinar con Dev 3**
   - *Completado el 09/09/2026. Implementación interna como `GET` puro en `ServicioSAP`. Se removió la exposición en DMZ por ser de uso interno exclusivo. Se migró la tabla a `BpRecogePedidos` (SIGMAVI) y la obtención del UEN se realiza consultando SAP SD36 (`SalesMethods.CheckDocumentExistsSD36Async`), reemplazando definitivamente el JOIN con la tabla Venta de Intelisis.*
-- [ ] **S3-02** `order/createStorepickupCode/{idEcommerce}/{idOrder}` — cruza `TrWDM0285_CteRecoge` (BPRecogePedidos) en SigMavi, `Venta` (SD36), `Cte` (BP05), `VentaEntrega` (PartnerAddress) y `EcommerceDetPedidos` (SD36). **Coordinar con Dev 3**, que crea la tabla en SIGMAVI
+- [x] ✅ **S3-02** `order/createStorepickupCode/{idEcommerce}/{idOrder}` — cruza `TrWDM0285_CteRecoge` (BPRecogePedidos) en SigMavi, `Venta` (SD36), `Cte` (BP05), `VentaEntrega` (PartnerAddress) y `EcommerceDetPedidos` (SD36). **Coordinar con Dev 3**, que crea la tabla en SIGMAVI
+  - *Completado el 11/09/2026. Implementado en `ServicioSAP` utilizando lógica interna que invoca a DMZ para notificar a Magento (`order/setOrderStatus` y `order/sendStorePickupEmail`, responsabilidad de Dev 2) y centraliza el guardado del código generado.*
 - [ ] **S3-03** `customerService/obtenerCreditos` — venta por SD36 y artículos ya resueltos. (La tabla `TarjetaSerieMovMAVI` ya no existirá y no se utilizará más).
 - [ ] **S3-04** `order/estimated-delivery/{ecommerceId}` — SD36 y `ZSRV_SALESDOC_ADDRCHANGE`. Ojo: en SAP designaron la guía como el *tracking*, y el tracking real se desconoce
 - [ ] **S3-05** `order/getOrderInfoAndSet/{incrementId}` — consulta Magento, valida estatus en SD36 y, si procede, genera pedido SD01
