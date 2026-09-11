@@ -33,7 +33,7 @@ CustomersController,customer/setCustomer,POST,partner/client,POST,Marcos,Si,Si,B
 CustomersController,customer/setCustomerList,POST,customer/setCustomerList,POST,Diego,SI,Si,SIGMAVI + SAP - Endpoint SAP existe
 CustomersController,customer/getCustomerList,GET,customer/getCustomerList,POST,Diego,SI,Si,SIGMAVI + SAP - Endpoint SAP existe
 CustomersController,customer/deleteCustomerList,POST,customer/deleteCustomerList,POST,Diego,SI,Si,SIGMAVI + SAP - Endpoint SAP existe
-CustomersController,customer/cashCustomerReport,POST,customer/cashCustomerReport,POST,Diego,Si,Si,Conectado: DMZ CustomersController.cs hace PostSAP. Verificado 2026-09-09.
+CustomersController,customer/cashCustomerReport,POST,customer/cashCustomerReport,POST,Diego,No,No,
 CustomerServiceController,customerService/GetAccountDebts,POST,credit/GetAccountDebts,POST,Marcos,Si,Si,EX01 - Migrado
 CustomerServiceController,customerService/ApplyPaymentNeko,POST,credit/ApplyPaymentNeko,POST,Marcos,No,No,ZAPI_REFERENCIAS_BANCARIAS - Estructura SAP existe falta lógica ABAP
 CustomerServiceController,customerService/UpdateStatusPaymentNeko,POST,credit/UpdateStatusPaymentNeko,POST,Marcos,No,No,ZAPI_REFERENCIAS_BANCARIAS - Estructura SAP existe falta lógica ABAP
@@ -47,7 +47,7 @@ CustomerServiceController,customerService/bitacoraAtencionClientes,POST,To Do,PO
 CustomerServiceController,customerService/validarCoberturaPorCP,POST,To Do,GET,Javier,No,No,SEPOMEX - Endpoint SAP existe
 CustomerServiceController,customerService/obtenerVentanaConfirmacion,POST,To Do,GET,Javier,No,No,BP05 + SD36 + ADDRCHANGE - Requiere desarrollo (3 APIs)
 CustomerServiceController,customerService/obtenerCreditos,POST,To Do,GET,Javier,No,No,SD36 + DM01 + tarjetaSerie - Requiere desarrollo
-CustomerServiceController,customerService/obtenerQuejas,POST,customerService/obtenerQuejas,GET,Diego,Si,Si,Conectado: DMZ CustomerServiceController.cs:124 PostSAP -> SAP CustomerServiceController.cs:20. Paridad verificada 2026-09-09.
+CustomerServiceController,customerService/obtenerQuejas,POST,customerService/obtenerQuejas,GET,Diego,No,No,
 CustomerServiceController,customerService/ObtenerEstatusEmbarque,POST,To Do,GET,Javier,No,No,BLOQUEADO - Pendiente desarrollo ABAP
 CustomerServiceController,customerService/LoginClienteCredito,POST,customerService/LoginClienteCredito,GET,Javier,Si,Si,BP05 - Login por datos BP
 CustomerServiceController,customerService/LoginClienteCreditoFechaN,POST,customerService/LoginClienteCreditoFechaN,GET,Javier,Si,Si,BP05 - Login por fecha nacimiento
@@ -55,7 +55,7 @@ CustomerServiceController,customerService/GetSTPAccount,POST,To Do,POST,Marcos,N
 CustomerServiceController,customerService/GetSalesChannelsSTP,POST,To Do,GET,Javier,No,No,CteEnviarA  → salesanddistribution-api.mavi.fun/AS_GET_PartnerAddress?SdDoc=0000007844&PartnRole=WE
 CustomerServiceController,customerService/ValidateSTPAccount,GET,To Do,GET,Marcos,No,No,Tabla Z nueva en SAP - Requiere desarrollo
 CustomerServiceController,customerService/bbvaKeyNeko,POST,N/A,N/A,Deprecado,N/A,N/A,DEPRECADO
-CustomerServiceController,customerService/bbvaKeyAdvanced,POST,customerService/bbvaKeyAdvanced,GET,Diego,Si,Si,Conectado: DMZ CustomerServiceController.cs:284 GetSAP -> SAP CustomerServiceController.cs:31. Paridad verificada 2026-09-09.
+CustomerServiceController,customerService/bbvaKeyAdvanced,POST,customerService/bbvaKeyAdvanced,GET,Diego,No,No,
 CustomerServiceController,customerService/GetEmpleadoByNomina,POST,partner/successfactor/employee/{userId},GET,Javier,No,No,SuccessFactor - Endpoint SAP existe
 CustomerServiceController,customerService/ActualizarCamposConfigurables,POST,N/A,N/A,Deprecado,N/A,N/A,DEPRECADO
 CustomerServiceController,customerService/InsertarDesdeTablerateNativo,POST,N/A,N/A,Deprecado,N/A,N/A,DEPRECADO
