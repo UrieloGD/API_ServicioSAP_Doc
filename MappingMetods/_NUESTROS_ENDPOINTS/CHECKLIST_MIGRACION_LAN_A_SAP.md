@@ -119,7 +119,7 @@ En la práctica esto recae sobre los mixtos `M-11`…`M-08` y sobre las partidas
 
 ## Ola 7 — SIGMAVI sin dependencia de SAP · #12558
 
-- [ ] **E-15** `order/GetPickUpCode` — **35 %**: escrito el 31 ago en `Methods\Order\StorePickupMethods.cs`, commiteado y subido en `8cf2c52`,, compila en 0 errores, asíncrono. Solo la lectura; los tres escritores se quedan en el legado. Sin pruebas, sin cutover y sin ficha. No lee nada de SAP.
+- [ ] **E-15** `order/GetPickUpCode` — **90 %**: escrito el 31 ago en `Methods\Order\StorePickupMethods.cs`, commiteado y subido en `8cf2c52`, compila en 0 errores, asíncrono. **Probado el 14 sep** en sus cuatro casos contra datos reales de `BpRecogePedidos`, con ficha en [[E-15_GetPickUpCode]]. Solo la lectura. Falta el cutover, que **no puede aplicarse solo**: de los tres escritores, `crearPrimerCodigoRecogerSucbanktransfer` sigue escribiendo en IntelisisTmp. No lee nada de SAP.
 
 > 📌 **La tabla ya existe en SIGMAVI: `BpRecogePedidos`**, no `TrWDM0285_CteRecoge`. Mismas columnas, `MaviSAP: Tables\BpRecogePedidos.sql`, de abril de 2025. **No hay que crearla.**
 
@@ -218,9 +218,9 @@ Las cuatro bajas quedan fuera, así que el denominador de la ola es **26**.
 > Las tres de 8.5 cierran con una validación diferida —comprobar que siguen operando tras el
 > apagado—, el mismo trato que reciben H-02 y H-04 esperando QA.
 
-> ✅ **Desde el 9 sep este 88 % entra en el total del plan.** No se promedia con el 44,7 %:
-> se suman **partidas equivalentes**. `38 × 44,7 % = 17,0` más `26 × 88,5 % = 23,0`, sobre
-> **64 entradas** —las cuatro bajas quedan fuera—, da **62,5 %**. Cada entrada pesa lo mismo,
+> ✅ **Desde el 9 sep este 88 % entra en el total del plan.** No se promedia con el 46,2 %:
+> se suman **partidas equivalentes**. `38 × 46,2 % = 17,6` más `26 × 88,5 % = 23,0`, sobre
+> **64 entradas** —las cuatro bajas quedan fuera—, da **63,4 %**. Cada entrada pesa lo mismo,
 > así que una ruta que no requirió trabajo cuenta igual que un endpoint migrado.
 
 > 🔴 **Corrección del 9 sep: el grupo 8.5 tiene tres rutas, no seis.** Los dos checklists decían "6 rutas" y su texto añadía *"y las tres de producto sin llamador en la LAN"*. **Esas tres no existen**: las ocho rutas de producto de la DMZ están todas en 8.4. El rango de identificadores solo da para tres —E-39, E-40 y E-41— y la enumeración de arriba lo confirma.
@@ -311,21 +311,21 @@ Las cuatro bajas quedan fuera, así que el denominador de la ola es **26**.
 
 **10 / 38** partidas marcadas como completadas (H-01, H-02, H-03, H-04, E-01, E-02, E-03, E-04, E-07, E-08). `[x]` aquí significa **desarrollo terminado**; varias tienen validaciones diferidas anotadas en su línea: H-02 y H-04 esperan QA, E-01 espera el canal de SMS, y las cuatro partidas de endpoints esperan el despliegue del cutover.
 
-El contador solo cuenta partidas cerradas, así que esconde el trabajo a medias. El avance ponderado de esas 38 es **44,7 %**; el desglose por endpoint, con el criterio de cálculo y el estado de pruebas de cada uno, está en [[ESTADO_PRUEBAS_Y_AVANCE]].
+El contador solo cuenta partidas cerradas, así que esconde el trabajo a medias. El avance ponderado de esas 38 es **46,2 %**; el desglose por endpoint, con el criterio de cálculo y el estado de pruebas de cada uno, está en [[ESTADO_PRUEBAS_Y_AVANCE]].
 
-**Sumando las rutas de la Ola 8, el avance del plan es 62,5 %.**
+**Sumando las rutas de la Ola 8, el avance del plan es 63,4 %.**
 
 | | Entradas | Avance |
 |---|---:|---:|
-| Partidas medibles | 38 | 44,7 % |
+| Partidas medibles | 38 | 46,2 % |
 | Rutas de la Ola 8, sin las bajas | 26 | 88,5 % |
-| **Total** | **64** | **62,5 %** |
+| **Total** | **64** | **63,4 %** |
 
-> ⚙️ **Cambio de criterio del 9 sep.** Hasta ahora las 30 rutas de la Ola 8 quedaban fuera del promedio porque se miden con otra vara — completas cuando su llamador queda resuelto, sin hitos de cutover ni de ficha. Dejarlas fuera escondía trabajo real: once llamadores escritos y probados que no movían el porcentaje. Ahora se suman como **partidas equivalentes**, `38 × 44,7 % + 26 × 88,5 % = 40,0` sobre **64**.
+> ⚙️ **Cambio de criterio del 9 sep.** Hasta ahora las 30 rutas de la Ola 8 quedaban fuera del promedio porque se miden con otra vara — completas cuando su llamador queda resuelto, sin hitos de cutover ni de ficha. Dejarlas fuera escondía trabajo real: once llamadores escritos y probados que no movían el porcentaje. Ahora se suman como **partidas equivalentes**, `38 × 46,2 % + 26 × 88,5 % = 40,6` sobre **64**.
 >
 > El denominador excluye las **cuatro bajas**. Y cada entrada pesa lo mismo, así que las ocho rutas que pasan sin cambio cuentan igual que un endpoint migrado con sus pruebas — es lo que implica contarlas.
 
-> 🔴 **Ese 44,7 % sustituye al 49,0 % del 25 ago, y no es un retroceso.** El denominador de los mixtos estaba mal —decía 12 y son **15**, contados uno a uno en la tabla—, lo que inflaba el promedio. Corregido eso, entró además E-15 al 35 %, por debajo de la media. El trabajo hecho es el mismo; lo que cambió es sobre cuántas partidas se promedia.
+> 🔴 **El 44,7 % del 31 ago sustituyó al 49,0 % del 25 ago, y no es un retroceso.** El denominador de los mixtos estaba mal —decía 12 y son **15**, contados uno a uno en la tabla—, lo que inflaba el promedio. Corregido eso, entró además E-15 al 35 %, por debajo de la media. El trabajo hecho es el mismo; lo que cambió es sobre cuántas partidas se promedia.
 
 **La Ola 4 es la primera que cierra completa**: E-07 y E-08 al 100 %, con pruebas contra AdminDoc real y cutover commiteado. Lo que les queda ya no depende del equipo de desarrollo — es despliegue, y en E-08 confirmar los permisos de la carpeta de imágenes.
 
