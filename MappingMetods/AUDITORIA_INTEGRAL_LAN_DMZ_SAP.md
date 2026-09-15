@@ -15,6 +15,15 @@ Comparativa de paridad de los tres proyectos y plantilla de verificación. Todo 
 
 ---
 
+> [!warning] Este documento fue superado en parte — leer junto con la guía
+> **2026-09-10.** El documento de desarrollo vigente es [[GUIA_MIGRACION_FABLE]]. Esta auditoría se conserva como **respaldo de evidencia**, pero tres cosas de aquí ya **no son válidas**:
+>
+> 1. **`R-03` / `C03` — RETIRADO.** *"Todos los puentes devuelven 200 cuando falla el transporte"*, declarado aquí **causa raíz común de C01, C03 y C06**. **No lo es.** El DMZ es un puente passthrough y ServicioSAP devuelve el resultado de negocio **en el cuerpo con HTTP 200**; el puente nunca necesita el status. Confirmado por el usuario.
+> 2. **§7 "Desalineación del CSV" — SIN EFECTO.** `MAVIDMZSAPConexiones.csv` es **referencia informativa** del universo de endpoints, **no un tracker de progreso**, y **no se modifica**. Caen con ella `C15`, `C20`, `C21` y `C23`. El estado real se deriva del código (guía §3).
+> 3. **`R-06` y `R-12` no son defectos**, son **prerrequisitos de pase** (guía §8.6).
+>
+> Todo lo demás de este documento sigue vigente y está arrastrado a la guía §8.5.
+
 ## 0. Cómo se produjo y qué límites tiene
 
 Tres agentes se repartieron los controladores; cada hallazgo de severidad alta o media pasó por un verificador adversarial independiente cuya instrucción era **refutarlo**, no confirmarlo.
