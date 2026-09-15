@@ -138,6 +138,10 @@ En la práctica esto recae sobre los mixtos `M-11`…`M-08` y sobre las partidas
 
 > ✅ **Once de los doce llamadores escritos el 7 sep.** Las siete cargas de catálogo (E-16…E-22) verificadas contra la cadena completa DMZ → Magento → SQLite, sin perder filas y con las diferencias explicadas por catálogo vivo. También el helper compartido **E-28** —el que bloqueaba a Dev 2— y los tres reenvíos **E-24**, **E-25** y **E-30**. Falta solo **E-23** (`getOrderId`), cuyo llamador escribe en IntelisisTmp con `SpVTASeCommerceDetPedidos`. Subido el 14 sep en `c7d582d`.
 
+> 🔴 **Tres de las siete cargas fallan al reejecutarlas — 15 sep.** `attributes`, `generalAttributes`, `attributeSets` y `categories` responden 200. **E-19 `attributeSetChildren`, E-21 `children` y E-22 `productWithWebsites` fallan las tres con `JsonReaderException` en la línea del `DeserializeObject`**, y las tres son las paginadas. El mismo GET reproducido fuera del servicio —mismo token, mismo `HttpClient`, mismas dos transformaciones— devuelve un cuerpo que **sí parsea** (1 000 ítems), así que la causa todavía no está aislada. La cadena además va al límite: `productWithWebsites` recorrió 13 páginas en 477 s con reintentos por timeout en las dos últimas, y una sonda a `/1/1000` llegó a devolver un cuerpo de 2 bytes. Esto **contradice el "verificadas sin perder filas" del 7 sep**, que queda en entredicho hasta que se reproduzca.
+
+> ⚠️ **La copia local de `data.db` quedó a medio cargar** tras esa corrida: `children` en 0 filas (de 11 265), `product_in_stores` en 12 000 (de 32 548) y `atributos_de_magento` en 14 089 (de 24 092). Las cargas vacían la tabla antes de rellenarla, así que un fallo a media página la deja incompleta. No afecta al servidor: la ruta local se sobreescribe por `Web.local.config`.
+
 > 🗑️ **E-23 se propone como baja, no como porteo — 14 sep.** Su llamador existía para rellenar `idOrden` en `eCommerceDetPedidos`, y el único lector de esa columna era el flujo de recoger en sucursal. Dev 2 lo migró el 10 y 11 sep (`b8f4358`, `8107ede`) **sin usar la tabla**: el `idOrder` le llega como parámetro de ruta. `Venta` y `VentaD`, lo único que faltaba por equivaler, son **SD36**. Queda una pregunta antes de cerrarla: si Magento usa el arreglo `products` del aviso de recogida, que hoy viaja vacío. El detalle en [[E-23_getOrderId#6. Lo que cambió · 9 al 15 de septiembre]].
 
 > 🔴 **Hallazgo en la cadena de recogida, verificado el 14 sep.** `StorePickupMethods.cs:226` y `:264` consultan SD36 con el `idEcommerce` crudo, cuando el filtro es `PurchNoC eq '…'`. Probado contra SAP: con `ZSD_ZMER_38515` devuelve el documento, con `38515` devuelve `[]`. S3-02 guarda el contacto vacío sin marcar error y S3-01 rota la clave y luego falla. Para Dev 2.
@@ -157,10 +161,10 @@ Se listan aquí para que la serie se pueda verificar sin abrir otro documento. E
 | E-16 | `magento/attributes` | 8.1 | ✅ llamador reconstruido |
 | E-17 | `magento/general/attributes` | 8.1 | ✅ llamador reconstruido |
 | E-18 | `magento/attributeSets` | 8.1 | ✅ llamador reconstruido |
-| E-19 | `magento/attributeSetChildren/{id}` | 8.1 | ⏸️ SQLite hecho; MySQL e Intelisis en espera |
+| E-19 | `magento/attributeSetChildren/{id}` | 8.1 | 🔴 falla al reejecutar (15 sep); MySQL e Intelisis en espera |
 | E-20 | `magento/categories` | 8.1 | ✅ llamador reconstruido |
-| E-21 | `magento/children/{page}/{size}/{store}` | 8.1 | ✅ llamador reconstruido |
-| E-22 | `magento/productWithWebsites/{page}/{size}` | 8.1 | ✅ llamador reconstruido |
+| E-21 | `magento/children/{page}/{size}/{store}` | 8.1 | 🔴 falla al reejecutar (15 sep) |
+| E-22 | `magento/productWithWebsites/{page}/{size}` | 8.1 | 🔴 falla al reejecutar (15 sep) |
 | 🗑️ | ~~`magento/noImagenProduct/{store}`~~ | — | baja el 8 sep, **sin ID** |
 | E-23 | `magento/getOrderId/{incrementId}` | 8.2 | 🗑️ propuesta de baja — su consumidor ya migró sin la tabla |
 | E-24 | `magento/deletePromociones` | 8.2 | ✅ escrito, sin ejecutar |
