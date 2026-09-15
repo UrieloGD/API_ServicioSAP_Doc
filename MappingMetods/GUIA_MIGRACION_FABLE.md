@@ -3,7 +3,7 @@ tags: [migracion, sap, fable, guia-desarrollo]
 fecha: 2026-09-10
 estado: vigente
 ---
-
+cambiar
 # Guía de migración LAN → DMZ → ServicioSAP
 
 > [!abstract] Para qué sirve este documento
@@ -25,6 +25,76 @@ estado: vigente
 > - 🔬 **verificado con response real** de SAP
 > - ⚠️ **por validar** — falta consumir la OData o falta una decisión de negocio
 > - ❌ **refutado** — se reportó y se cayó; no volver a levantarlo
+
+---
+
+## 0. El objetivo, y dónde viven las reglas
+
+> [!important] Qué significa que esta migración esté terminada
+> **Cada endpoint que expone el DMZ debe tener su igual en ServicioSAP, cumpliendo la misma lógica que hoy hace LAN, resuelta con sus equivalencias en SAP.**
+>
+> Ése es el criterio de completitud. No es "que responda": es que haga lo mismo, con el mismo contrato de salida, apoyándose en OData en lugar de Intelisis.
+
+> [!tip] El trabajo va partido por controlador, no de un solo golpe
+> Las 120 rutas del DMZ están repartidas en **14 paquetes** — uno por controlador, con su alcance, sus bloqueos y su criterio de cierre: [[PLAN_FABLE_POR_CONTROLADOR]].
+>
+> Se toma **un paquete por sesión**. Los tres primeros existen para calibrar el método antes de tocar nada grande.
+
+### 0.1 Hay DOS documentos de reglas y los dos son obligatorios
+
+| Documento | Qué contiene |
+|---|---|
+| **`SKILL.md`** (raíz del skill) | Las **32 reglas de construcción**: cómo se escribe el código |
+| **Esta guía** | El **criterio**: destinos, evidencia válida, valores congelados, errores a no repetir |
+
+**Leer sólo una de las dos produce código roto.** Las de `SKILL.md` que más caro salen si se ignoran:
+
+| Regla | Qué pasa si se ignora |
+|---|---|
+| **19 · `.csproj`** | Todo `.cs` nuevo debe registrarse con `<Compile Include="..." />`. Si no, **el proyecto no lo compila y no hay error visible**: el archivo simplemente no existe para el build |
+| **26 · Entity Framework prohibido** | Todo acceso a datos es ADO.NET clásico o los helpers existentes |
+| **27 · Conexiones centralizadas** | Sólo `ConexionSQL` / `SQLiteDb`. Nunca una conexión cruda |
+| **17 · Controladores sin lógica** | Los `Controllers\` sólo reciben el request; la lógica OData vive en `Methods\` |
+| **18 · Ubicación de DTOs** | `Models\SAP\[Módulo]\` con `[JsonProperty("NombreSAP")]` |
+| **13 · La diagonal** | Anteponer `/` al servicio OData al concatenar sobre `obtenerUrl`. **Verificada**: faltaban 6 y tenían el CRUD de `ArticuloSEO` completamente muerto (404 al pedir el CSRF) |
+| **20 · Web.config** | Las rutas OData no se hardcodean; van en `<appSettings>` |
+| **12 · Async** | Prohibido `.Result` y `.Wait()` |
+
+### 0.2 En ServicioSAP hay DOS clases de ruta, y sólo una lleva puente
+
+> [!important] No toda ruta de ServicioSAP corresponde a un endpoint del DMZ. Muchas son plomería.
+
+| Clase | Qué es | ¿Puente en el DMZ? |
+|---|---|---|
+| **De cara al DMZ** | Replica un endpoint que hoy atiende LAN. Su contrato de salida es **el de LAN** (§3.2) | **Sí** |
+| **Interna (envoltura de OData)** | Expone un servicio OData de RSG casi en crudo. Existe para **consumirse desde dentro** de las rutas de la clase anterior | **No, por diseño** |
+
+**Consecuencias, y las dos son importantes:**
+
+**a) El objetivo se cuenta sobre los endpoints del DMZ, no sobre las rutas de ServicioSAP.** Que una ruta interna no tenga puente **no es un hueco** y no se reporta como pendiente. En la auditoría son las 16 marcadas `InternaSAP`.
+
+**b) Mapear un endpoint del DMZ a una envoltura de OData NO es equivalencia.** Es el error más fácil de cometer, porque el mapeo *parece* correcto: los nombres se tocan y la ruta existe.
+
+> [!example] El caso que lo ilustra
+> El CSV mapea `product/updateStock` (DMZ) → `product/stock` (ServicioSAP) y lo da por resuelto.
+>
+> Pero `product/stock` es **la envoltura de OData**: lee existencias. El endpoint de LAN hace además el **cálculo de delta** y dispara `mage.deleteReservations()`. Conectar el puente ahí haría que Magento reciba una lectura cruda donde esperaba un trabajo hecho.
+>
+> Lo que falta no es el puente: es **el método de cara al DMZ que usa `product/stock` por dentro** y hace lo que hace LAN. Lo mismo aplica a las otras cinco rutas de `product/*` del Grupo B y a `order/creditStatus` → `sale/filter`.
+
+**Regla práctica:** si el destino candidato devuelve la forma nativa de SAP (nombres de campo SAP, `d.results`, listas OData), es **interno**. Falta construir la capa que traduce y hace el trabajo de negocio.
+
+---
+
+### 0.3 Raíz de los archivos
+
+Todas las rutas del skill cuelgan de: (cabe mencionar que esa es la ruta remota, por lo tanto si algun dato maneja una ruta absoluta sin entrar por red, debes no)
+
+```
+\\CATECINF214058D\Migracion SAP\.agents\skills\lan-sap-migration
+```
+
+Si una ruta del `SKILL.md` no resuelve, **no inventes la ubicación**: reporta y pide verificación (regla 5).
 
 ---
 
@@ -60,11 +130,11 @@ Estas reglas ya costaron errores en el análisis. Romperlas produce código que 
 
 ### 1.2 Autenticación por destino ✅
 
-| Destino | Cabecera | Cómo |
-|---|---|---|
-| S/4HANA | `Authorization: Basic` | `TokenGenerator.CreateClientS4()` |
-| APIs MAVI / AWS | ninguna hoy | `TokenGenerator.CreateClientExternal()` |
-| DMZ / Magento / liberador | `Authorization: Bearer` | token propio |
+| Destino                   | Cabecera                | Cómo                                    |
+| ------------------------- | ----------------------- | --------------------------------------- |
+| S/4HANA                   | `Authorization: Basic`  | `TokenGenerator.CreateClientS4()`       |
+| APIs MAVI / AWS           | ninguna hoy             | `TokenGenerator.CreateClientExternal()` |
+| DMZ / Magento / liberador | `Authorization: Bearer` | token propio                            |
 
 **Un `Bearer` apuntando a una URL de S4 es un defecto**, no una variante. Y **jamás** usar `CreateClientS4()` para hablar con AWS o con una API MAVI: filtra las credenciales del usuario de servicio de SAP a un tercero.
 
@@ -124,7 +194,7 @@ request.Headers.Add("X-CSRF-Token", csrfToken);     // la escritura usa ESE toke
 
 **Compartir el cliente compartiría el contenedor de cookies**, y el token dejaría de ser exclusivo. **No se puede reutilizar un token entre peticiones.** Por eso está así en **todas** las llamadas a SAP, y así debe quedarse.
 
-### 1.6b Fuera de alcance: la APP mercancías ✅
+### 1.6b Fuera de alcance: la APP mercancías y Credilana ✅
 
 Todo lo que corresponde a la **APP mercancías** pertenece a **otro proyecto** y **no se toma en cuenta**. Si se requiere migrar algo de esa parte, se notificará explícitamente.
 
@@ -136,6 +206,17 @@ Todo lo que corresponde a la **APP mercancías** pertenece a **otro proyecto** y
 
 Caso concreto identificado de la app: la ruta del DMZ **`mercancias/getSaldoVencido`**, que hoy sigue apuntando a LAN. **No migrar.**
 
+### Credilana — fuera de alcance (2026-09-11)
+
+`SKILL.md` regla 15. Todo flujo, código, SP o tabla exclusivo de **CrediLana** (préstamo en efectivo + seguros de vida) **se queda en LAN**. No se pide su documentación ni sus SPs.
+
+Alcanza a: `credit/CreditoWeb_Seguro`, `SPCREDICredilana`, `SpCREDICredilanaSeguroDeVida`, `credit/SaveCredilanaInfo` y el documento `Resources\Flujo_Credilana.md`, que queda como referencia del legado.
+
+> [!warning] Lo que la exclusión NO resuelve
+> `credit/GetCreditAmounts` **ya está conectado** y lee `mavi_credilana_info` de la SQLite vía `Methods\Credit\CredilanaMethods.cs` (`CreditController.cs:58-72`). Esos montos — `montos_cte_nuevo`, `montos_cte_nuevo_apertura`, `montos_cte_casa` — **no son del préstamo**: alimentan el checkout de crédito normal. El nombre viene de que la fuente en LAN era `CredYPrestamoMethods.GetCredilanaInfo`.
+>
+> Si Credilana no se migra, **queda sin definir quién llena esa tabla**. Hoy nadie. ⚠️ Pendiente.
+
 ### 1.7 Descomposición de la UEN ✅ 📄
 
 La UEN de LAN se descompone en **dos** conceptos, no tres:
@@ -145,10 +226,59 @@ La UEN de LAN se descompone en **dos** conceptos, no tres:
 | Organización de ventas | `SalesOrg` / `Vkorg` | `04` = MA · `05` = VIU |
 | Canal de distribución | `DistrChan` / `Vtweg` | `01` = Contado · `02` = Crédito |
 
-**`Division` / `Spart` es un TERCER concepto (Sector) que NO se deriva de la UEN.** Vale **`"00"`** — lo dicen `sd01:70` y `sd09:29`, y el propio alta de BP del proyecto usa `SpartKnvv="00"`.
+**`Division` / `Spart` es un TERCER concepto (Sector) que NO se deriva de la UEN.** En el pedido vale **`"01"`**.
+
+> [!danger] CORREGIDO 2026-09-11 — esta guía decía `"00"` y eso rompió la creación de pedidos
+> Las fichas (`sd01:70`, `sd09:29`) dicen que la División es `"00"`, y el alta de BP del proyecto usa `SpartKnvv="00"`. Con esa evidencia documental se cambió el pedido de `"01"` a `"00"` en el commit `ac9449b`. **SAP lo rechazó:**
+>
+> ```
+> Type=E  Id=CZ  Number=115
+> "No existe el área de ventas 04 01 00"
+> Parameter=SALES_HEADER_IN
+> ```
+>
+> El área de ventas es la terna `SalesOrg` + `DistrChan` + `Division`. La terna `04/01/00` **no existe en el sistema**, aunque el maestro del cliente sí tenga sus áreas con `Spart="00"`. Contradicción ficha vs. sistema, **pendiente de aclarar con SAP**. En el pedido: `"01"`.
+>
+> Aplica §2.3 con toda su fuerza: **el response real manda sobre la ficha.** Un valor que funciona en runtime no se cambia porque un documento diga otra cosa — se reporta la contradicción.
+
+**Centro (`Plant`) y oficina (`SalesOff`)** — mapeo confirmado por negocio, **no modificar**:
+
+| | MA (`SalesOrg 04`) | VIU (`SalesOrg 05`) |
+|---|---|---|
+| **Contado** (`DistrChan 01`) | `0090` | `0041` |
+| **Crédito** (`DistrChan 02`) | `0504` | `0505` |
 
 > [!note] Sobre los ejemplos de body/response
 > Los payloads de ejemplo traen `"SalesOrg": "01"` y `Vkorg: "01"`. Son **datos reales de QA para basarse en la forma**, no la especificación de esos campos. Los valores van dinámicos según la organización correcta.
+
+### 1.8 Valores que ya funcionan, y valores que el legado define ✅
+
+**a) Un valor validado contra el sistema no se cambia apoyándose en una ficha.** Si la ficha contradice al sistema, se reporta la contradicción; no se toca el código. Ver §1.7 y §2.3.
+
+**b) Un cambio de valor que viaja a SAP va en su propio commit.** Los dos valores que rompieron la creación de pedidos iban enterrados en `ac9449b`, junto con correcciones de controladores, tokens y `Curl`. Eso los hizo difíciles de encontrar y de revertir.
+
+**c) Los vacíos y los `0` que el legado ya define se respetan.** Pueden ser deliberados: con esos valores el SP se salta ciertas validaciones. Sólo se corrigen las **regresiones** — donde LAN manda un valor real y ServicioSAP lo perdió.
+
+**d) Agentes y clientes NO se convierten.** Llegan con el valor que corresponde; sólo se toma el campo. No se construye traducción de nómina a interlocutor.
+
+**e) Los modelos llevan sólo los campos que las APIs realmente mandan.** No se agrega una propiedad porque el legado lea ese dato: hay que verificarlo contra un payload capturado.
+
+---
+
+### 1.9 Replicar, no mejorar ✅
+
+> [!danger] Esta sección nació de un error cometido el 2026-09-11 sobre `SP_CREDITO_WEB_DATOS`
+> Se dejaron **60 parámetros** donde LAN manda **38**, y uno de ellos (`@Agente = ""`) LAN no lo manda en absoluto: el SP debía recibir su default `NULL` y recibió cadena vacía, que inserta tal cual.
+
+**a) Replicar es uno a uno.** Los mismos parámetros que manda el legado, con las mismas fuentes. **Ni uno más.** Si el legado omite un parámetro, se omite: ese silencio es un valor (el default del SP), no un hueco que rellenar.
+
+**b) Está PROHIBIDO crear variables, parámetros o constantes sin consultarlo.** Incluye agregar un parámetro a un método existente. Si replicar exige algo que no existe, **se reporta y se pregunta** — no se construye.
+
+**c) Si ya existe una función que hace ese cálculo, se usa.** No se declaran constantes nuevas para algo que un método del proyecto ya resuelve.
+
+**d) Cada método vive donde le corresponde por dominio.** Un paso que pertenece al flujo de la orden se queda en el flujo de la orden, aunque exista un controlador con ese nombre.
+
+**e) El precio se consulta por SKU.** `GetFinalListProperBySkuAsync`, no la variante por UEN.
 
 ---
 
@@ -198,13 +328,21 @@ Los `.md` de resumen que produce el análisis **no son fuente**. Citarlos como p
 
 Derivado del código el **2026-09-10**, no de ningún CSV de seguimiento.
 
-| Métrica | Valor |
-|---|---|
-| Rutas expuestas por el DMZ | **119** |
-| Rutas expuestas por ServicioSAP | **92** en 19 controladores |
-| Puentes DMZ → **ServicioSAP** (`PostSAP`/`GetSAP`/`PatchSAP`) | **23** |
-| Llamadas DMZ → **LAN** (`Post`/`Get`) | **67** ← el trabajo que falta |
-| Destinos roto (ruta inexistente) | **0** |
+| Métrica | 2026-09-10 | **2026-09-14** |
+|---|---|---|
+| Rutas expuestas por el DMZ | 119 | — |
+| Rutas expuestas por ServicioSAP | 92 en 19 controladores | 19 controladores |
+| Puentes DMZ → **ServicioSAP** (`PostSAP`/`GetSAP`/`PatchSAP`) | 23 | **28** |
+| Llamadas DMZ → **LAN** (`Post`/`Get`) | 67 | **63** ← el trabajo que falta |
+| Destinos rotos (ruta inexistente) | 0 | — |
+
+> [!tip] Estas cifras caducan. Vuelve a derivarlas, no las cites de memoria.
+> ```bash
+> cd <raiz>/DMZ
+> grep -rho "PostSAP\|GetSAP\|PatchSAP" --include=*.cs . | wc -l   # puentes a ServicioSAP
+> grep -rhoE "curl\.(Post|Get)" --include=*.cs . | wc -l          # siguen en LAN
+> ```
+> Mide **todo el proyecto**, no sólo `Controllers\`: acotarlo a los controladores da 22/55 y subestima el avance. Recuerda además que las rutas **internas** de ServicioSAP (§0.2) no entran en esta cuenta.
 
 > [!info] Sobre `MAVIDMZSAPConexiones.csv`
 > Es **referencia informativa** del universo de endpoints que el proyecto debe tener conectados. **No es un tracker de progreso y no se modifica.** El progreso real se deriva del código.
@@ -261,7 +399,7 @@ Los que el código ya invoca, con su ficha cuando existe:
 | `ZAPI_DOCVTAS_CHECK_CDS` | 📄 sd36 | consultar documentos de venta |
 | `ZAPI_EX01_NOCOMP_SRV` | 📄 ex01 | documentos no compensados (`DocNoCompSet`) |
 | `zsb_ntz01_zsplit_merc` | 📄 ntz01 | parcialidades mercaderías (`zsplits`, **OData4**) |
-| `z_srvb_tz01_zsplit` | 📄 tz01 | parcialidades Credilana (**OData4**) |
+| `z_srvb_tz01_zsplit` | 📄 tz01 | parcialidades Credilana (**OData4**) — 🚫 Credilana quedó **fuera de alcance** el 2026-09-11; el servicio se lista porque el `Web.config` lo declara, no como trabajo pendiente |
 | `API_OUTBOUND_DELIVERY_SRV` | 📄 sd46 | anular salida de mercancías |
 | `API_BILLING_DOCUMENT_SRV` | 📄 sd48 | anular factura |
 | `ZAPI_ARTICULOS_SRV` | 📄 dm01 | artículos (`Articulos`) |
@@ -395,6 +533,17 @@ Todas verificadas con compilación limpia (Roslyn, 210 fuentes, **0 errores**).
 - **`saldoCapital`**: ¿EX01 o NTZ01 zsplits? (§6.3)
 - `idStatus = 03`
 - `validateCredit` / liberador — pendiente con Valentín
+
+> [!success] Resueltas el 2026-09-11
+> - **Ciclo del crédito:** la solicitud **nace al enviar la orden**, con su información de crédito. El **liberador sólo notifica**; no crea el documento. Se conserva el flujo del **SP de Android** que hace las inserciones. Queda por precisar si además debe crearse el documento de venta en SAP en ese mismo momento.
+> - **Saldo disponible:** **sí debe frenar** el pedido. Bloqueado: el campo existe en BP05MA `to_Cte` pero llega en `0.000`.
+> - **Agente:** número de agente → `to_partners` rol `Z1`; nómina → `Zusuariopos`. Sin conversión. Sin ceros a la izquierda.
+> - **`@origen`** del alta de crédito → `"PRODUCTOS MX"`, el default de LAN.
+> - **Contrato de salida:** no cambia. `order/new` devuelve 200; el DMZ es sólo el puente.
+
+**Pendientes de que MAVI entregue el dato:**
+- **Agente genérico de ecommerce** — hoy el `Z1` va vacío.
+- **BP genérico para invitado** — es obligatorio vincular un BP a la orden; si el pedido trae cuenta se usa esa.
 - Destino de las tablas propias de MAVI cuando Intelisis se apague: `VTASCListaNegra` / `VTASCListaBlanca` (probablemente **SigMavi**). El monedero es **Wallet**; `VentasCanalMAVI` → **SD52**; `TablaRangoStD` → **catálogo configurable de AWS**.
 - ¿Se borran `order/testnew` y `partner/testnew`?
 
@@ -510,6 +659,65 @@ No volver a levantarlos, y **corregir la auditoría** donde todavía los declare
 
 ---
 
+## 9b. Cómo compilar y verificar
+
+> [!success] Corregido el 2026-09-14 — **MSBuild SÍ funciona** en esta máquina
+> Esta sección decía que no servía y que había que usar el `csc.exe` suelto. Era falso: MSBuild
+> falla sólo por dos cosas, y las dos se resuelven con una bandera. No hay que instalar nada.
+
+### La compilación buena — MSBuild con el `.csproj`
+
+```powershell
+$roslyn = "Z:\ServicioSAP\ServicioSap\packages\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.2.0.1\tools\RoslynLatest"
+& "C:\Windows\Microsoft.NET\Framework64\v4.0.30319\MSBuild.exe" ServicioSap.csproj `
+    /t:Build /p:Configuration=Debug `
+    /p:VSToolsPath= `
+    /p:CscToolPath=$roslyn /p:CscToolExe=csc.exe `
+    /nologo /verbosity:minimal /m
+```
+
+Desde `ServicioSap\ServicioSap\`. Termina con `ServicioSap -> ...\bin\ServicioSap.dll` si todo está bien.
+
+**Qué hace cada bandera, y por qué hace falta:**
+
+| Bandera | Problema que resuelve |
+|---|---|
+| `/p:VSToolsPath=` | El `.csproj:479` importa `Microsoft.WebApplication.targets`, que **no está instalado** (no hay Visual Studio). El import tiene `Condition="'$(VSToolsPath)' != ''"`, así que vaciando la propiedad se salta. Esos targets sólo hacen falta para *publicar*, no para compilar |
+| `/p:CscToolPath` + `/p:CscToolExe` | El MSBuild de `Framework64\v4.0.30319` trae el **csc de C# 5**: revienta con interpolación de cadenas (`$"..."`) y con inicializadores de auto-propiedad. Se le apunta al Roslyn que ya viene en `packages\` |
+
+**Dos avisos que salen y son esperados:**
+
+- `ToolsVersion="15.0"` desconocido → lo trata como `4.0`. Compila igual.
+- `MSB3644`: no encuentra los *reference assemblies* de .NET Framework 4.7.2 y resuelve desde el **GAC**. Compila, pero no está validando estrictamente contra la superficie de 4.7.2 — podría dejar pasar una API que existe en la máquina y no en el target. Se quita instalando el *Targeting Pack de .NET Framework 4.7.2* (**requiere admin**).
+
+### El chequeo rápido — sólo sintaxis y tipos
+
+Cuando sólo quieres saber si un cambio compila, sin pasar por el `.csproj`:
+
+```bash
+FW="/c/Windows/Microsoft.NET/Framework64/v4.0.30319"
+REFS=""; for d in bin/*.dll; do REFS="$REFS /r:$PWD/$d"; done
+for a in System System.Core System.Data System.Xml System.Xml.Linq System.Web \
+         System.Web.Extensions System.Configuration System.Runtime.Serialization \
+         System.ComponentModel.DataAnnotations System.Drawing System.Net.Http \
+         System.Net.Http.WebRequest System.Transactions mscorlib; do
+  REFS="$REFS /r:$FW/$a.dll"
+done
+find . -name "*.cs" -not -path "./obj/*" -not -path "./bin/*" > /tmp/srcs.txt
+"packages/Microsoft.CodeDom.Providers.DotNetCompilerPlatform.2.0.1/tools/RoslynLatest/csc.exe" \
+  /nologo /target:library /langversion:7.3 /nostdlib+ /noconfig /out:/tmp/chk.dll \
+  $REFS @/tmp/srcs.txt 2>&1 | grep -E ": error "
+```
+
+Sin líneas de salida = 0 errores.
+
+> [!warning] Este atajo NO sustituye a MSBuild
+> Barre el disco con `find`, así que **un `.cs` que no esté registrado en el `.csproj` sí compila aquí** y no en el servidor. Sólo MSBuild atrapa la violación de la regla 19. Usa el atajo para iterar; **antes de dar algo por terminado, corre MSBuild.**
+
+**Y compilar limpio no es evidencia de que funcione.** Es la condición mínima. La prueba real es la E2E de la regla 25 del `SKILL.md`: request enviado y response exacto recibido, documentados.
+
+---
+
 ## 10. Bitácora de errores del análisis
 
 Se documentan para que no se repitan. Cada uno produjo una regla en §2.
@@ -523,3 +731,10 @@ Se documentan para que no se repitan. Cada uno produjo una regla en §2.
 7. **Se marcaron como defecto APIs MAVI que consumen datos "de SAP"**. El destino lo determina el resolvedor. → §1.1
 8. **Se editó `MAVIDMZSAPConexiones.csv`**, que es informativo. Revertido, con pérdida del texto original de 3 celdas de `Notas`.
 9. **Un workflow reportó "0 refutadas" de 89** por un defecto de post-procesamiento propio. Las reales eran **33**. Verificar siempre el journal antes de reportar un resultado limpio.
+10. **Se cambió `Division` de `"01"` a `"00"` apoyándose en las fichas**, rompiendo la creación de pedidos. Se tenía la evidencia más fuerte disponible —que `"01"` funcionaba— y se descartó por un documento. → §1.7, §2.3
+11. **Se propuso revertir el mapeo de centro/planta** (`0090`/`0041`/`0504`/`0505`) por el solo hecho de que difería de un commit anterior. No era regresión: era el mapeo correcto. *Diferir del código viejo no es evidencia de estar roto.*
+12. **Se agruparon dos errores de SAP por el parecido de su texto** (`04/01/00` y `04/01/0090`) y se infirió una causa común en el canal `01`. El tercer elemento era una cosa distinta en cada uno (División vs. centro), y el propio response ya desmentía la hipótesis: `SALES_HEADER_IN procesado con éxito`. *Leer lo que el sistema respondió, no la forma del mensaje.*
+13. **Se inventó una conversión inexistente** (nómina → interlocutor de agente) a partir de que dos ejemplos tenían formatos distintos. No hacía falta: el valor llega ya correcto. → §1.8d
+14. **Se generalizó "la orden no trae código postal"** desde un único payload de crédito con `instore_pickup`. Los pedidos con envío a domicilio sí lo traen. *Un payload no es la población.*
+15. **Se lanzaron 6 subagentes para una pregunta de una línea** cuyos datos ya estaban a la mano con tres `grep`. El alcance lo fija lo que se pidió, no la capacidad disponible.
+16. **Se declaró que MSBuild no funcionaba en esta máquina** y se escribió así en la guía. Sí funciona: fallaba por un import de targets ausente y por usar el csc de C# 5, y las dos cosas se resuelven con una bandera. *No confundir "falló como lo invoqué" con "no se puede".* → §9b
