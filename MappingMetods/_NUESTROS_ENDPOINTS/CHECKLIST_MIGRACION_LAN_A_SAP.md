@@ -136,7 +136,11 @@ En la práctica esto recae sobre los mixtos `M-11`…`M-08` y sobre las partidas
 
 > 🗑️ **`magento/noImagenProduct/{store}` dada de baja el 8 sep, sin ID.** No tiene llamador en APIMagento y su resultado depende por completo de la tienda —`all` devuelve 1 producto, `viu` 1 704, `muebles_america` 1 784, `mavi` 14—, así que sin llamador que copiar no hay forma de saber con cuál se llamaba. Se escribió y probó antes de retirarla. **Pierde su identificador y los posteriores se reindexan una posición**, igual que se hizo con `setRecommenderList` el 31 ago: la serie pasa de 69 entradas a 68 y termina en E-49.
 
-> ✅ **Once de los doce llamadores escritos el 7 sep.** Las siete cargas de catálogo (E-16…E-22) verificadas contra la cadena completa DMZ → Magento → SQLite, sin perder filas y con las diferencias explicadas por catálogo vivo. También el helper compartido **E-28** —el que bloqueaba a Dev 2— y los tres reenvíos **E-24**, **E-25** y **E-30**. Falta solo **E-23** (`getOrderId`), cuyo llamador escribe en IntelisisTmp con `SpVTASeCommerceDetPedidos`.
+> ✅ **Once de los doce llamadores escritos el 7 sep.** Las siete cargas de catálogo (E-16…E-22) verificadas contra la cadena completa DMZ → Magento → SQLite, sin perder filas y con las diferencias explicadas por catálogo vivo. También el helper compartido **E-28** —el que bloqueaba a Dev 2— y los tres reenvíos **E-24**, **E-25** y **E-30**. Falta solo **E-23** (`getOrderId`), cuyo llamador escribe en IntelisisTmp con `SpVTASeCommerceDetPedidos`. Subido el 14 sep en `c7d582d`.
+
+> 🗑️ **E-23 se propone como baja, no como porteo — 14 sep.** Su llamador existía para rellenar `idOrden` en `eCommerceDetPedidos`, y el único lector de esa columna era el flujo de recoger en sucursal. Dev 2 lo migró el 10 y 11 sep (`b8f4358`, `8107ede`) **sin usar la tabla**: el `idOrder` le llega como parámetro de ruta. `Venta` y `VentaD`, lo único que faltaba por equivaler, son **SD36**. Queda una pregunta antes de cerrarla: si Magento usa el arreglo `products` del aviso de recogida, que hoy viaja vacío. El detalle en [[E-23_getOrderId#6. Lo que cambió · 9 al 15 de septiembre]].
+
+> 🔴 **Hallazgo en la cadena de recogida, verificado el 14 sep.** `StorePickupMethods.cs:226` y `:264` consultan SD36 con el `idEcommerce` crudo, cuando el filtro es `PurchNoC eq '…'`. Probado contra SAP: con `ZSD_ZMER_38515` devuelve el documento, con `38515` devuelve `[]`. S3-02 guarda el contacto vacío sin marcar error y S3-01 rota la clave y luego falla. Para Dev 2.
 
 > ⏸️ **E-19 a medias por dependencia.** Su tramo de SQLite está en paridad; los de **MySQL `aplicaciones_web`** e **IntelisisTmp** esperan a que se cierre la exportación de artículos (Dev 2, Sprint 9). Decisión de magalindo el 7 sep: la migración de `SPexportaArt` está incompleta —la validación de atributos aún no está en `EcommerceMethods.cs`— así que esas tablas **todavía hacen falta** y no se dan de baja.
 
@@ -158,7 +162,7 @@ Se listan aquí para que la serie se pueda verificar sin abrir otro documento. E
 | E-21 | `magento/children/{page}/{size}/{store}` | 8.1 | ✅ llamador reconstruido |
 | E-22 | `magento/productWithWebsites/{page}/{size}` | 8.1 | ✅ llamador reconstruido |
 | 🗑️ | ~~`magento/noImagenProduct/{store}`~~ | — | baja el 8 sep, **sin ID** |
-| E-23 | `magento/getOrderId/{incrementId}` | 8.2 | 🔒 su llamador ejecuta `SpVTASeCommerceDetPedidos` |
+| E-23 | `magento/getOrderId/{incrementId}` | 8.2 | 🗑️ propuesta de baja — su consumidor ya migró sin la tabla |
 | E-24 | `magento/deletePromociones` | 8.2 | ✅ escrito, sin ejecutar |
 | E-25 | `magento/deleteReservations` | 8.2 | ✅ escrito, sin ejecutar |
 | E-26 | `magento/getCuenta` | 8.2 | ya cubierta como **E-11** en la Ola 6 |
