@@ -38,13 +38,14 @@ en producción.
 | E-12 | `customer/setCuenta` | 6 | — sin cutover, va hacia la DMZ | [[E-12_setCuenta]] |
 | E-13 | `customer/cashCustomerReport` | 6 | ✅ subido (`e403065`), sin desplegar | [[E-13_cashCustomerReport]] |
 | E-14 | `product/obtenerImagen` | 6 | — sin cutover, no existe en la DMZ | [[E-14_obtenerImagen]] |
-| E-15 | `order/GetPickUpCode` | 7 | 🔴 **no aplicar todavía** — dejaría sin clave a todos los pedidos | sin ficha; ver [[FLUJO_RECOGER_EN_SUCURSAL]] |
+| E-15 | `order/GetPickUpCode` | 7 | 🔴 **no aplicar solo** — falta migrar el tercer escritor | [[E-15_GetPickUpCode]] |
 | E-19 | `magento/attributeSetChildren/{id}` | 8 | — la ruta se queda en la DMZ | [[E-19_attributeSetChildren]] |
+| E-23 | `order/getOrderId/{idEcommerce}` | 8 | — la ruta se queda en la DMZ | [[E-23_getOrderId]] |
 
 > **La Ola 8 no lleva ficha por partida.** Sus entradas no son endpoints migrados sino
 > llamadores reubicados: la ruta de la DMZ no cambia, así que no hay contrato nuevo que
-> documentar. La excepción es E-19, que sí tiene ficha porque su lógica es propia y quedó a
-> medias. El resto está en el mapa de flujo de la ola.
+> documentar. Las excepciones son E-19 y E-23, que sí llevan ficha porque su lógica es propia
+> y quedó a medias. El resto está en el mapa de flujo de la ola.
 
 > Todos los cutovers están subidos a `dbAndroid` desde el 31 ago. **Ninguno desplegado**, y
 > el orden cuando toque es **ServicioSAP primero, la DMZ después**.

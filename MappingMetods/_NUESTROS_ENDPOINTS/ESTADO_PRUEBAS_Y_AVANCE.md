@@ -62,7 +62,7 @@ Para que el número signifique algo y no sea una impresión, cada partida se mid
 | E-12 | `customer/setCuenta` | 6 | **80 %** | 🔶 Rama de error verificada el 25 ago; la escritura real no se ejecutó | Probar la escritura + despliegue |
 | E-13 | `customer/cashCustomerReport` | 6 | **80 %** | 🔶 Validación y escritura local verificadas el 25 ago. **La copia al share no es verificable desde desarrollo** | Se valida en QA |
 | E-14 | `product/obtenerImagen` | 6 | **55 %** ⁽⁵⁾ | 🔶 Solo el 401. **No es verificable desde desarrollo**: la impersonación falla antes de la copia | Se valida en QA |
-| E-15 | `order/GetPickUpCode` | 7 | **35 %** ⁽⁶⁾ | ⏳ Sin probar: la tabla en SIGMAVI está vacía hasta que Dev 2 mueva los escritores | Depende de Dev 2 (10-11 sep) |
+| E-15 | `order/GetPickUpCode` | 7 | **90 %** ⁽⁶⁾ | ✅ Probado el 14 sep: 200 con clave, 404 sin fila, 400 con body nulo (paridad) | Falta el cutover, que va con los tres escritores |
 | E-46    | `credit/SolicitudMercancia`           | 7   | 0 %      | —                       | Conexión a definir por equipo SAP |
 | E-47    | `credit/codigoPromocion`              | 8   | 0 %      | —                       | 🟠 Origen IntelisisTmp            |
 | E-48    | `credit/getPlazos`                    | 8   | 0 %      | —                       | 🟠 Origen IntelisisTmp            |
@@ -123,11 +123,11 @@ Es decir: si en QA falla, será porque el archivo no está en esa ruta o por per
 | | Partidas | Avance medio |
 |---|---|---|
 | Habilitadores (4) | **4 al 100 %** | **100 %** |
-| Endpoints en alcance (19) | 3 al 100 %, 6 al 90 %, 4 al 80 %, 1 al 55 %, 1 al 35 %, 4 sin iniciar | 65,8 % |
+| Endpoints en alcance (19) | 3 al 100 %, **7 al 90 %**, 4 al 80 %, 1 al 55 %, 4 sin iniciar | 68,7 % |
 | Mixtos (15) | 2 al 25 %, 13 sin iniciar | 3,3 % |
-| **Subtotal partidas medibles (38)** | | **44,7 %** |
+| **Subtotal partidas medibles (38)** | | **46,2 %** |
 | Rutas de la Ola 8 (26) | **23 completas**, 3 pendientes | 88,5 % |
-| **Total (64)** | | **62,5 %** |
+| **Total (64)** | | **63,4 %** |
 
 > ⚙️ **Las rutas de la Ola 8 entran en el total desde el 9 sep.** Antes se reportaban aparte
 > porque se miden con otra vara —completa cuando su llamador queda resuelto, sin hitos de
@@ -137,11 +137,15 @@ Es decir: si en QA falla, será porque el archivo no está en esa ruta o por per
 > El total se compone sumando **partidas equivalentes**, no promediando porcentajes:
 >
 > ```
-> 38 medibles × 44,7 %  =  17,0 equivalentes
+> 38 medibles × 46,2 %  =  17,6 equivalentes
 > 26 rutas    × 88,5 %  =  23,0 equivalentes
 > ────────────────────────────────────────────
->              40,0 ÷ 64  =  62,5 %
+>              40,6 ÷ 64  =  63,4 %
 > ```
+>
+> **14 sep:** E-15 pasó de 35 % a 90 % al probarse y documentarse, lo que sube los endpoints en
+> alcance de 65,8 % a 68,7 % y el total nueve décimas. La suma de los 19 endpoints es ahora
+> **1 305**, y el subtotal medible `(4×100 + 1 305 + 50) ÷ 38`.
 >
 > El denominador es **64**, no 68: las **cuatro bajas** de la Ola 8 salen del conteo. Cada
 > entrada pesa lo mismo, así que una ruta que no requirió trabajo cuenta igual que un endpoint
@@ -155,9 +159,9 @@ Es decir: si en QA falla, será porque el archivo no está en esa ruta o por per
 >    es 3,3 %. Eso solo ya baja el total al 45,1 %.
 > 2. **Entró E-15 al 35 %**, por debajo de la media, que resta las cuatro décimas restantes.
 >
-> El trabajo hecho no cambió: cambió sobre cuántas partidas se promedia. La cuenta es
-> `(4×100 + 1 250 + 50) ÷ 38`, donde 1 250 es la suma de los 19 endpoints y 50 la de los 15
-> mixtos.
+> El trabajo hecho no cambió: cambió sobre cuántas partidas se promedia. La cuenta **con las
+> cifras del 31 ago** era `(4×100 + 1 250 + 50) ÷ 38`, donde 1 250 es la suma de los 19
+> endpoints y 50 la de los 15 mixtos; hoy esa suma es 1 305.
 
 > ⚠️ **El denominador cambió el 25 ago, de 37 a 34.** La tabla decía "21 endpoints en alcance"
 > pero solo lista **18** filas `E-xx`, y a esas les faltaba **E-14**, que sí está en el
@@ -176,10 +180,12 @@ AdminDoc sí responde desde desarrollo y se pudo verificar cada fila. Lo que que
 E-08 ya no depende del equipo de desarrollo: es despliegue, y en el caso de E-08 confirmar
 que el app pool pueda escribir en su carpeta.
 
-⁽⁶⁾ **El 35 % de E-15 cubre código y compilación, y nada más.** No hay pruebas, ni e2e, ni
-cutover, ni ficha. No es un bloqueo de entorno como los de arriba: el endpoint lee una tabla
-que hoy nadie llena en SIGMAVI, porque los tres flujos que la escriben siguen en el legado y
-son de Dev 2. Se puede probar antes insertando una fila a mano en `BpRecogePedidos`.
+⁽⁶⁾ **El 90 % de E-15 cubre todo menos el cutover.** Se probó el 14 sep contra datos reales:
+Dev 2 subió dos de los tres escritores el 10 y el 11 sep, y `BpRecogePedidos` pasó de 0 filas a
+6, así que no hizo falta insertar ninguna a mano. El 10 % que falta es el cutover, y **no
+depende de E-15**: el tercer escritor, `crearPrimerCodigoRecogerSucbanktransfer`, sigue
+escribiendo en IntelisisTmp desde el alta del legado, así que conmutar la lectura antes de
+moverlo dejaría sin clave a los pedidos `instore_pickup` + `banktransfer` con agente.
 
 ⁽⁵⁾ **E-14 no tiene cutover posible**: no existe ruta suya en la DMZ, así que ese 10 % de la rúbrica nunca se puede ganar. El 55 % cubre código, compilación y ficha; todo lo demás depende de H-02.
 
@@ -1085,6 +1091,13 @@ falla con el mismo mensaje — que es exactamente H-02, no una diferencia entre 
 > **IntelisisTmp en MAVICUBOS**: la regla de destinos del 5-ago prohíbe consultarlo. Cualquier
 > caso con un `IdEcommerce` real habría golpeado ese servidor, así que no se ejecutó.
 
+> ✅ **Cerrado el 14 sep.** Con los escritores de Dev 2 arriba, `BpRecogePedidos` tiene filas y
+> el caso con dato real se probó contra el migrado: `2100061234` → `200`
+> `{"PickupCode":"58AB1D28"}`, la misma clave que guarda la tabla. El lado del legado sigue sin
+> consultarse —la regla de MAVICUBOS no cambió—, así que la paridad se apoya en que el
+> controlador migrado es idéntico al de `APIMagento\Controllers\OrdersController.cs:347`, línea
+> por línea. Los detalles, en [[E-15_GetPickUpCode]].
+
 #### Qué deja el barrido
 
 **Dos divergencias reales en 45 casos**, las dos en el manejo de un campo nulo y las dos
@@ -1095,8 +1108,8 @@ El patrón se repite: **el hueco está en lo que pasa cuando falta un dato**. E-
 500 en un 200 con efecto externo; E-08 convertía un 200 en un 400. Conviene mirar con esa
 lente las olas que aún no se han barrido.
 
-Queda pendiente de comparar **E-12 escribiendo** —falta el id de cliente— y **E-15 completo**,
-que depende de Dev 2 y de resolver la equivalencia de IntelisisTmp.
+Queda pendiente de comparar **E-12 escribiendo** —falta el id de cliente—. **E-15 se cerró el
+14 sep** en cuanto Dev 2 subió sus escritores.
 
 ### Ola 8 — cargas de catálogo y reenvíos, 7 sep
 
@@ -1183,8 +1196,8 @@ costado trabajo o no. Las cuatro bajas salen del denominador.
 | **Total** | **26** | **23 · 88 %** |
 
 **Este 88 % sí entra en el total desde el 9 sep.** Sumado a las 38 partidas medibles —que
-siguen en 44,7 %— da **62,5 % sobre 64 entradas**; la composición está en el Resumen. Las dos
-varas se mantienen separadas para calcular, y se juntan solo al totalizar.
+desde el 14 sep están en 46,2 %— da **63,4 % sobre 64 entradas**; la composición está en el
+Resumen. Las dos varas se mantienen separadas para calcular, y se juntan solo al totalizar.
 
 ### Refactor transversal — endpoints a asíncrono, 20 ago
 
