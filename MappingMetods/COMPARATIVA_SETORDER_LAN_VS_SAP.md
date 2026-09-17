@@ -202,7 +202,8 @@ Comparar, para un mismo payload, el registro creado en Intelisis contra el docum
 | Correo | `@CorreoElectronico` | — | ☐ | |
 | Método de envío | `@MetodoEnvio` | — | ☐ | |
 | Pagos / cuotas | `@Pagos` | — | ☐ | D-08 |
-| Agente | `@Agente` | `"Tadeo"` (literal) | ☐ | D-09 |
+| Agente | `@Agente` | `to_partners` rol **`Z1`** | ☐ | ✅ resuelto 2026-09-11 — ver §6 |
+| Nómina del agente | `@Agente` | `Zusuariopos` (alta de BP) | ☐ | ✅ resuelto 2026-09-11 — ver §6 |
 | Cuenta contado | `@ClienteContado` | `Zctefinal` / `to_partners[AG]` | ☐ | |
 | Monedero a redimir | `@MonederoARedimir` | `Zredimepos` / `Zredimepuntos` | ☐ | |
 | Origen / referencia | `@Referencia` | — | ☐ | D-10 |
@@ -227,12 +228,12 @@ Comparar, para un mismo payload, el registro creado en Intelisis contra el docum
 |---|---|---|---|---|
 | 1 | Openpay tarjetas: ¿quién reprocesa la orden tras el cargo (watcher en SAP, en DMZ o job externo)? | | | |
 | 2 | Monedero y afectación: ¿existen APIs SAP equivalentes o se quedan en Intelisis? | | | |
-| 3 | Crédito con saldo insuficiente: ¿abortar (SAP) o registrar la solicitud (LAN)? | | | |
+| 3 | Crédito con saldo insuficiente: ¿abortar (SAP) o registrar la solicitud (LAN)? | **Sí debe frenar el pedido.** Bloqueado: no hay fuente real del saldo disponible. El campo existe en BP05MA `to_Cte` pero llega en `0.000`. Hasta entonces se mantiene el comportamiento de LAN (no frena). | Negocio | 2026-09-11 |
 | 4 | Stock insuficiente: ¿bloquear la orden (SAP) o permitirla (LAN)? | | | |
 | 5 | Validación de precio: ¿la ProperList sustituye a `SP_eCommerceNuevoPed`? ¿Sigue vivo `CorreoErrorPrecio`? | | | |
 | 6 | Retiro en sucursal: ¿la clave y el correo se generan en SAP, en el DMZ o en Magento? | | | |
 | 7 | Totales: ¿SAP recalcula subtotal / impuesto / total, o Magento manda la verdad? | | | |
-| 8 | Agente / vendedor: ¿qué campo SAP lo recibe? | | | |
+| 8 | Agente / vendedor: ¿qué campo SAP lo recibe? | **Dos campos distintos, no uno.** El **número de agente** va en `to_partners` con rol `Z1`; la **nómina** va en `Zusuariopos` del alta de BP. **Ni agentes ni clientes se convierten**: llegan con el valor que corresponde y sólo se toma el campo. | Negocio | 2026-09-11 |
 | 9 | `Zliberado = "1234"` y `Name` / `Bname` = `"Tadeo"`: ¿son placeholders de desarrollo? | | | |
 | 10 | `order/validateCredit` (LAN) → ¿mismo `order/new` o endpoint propio? | | | |
 
@@ -243,5 +244,78 @@ Comparar, para un mismo payload, el registro creado en Intelisis contra el docum
 1. **Openpay tarjetas** — es la brecha más grande. ¿Se planeó un servicio aparte que llame a `order/new` cuando el cargo se confirma, o el `CheckStatus` debe portarse a ServicioSAP?
 2. **Monedero y `spAfectar`** — ¿se quedan en Intelisis durante la convivencia, o hay APIs SAP definidas? Hoy son stubs que devuelven éxito, lo que puede dar falsos positivos en pruebas.
 3. **Totales e impuestos** — ¿SAP es la fuente de verdad del importe, o hay que enviar los de Magento para validar contra ellos? De eso depende si D-07 / D-08 son defectos o diseño.
-4. **`"Tadeo"` y `Zliberado = "1234"`** — ¿placeholders de desarrollo o valores acordados con el equipo ABAP?
+4. **`"Tadeo"` y `Zliberado = "1234"`** — ¿placeholders de desarrollo o valores acordados con el equipo ABAP? *(Sigue abierto. Lo que sí se resolvió es el `Z1`: era `"0023000125"`, un agente de pruebas, y hoy va **vacío** a la espera del genérico de ecommerce — ver §6.)*
 5. **Alcance** — esta revisión está acotada a la creación de orden. ¿Extiendo el mismo formato a `cancelOrder` / `returnOrder` / `validateCredit`?
+
+---
+
+## 6. Valores de la estructura organizativa — CONGELADOS
+
+> [!danger] Estos valores están validados contra el sistema. No se cambian apoyándose en una ficha.
+> Dos de ellos ya se cambiaron una vez "según la documentación" y rompieron la creación del pedido. La regla que quedó: **si un valor funciona en runtime, la ficha no lo derriba**. Si la ficha contradice al sistema, se reporta la contradicción — no se toca el código.
+
+### 6.1 División (`Spart`) = `"01"`
+
+`OrderMethods.cs` → `BuildSapOrderAsync`.
+
+Se cambió a `"00"` en el commit `ac9449b` apoyándose en las fichas (sd01:70 y sd09:29 dicen *"DIVISION es 00"*) y en que el alta de BP usa `SpartKnvv="00"`. SAP rechazó el pedido:
+
+```
+Type=E  Id=CZ  Number=115
+"No existe el área de ventas 04 01 00"
+Parameter=SALES_HEADER_IN
+```
+
+El área de ventas es la terna `SalesOrg` + `DistrChan` + `Division`. Con `"00"` la terna `04/01/00` no existe, **aunque el maestro del cliente sí tenga sus áreas dadas de alta con `Spart="00"`**. Es una contradicción entre la ficha y la estructura organizativa de S/4HANA, **pendiente de aclarar con SAP**. Revertido a `"01"`.
+
+### 6.2 Centro (`Plant`) y oficina (`SalesOff`)
+
+> [!warning] Mapeo funcional confirmado por negocio (2026-09-11). **No modificar.**
+
+| | MA (`SalesOrg 04`) | VIU (`SalesOrg 05`) |
+|---|---|---|
+| **Contado** (`DistrChan 01`) | `0090` | `0041` |
+| **Crédito** (`DistrChan 02`) | `0504` | `0505` |
+
+Este mapeo **también se intentó "revertir"** contra un commit anterior, por el mismo error de razonamiento: se vio que difería del código viejo y se asumió regresión. No lo era.
+
+> [!note] El error `"Ventas de org.de ventas 04, canal distr.01, centro 0090 no están definidas"` **no es del código.** Es configuración de artículos: se envió un artículo de la sucursal `0041` a consultarse contra la `0090`.
+>
+> Y no comparte causa con §6.1, aunque el texto de los dos mensajes se parezca: en uno el tercer elemento es la **División** y en el otro el **centro**. Son validaciones distintas. La prueba de que `04/01` está bien definido estaba en el propio response: `SALES_HEADER_IN procesado con éxito`.
+
+### 6.3 Organización de ventas (`SalesOrg`)
+
+Sale de `DeterminarSalesOrg(order)` — única fuente de verdad: respeta `order.salesOrg` si viniera poblado y si no lo deriva del `storeId` (`viu` → `05`, resto → `04`). Magento **no** manda `salesOrg` hoy en ninguno de los payloads capturados, así que la rama que lo respeta es defensiva.
+
+### 6.4 Agente — interlocutor `Z1`
+
+| Concepto | Campo | Valor |
+|---|---|---|
+| Número de agente | `to_partners` rol `Z1` | el que traiga el pedido; **vacío** si no viene |
+| Nómina del agente | `Zusuariopos` (alta de BP) | tal cual llega — `E0xxxxx` hoy, `30xxxxxx` en SAP |
+
+**Reglas:**
+
+1. **Ni agentes ni clientes se convierten.** Llegan con el valor que corresponde; sólo se toma el campo. No hay que construir traducción de nómina a interlocutor.
+2. **Nomenclatura:** los agentes en S/4HANA **no llevan ceros a la izquierda**. Se mandaba `"0023000125"` y SAP lo devolvía normalizado como `"23000125"`.
+3. **El valor por defecto va vacío**, con nota de pendiente. Antes se mandaba `"23000125"` — un agente de pruebas — que a simple vista se confundía con el BP del cliente en `to_partners`.
+
+⚠️ **Pendiente:** MAVI entregará un **agente genérico de ecommerce** que ocupará ese lugar.
+
+### 6.5 BP del pedido
+
+Es obligatorio vincular un BP a la orden. Si el pedido trae cuenta, se usa esa.
+
+⚠️ **Pendiente:** el **BP genérico para los flujos de invitado**, también a la espera de MAVI.
+
+### 6.6 `@origen` del alta de crédito = `"PRODUCTOS MX"`
+
+LAN hace `infoCliente["origen"]` si viene, y si no `"PRODUCTOS MX"` (`WebApiMagento\Metodos\OrderMethods.cs:646`). Los payloads de Magento **no traen `origen`** en `infoCliente`, así que LAN siempre cae al default. Se replica el literal **sin agregar el campo al modelo**: los modelos llevan sólo los campos que las APIs realmente mandan.
+
+### 6.7 Valores vacíos o en `0` que el legado ya define
+
+Se **respetan tal cual**. Pueden ser deliberados: con esos valores el SP se salta ciertas validaciones, y cambiarlos altera el flujo. Sólo se corrigen los que son **regresión** — aquellos donde LAN sí manda un valor real y ServicioSAP lo perdió.
+
+### 6.8 El contrato de salida no cambia
+
+El **DMZ es sólo el puente**. Magento debe recibir lo mismo que ya recibía: `order/new` devuelve **200**, no 400, aunque el flujo falle. Se revirtió el cambio que introducía el 400.
