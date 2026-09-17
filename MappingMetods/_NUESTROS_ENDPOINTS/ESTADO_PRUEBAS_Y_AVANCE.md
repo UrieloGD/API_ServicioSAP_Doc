@@ -1507,3 +1507,54 @@ Los requests quedan en `ServicioSap\ServicioSap\Tests\ServicioSap.Ola8.http`.
 > Para reproducir en local hay que sobreescribir `URL_DMZ` a `http://localhost:44302/` en
 > `Web.local.config`: IIS Express sirve el DMZ por http cuando se arranca con `/path` y `/port`.
 > Y las rutas son POST sin cuerpo, así que hay que mandar `Content-Length: 0` o IIS responde 411.
+
+### Ola 8 — segunda corrida tras arreglar `Curl`, 17 sep
+
+La corrida del 15 dejó E-19, E-21 y E-22 fallando con `JsonReaderException`. **La causa no
+estaba en el porteo: estaba en el helper `Curl`**, y con ella arreglada las cargas vuelven a
+pasar.
+
+| Tabla | Antes de la corrida | Después |
+|---|---|---|
+| `children` | 11 265 | **11 265** |
+| `product_in_stores` | 32 548 | **32 548** |
+| `attribute_sets` | 446 | 446 |
+| `categories` | 791 | 791 |
+
+Conteos idénticos: no se pierde ni se duplica una fila. `productWithWebsites` encadenó
+**34 páginas con cero reintentos**; en la corrida del 15 moría en la 13 después de dos
+timeouts.
+
+#### Qué estaba mal
+
+**Autenticaba en cada petición.** El legado saca el token una vez, en el constructor
+(`APIMagento\Helper\Curl.cs:25`), y lo reutiliza. El nuestro llamaba a `login/authenticate`
+antes de cada GET — en una carga de `children` eso son 36 autenticaciones que el original no
+hace. Es una divergencia que introdujo la migración, no una decisión.
+
+**Creaba un `HttpClient` por llamada.** Con la reautenticación, dos conexiones nuevas por
+página. Es el antipatrón que deja sockets en `TIME_WAIT` y agota los puertos efímeros bajo
+carga sostenida, y explica por qué el fallo aparecía **después** de un rato largo y se curaba
+al reiniciar el proceso.
+
+**El plazo por defecto era de 30 s.** Una página de 1 000 artículos tarda 35,7 s medidos, así
+que el cliente cancelaba la petición y el reintento repetía el trabajo completo. De ahí los
+*"Se canceló una tarea"* de las páginas 12 y 13.
+
+#### Qué se cambió
+
+Un solo `HttpClient` estático por proceso, con el plazo por petición gobernado por un
+`CancellationToken` en vez de por el cliente. Token cacheado 20 minutos, con renovación
+automática ante un 401. Las cargas de catálogo construyen su `Curl` con 300 s. **La firma
+pública no cambia**, así que los seis archivos que lo consumen —dos de ellos de Dev 2— no se
+tocan.
+
+Y al fallar un `DeserializeObject` ahora se registra longitud y primeros 300 caracteres del
+cuerpo (`MagentoCatalogMethods.Deserializar<T>`). Sin eso, el síntoma era solo *"carácter
+inesperado en la posición 0"*.
+
+#### Lo que sigue sin probarse
+
+**E-19 `attributeSetChildren`** no se reejecutó tras el arreglo: `atributos_de_magento` sigue
+en 14 089 de 24 092. **E-24, E-25, E-28 y E-30** siguen sin ejecutar, esperando autorización:
+escriben en Magento.

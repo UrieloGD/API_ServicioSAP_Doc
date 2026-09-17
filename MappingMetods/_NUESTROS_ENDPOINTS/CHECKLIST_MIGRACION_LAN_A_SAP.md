@@ -138,9 +138,11 @@ En la práctica esto recae sobre los mixtos `M-11`…`M-08` y sobre las partidas
 
 > ✅ **Once de los doce llamadores escritos el 7 sep.** Las siete cargas de catálogo (E-16…E-22) verificadas contra la cadena completa DMZ → Magento → SQLite, sin perder filas y con las diferencias explicadas por catálogo vivo. También el helper compartido **E-28** —el que bloqueaba a Dev 2— y los tres reenvíos **E-24**, **E-25** y **E-30**. Falta solo **E-23** (`getOrderId`), cuyo llamador escribe en IntelisisTmp con `SpVTASeCommerceDetPedidos`. Subido el 14 sep en `c7d582d`.
 
-> 🔴 **Tres de las siete cargas fallan al reejecutarlas — 15 sep.** `attributes`, `generalAttributes`, `attributeSets` y `categories` responden 200. **E-19 `attributeSetChildren`, E-21 `children` y E-22 `productWithWebsites` fallan las tres con `JsonReaderException` en la línea del `DeserializeObject`**, y las tres son las paginadas. El mismo GET reproducido fuera del servicio —mismo token, mismo `HttpClient`, mismas dos transformaciones— devuelve un cuerpo que **sí parsea** (1 000 ítems), así que la causa todavía no está aislada. La cadena además va al límite: `productWithWebsites` recorrió 13 páginas en 477 s con reintentos por timeout en las dos últimas, y una sonda a `/1/1000` llegó a devolver un cuerpo de 2 bytes. Esto **contradice el "verificadas sin perder filas" del 7 sep**, que queda en entredicho hasta que se reproduzca.
+> ✅ **Las siete cargas vuelven a pasar — 17 sep.** La corrida del 15 dejó tres fallando; la causa era del helper `Curl`, no del porteo. Corregido, `children` vuelve a **11 265 filas** y `product_in_stores` a **32 548**, los conteos exactos de antes. `productWithWebsites` encadena **34 páginas sin un solo reintento**, donde antes moría en la 13.
 
-> ⚠️ **La copia local de `data.db` quedó a medio cargar** tras esa corrida: `children` en 0 filas (de 11 265), `product_in_stores` en 12 000 (de 32 548) y `atributos_de_magento` en 14 089 (de 24 092). Las cargas vacían la tabla antes de rellenarla, así que un fallo a media página la deja incompleta. No afecta al servidor: la ruta local se sobreescribe por `Web.local.config`.
+> 🔧 **Dos arreglos en `Curl` (H-03), 17 sep.** Se hacía `login/authenticate` **antes de cada petición** —el legado autentica una vez por instancia (`APIMagento\Helper\Curl.cs:25`)— y se creaba un `HttpClient` nuevo por llamada, que deja sockets en `TIME_WAIT` y agota los puertos efímeros bajo carga. Ahora el cliente es único por proceso y el token se cachea, renovándose ante un 401. Además el plazo por defecto eran **30 s cuando una página de 1 000 artículos tarda 36**: el cliente cancelaba y el reintento repetía el trabajo. Las cargas de catálogo lo suben a 300 s.
+
+> 📌 **Al fallar un `DeserializeObject` ahora se registra el cuerpo** (`MagentoCatalogMethods.Deserializar<T>`). Sin eso, un cuerpo inesperado del DMZ solo dejaba *"carácter inesperado en la posición 0"* y había que reproducir la llamada por fuera para saber qué había pasado.
 
 > 🗑️ **E-23 se propone como baja, no como porteo — 14 sep.** Su llamador existía para rellenar `idOrden` en `eCommerceDetPedidos`, y el único lector de esa columna era el flujo de recoger en sucursal. Dev 2 lo migró el 10 y 11 sep (`b8f4358`, `8107ede`) **sin usar la tabla**: el `idOrder` le llega como parámetro de ruta. `Venta` y `VentaD`, lo único que faltaba por equivaler, son **SD36**. Queda una pregunta antes de cerrarla: si Magento usa el arreglo `products` del aviso de recogida, que hoy viaja vacío. El detalle en [[E-23_getOrderId#6. Lo que cambió · 9 al 15 de septiembre]].
 
@@ -161,10 +163,10 @@ Se listan aquí para que la serie se pueda verificar sin abrir otro documento. E
 | E-16 | `magento/attributes` | 8.1 | ✅ llamador reconstruido |
 | E-17 | `magento/general/attributes` | 8.1 | ✅ llamador reconstruido |
 | E-18 | `magento/attributeSets` | 8.1 | ✅ llamador reconstruido |
-| E-19 | `magento/attributeSetChildren/{id}` | 8.1 | 🔴 falla al reejecutar (15 sep); MySQL e Intelisis en espera |
+| E-19 | `magento/attributeSetChildren/{id}` | 8.1 | ⏸️ SQLite hecho; MySQL e Intelisis en espera |
 | E-20 | `magento/categories` | 8.1 | ✅ llamador reconstruido |
-| E-21 | `magento/children/{page}/{size}/{store}` | 8.1 | 🔴 falla al reejecutar (15 sep) |
-| E-22 | `magento/productWithWebsites/{page}/{size}` | 8.1 | 🔴 falla al reejecutar (15 sep) |
+| E-21 | `magento/children/{page}/{size}/{store}` | 8.1 | ✅ llamador reconstruido |
+| E-22 | `magento/productWithWebsites/{page}/{size}` | 8.1 | ✅ llamador reconstruido |
 | 🗑️ | ~~`magento/noImagenProduct/{store}`~~ | — | baja el 8 sep, **sin ID** |
 | E-23 | `magento/getOrderId/{incrementId}` | 8.2 | 🗑️ propuesta de baja — su consumidor ya migró sin la tabla |
 | E-24 | `magento/deletePromociones` | 8.2 | ✅ escrito, sin ejecutar |
