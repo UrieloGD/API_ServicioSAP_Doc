@@ -215,9 +215,13 @@ No guardan nada, solo devuelven a quien preguntó. El patrón ya está resuelto 
 
 > ✅ **E-24 y E-25 escritos el 7 sep** en `Methods\Catalog\MagentoCatalogMethods.cs`, con ruta propia. **No se ejecutaron**: los dos escriben en Magento —uno vacía las categorías OUTLET, el otro las reservas de inventario— y no son cargas de lectura como las siete anteriores.
 
-> 🔒 **E-23 bloqueado, y no por el reenvío.** Éste es limpio, pero su llamador `InsertDetPedido` lee `Venta`/`VentaD` y ejecuta **`SpVTASeCommerceDetPedidos`** en IntelisisTmp. El SP está mapeado en [[SP_VTASeCommerceDetPedidos]]: 3 ramas, 3 tablas temporales y 7 permanentes, de las que solo escribe `eCommerceDetPedidos` — la equivalencia **SD36**.
+> 🗑️ **E-23 se propone como baja — 14 sep.** Su llamador `InsertDetPedido` existía para rellenar `idOrden` en `eCommerceDetPedidos`, y el **único lector** de esa columna era el flujo de recoger en sucursal (`CodigoRecogerSucursal.cs:151`, filtrando `WHERE idorden = @Id`). Dev 2 migró ese flujo el 10 y 11 sep (`b8f4358`, `8107ede`) **sin usar la tabla**: el `idOrder` le llega como parámetro de ruta. Y `Venta`/`VentaD`, lo único sin equivalencia, **son SD36**. No queda nada que portar.
 >
-> 📌 **Hallazgo que reduce el trabajo:** E-23 pasa `codigoPostal = "1"` fijo (`OrderMethods.cs:482`), así que **nunca entra por la lógica de cambio de SKU por región**. Cuatro de las seis tablas de consulta —`VTASCRegionSku`, `VTASCCodigoPostalRegionCelular`, `eCommerceExist`, `VTASDEcommerceExportaArtExistencia`— podrían no hacer falta por este camino. Confirmarlo antes de pedir equivalencia para las cuatro.
+> ⏳ **Falta una respuesta antes de cerrarla:** si Magento usa el arreglo `products` del aviso de recogida, que hoy viaja vacío (`StorePickupMethods.cs:341`) donde el legado mandaba SKU y cantidad. Si lo usa, la regla de cambio de SKU por región se recalcula al armarlo; si lo ignora, se da de baja con la partida. Todo el detalle en [[E-23_getOrderId#6. Lo que cambió · 9 al 15 de septiembre]].
+>
+> 🔴 **Para Dev 2, verificado el 14 sep:** `StorePickupMethods.cs:226` y `:264` consultan SD36 con el `idEcommerce` crudo, cuando el filtro es `PurchNoC eq '…'`. Con `ZSD_ZMER_38515` devuelve el documento; con `38515`, `[]`. S3-02 guarda el contacto vacío sin marcar error; S3-01 rota la clave y después falla.
+>
+> 📌 **Hallazgo anterior, ya superado:** E-23 pasaba `codigoPostal = "1"` fijo (`OrderMethods.cs:482`), así que nunca entraba por la lógica de región. Esa lógica sí se escribió, pero para el alta de pedido, donde el CP es real.
 
 > `E-26 magento/getCuenta` y `E-27 magento/setCuenta` **ya están cubiertas** como E-11 y E-12 en la Ola 6; aquí solo se listan para que el conjunto quede completo.
 
