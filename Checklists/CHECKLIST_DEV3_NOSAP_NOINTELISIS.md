@@ -137,11 +137,13 @@ Se agota el bloque A antes de entrar al B. La razón es simple: el bloque A es e
 
 La partida de SIGMAVI que resuelve contra una sola tabla y no lee nada de SAP. Verificado sobre el código el 12 ago.
 
-- [ ] **E-15** `order/GetPickUpCode` — **35 %**: escrito el 31 ago en `Methods\Order\StorePickupMethods.cs`, commiteado y subido en `8cf2c52`, con sus modelos y la ruta en `OrderController`, compila en 0 errores, asíncrono. Sin pruebas, sin cutover y sin ficha. 🤝 Dev 2 depende de la misma tabla para `createStorepickupCode` y `generateNewStorepickupCode`.
+- [ ] **E-15** `order/GetPickUpCode` — **90 %**: escrito el 31 ago en `Methods\Order\StorePickupMethods.cs`, commiteado y subido en `8cf2c52`, con sus modelos y la ruta en `OrderController`, compila en 0 errores, asíncrono. **Probado el 14 sep** —200 con clave, 404 sin fila, 400 con body nulo (paridad)— y documentado en [[E-15_GetPickUpCode]]. Falta solo el cutover. 🤝 Dev 2 ya migró dos de los tres escritores de la misma tabla.
 
 > 📌 **La tabla ya existe en SIGMAVI y se llama `BpRecogePedidos`**, no `TrWDM0285_CteRecoge` — mismas columnas, `MaviSAP: Tables\BpRecogePedidos.sql`, creada en abril de 2025. **Dev 3 no tiene que crearla.** Ese es el nombre contra el que quedó programado E-15, y conviene avisar a Dev 2, cuyo checklist todavía dice el nombre viejo.
 
-> ⏳ **E-15 no se puede probar todavía.** Solo lee; los tres flujos que llenan la tabla siguen escribiendo en Intelisis. Dos son de Dev 2 —`createStorepickupCode` (feb 2027) y `generateNewStorepickupCode` (10-11 sep)— y el tercero, `crearPrimerCodigoRecogerSucbanktransfer`, apareció el 20 ago con el work item 8600 y **no está en ningún checklist**. Mientras tanto el endpoint responde 404 siempre. Se puede adelantar la prueba insertando una fila a mano.
+> ✅ **E-15 ya se probó (14 sep).** Dev 2 subió sus dos escritores el 10 y el 11 sep —`generateNewStorepickupCode` (`b8f4358`) y `createStorepickupCode` (`8107ede`)— y `BpRecogePedidos` pasó de 0 filas a 6, así que no hizo falta insertar nada a mano. El tercer escritor, `crearPrimerCodigoRecogerSucbanktransfer`, **sigue sin migrar y sin aparecer en ningún checklist**: se dispara desde el alta del legado (`APIMagento\Metodos\OrderMethods.cs:695`) para `instore_pickup` + `banktransfer` con agente, y escribe en IntelisisTmp. Por eso el cutover de E-15 no puede ir solo.
+
+> 🔴 **Hallazgo para Dev 2, confirmado al probar.** Cinco de las seis filas de `BpRecogePedidos` tienen `Correo` y `Nombre` vacíos. `StorePickupMethods` llama a `CheckDocumentExistsSD36Async` con el `idEcommerce` crudo (líneas 226 y 264), pero el filtro es `PurchNoC eq` y el folio es `ZSD_{docType}_{incrementId}`. Verificado: `checkDocument/2100061234` devuelve `[]` y `checkDocument/ZSD_ZMER_2100061234` devuelve el documento. Consecuencia: S3-02 inserta los contactos en blanco y S3-01 no manda el correo, ambos respondiendo éxito.
 
 > ⛔ **El 3 sep solo se contrastaron las dos rutas que no tocan base** (`IdEcommerce` nulo → 404; body nulo → 400), iguales en las dos versiones. La comparación real está bloqueada por los dos lados: la tabla migrada está vacía, y el legado lee `TrWDM0285_CteRecoge` con `sCadenaConexion`, que es **IntelisisTmp en MAVICUBOS**, prohibido por la regla de destinos del 5 ago.
 
@@ -205,11 +207,11 @@ El grueso del trabajo real de la ola. Los métodos viven en `Conn\Magento.cs` de
 
 No guardan nada, solo devuelven a quien preguntó. El patrón ya está resuelto en la Ola 6 con E-11 y E-12, que reconstruyen exactamente este tipo de llamador sobre `magento/getCuenta` y `magento/setCuenta`.
 
-| ID | Ruta | Método de origen |
-|---|---|---|
+| ID   | Ruta                               | Método de origen          |
+| ---- | ---------------------------------- | ------------------------- |
 | E-23 | `magento/getOrderId/{incrementId}` | `OrdersController.cs:421` |
-| E-24 | `magento/deletePromociones` | `deletePromociones` |
-| E-25 | `magento/deleteReservations` | `deleteReservations` |
+| E-24 | `magento/deletePromociones`        | `deletePromociones`       |
+| E-25 | `magento/deleteReservations`       | `deleteReservations`      |
 
 > ✅ **E-24 y E-25 escritos el 7 sep** en `Methods\Catalog\MagentoCatalogMethods.cs`, con ruta propia. **No se ejecutaron**: los dos escriben en Magento —uno vacía las categorías OUTLET, el otro las reservas de inventario— y no son cargas de lectura como las siete anteriores.
 
@@ -252,10 +254,10 @@ No guardan nada, solo devuelven a quien preguntó. El patrón ya está resuelto 
 
 ### 8.5 · Sin llamador identificado — 3 rutas, se conservan - 1 día
 
-| ID | Ruta |
-|---|---|
-| E-39 | `order/authorizationResult` |
-| E-40 | `order/sendStorePickupEmail` |
+| ID   | Ruta                               |
+| ---- | ---------------------------------- |
+| E-39 | `order/authorizationResult`        |
+| E-40 | `order/sendStorePickupEmail`       |
 | E-41 | `order/getOrderInfo/{incrementId}` |
 
 No aparece ninguna invocación en los tres repositorios, así que lo más probable es que sean entrada desde Magento hacia la DMZ.
@@ -560,15 +562,15 @@ Las dos primeras filas son las **38 partidas medibles** que se promedian en
 
 | | Terminadas | Total | Avance |
 |---|---:|---:|---:|
-| Partidas medibles | 10 | 38 | 44,7 % |
+| Partidas medibles | 10 | 38 | 46,2 % |
 | Rutas de la Ola 8 | 23 | 26 | 88,5 % |
-| **Total** | | **64** | **62,5 %** |
+| **Total** | | **64** | **63,4 %** |
 
 El contador de terminadas solo cuenta las cerradas del todo, así que esconde el trabajo a medias; el ponderado es el que manda. El desglose por endpoint está en [[ESTADO_PRUEBAS_Y_AVANCE]].
 
-**Las rutas de la Ola 8 entran en el total desde el 9 sep.** Se suman como **partidas equivalentes**, no promediando porcentajes: `38 × 44,7 % = 17,0` más `26 × 88,5 % = 23,0`, sobre 64 entradas. El denominador excluye las cuatro bajas.
+**Las rutas de la Ola 8 entran en el total desde el 9 sep.** Se suman como **partidas equivalentes**, no promediando porcentajes: `38 × 46,2 % = 17,6` más `26 × 88,5 % = 23,0`, sobre 64 entradas. El denominador excluye las cuatro bajas.
 
-> ⚠️ **Cada entrada pesa lo mismo.** Una ruta que no requirió trabajo —las ocho de 8.4— cuenta igual que un endpoint migrado con sus pruebas y su cutover. Es la consecuencia de contarlas, y conviene tenerla presente al leer el 62,5 %.
+> ⚠️ **Cada entrada pesa lo mismo.** Una ruta que no requirió trabajo —las ocho de 8.4— cuenta igual que un endpoint migrado con sus pruebas y su cutover. Es la consecuencia de contarlas, y conviene tenerla presente al leer el 63,4 %.
 
 > 📌 **Recompuesto el 9 sep.** La tabla anterior no cerraba: sumaba 72 con un total de 70, y su
 > fila de cerradas incluía un `E-20` que no corresponde a ninguna partida terminada en ninguna
@@ -613,7 +615,7 @@ que la ola pide de ellas es determinar quién las llama, y eso está determinado
 cierran con validación diferida al apagado, el mismo trato que H-02 y H-04 esperando QA.
 
 > ✅ **Desde el 9 sep este 88 % entra en el total.** Se suma como partidas equivalentes junto
-> a las 38 medibles: 62,5 % sobre 64 entradas. Las dos varas siguen separadas para calcular y
+> a las 38 medibles: 63,4 % sobre 64 entradas. Las dos varas siguen separadas para calcular y
 > solo se juntan al totalizar.
 
 

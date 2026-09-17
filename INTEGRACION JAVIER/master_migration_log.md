@@ -419,3 +419,26 @@ curl --request GET \
 curl --request GET \
   --url https://localhost:44399/order/createStorepickupCode/123456789/000000123
 ```
+
+### 2026-09-14: S3-03 customerService/obtenerCreditos
+- **Estado**: Migrado a `ServicioSAP` utilizando SAP SD36 y `ProductMethods` (DM01). Eliminación definitiva de la tabla local heredada `TarjetaSerieMovMAVI`.
+- **Detalles**:
+  - Se implementó `ObtenerCreditosAsync` en `CustomerServiceMethods.cs` de `ServicioSAP`.
+  - La lógica recupera el historial de créditos consumiendo el servicio de ventas SAP (SD36: `ZAPI_DOCVTAS_CHECK_CDS`) aplicando el filtro OData `Customer eq '{cliente_id}'`.
+  - Se añadieron capacidades al wrapper OData (`SalesMethods.GetCreditDocumentsAsync`) para usar un `$expand` simultáneo sobre `to_salesdoc_items`, `to_zsdt_vbak` y `to_zsdt_vbap` requerido para extraer el método de pago y estatus.
+  - Para asegurar la pertinencia, los créditos se limitan programáticamente a aquellos de los últimos 2 años (`limitDate = DateTime.Now.AddYears(-2)`) y con método de pago de Crédito (`Zformapagotp == "CREDITO"`).
+  - La traducción de los identificadores de estatus locales se consolidó sobre el diccionario SD36: `"01"` se traduce a `"pendiente"`, `"02"` a `"concluido"` (o entregado), y `"03"` a `"anulado"` (rechazado).
+  - Para evitar latencia excesiva con OData, las descripciones de los artículos se resuelven deduplicando los `Material` SKUs a través de un diccionario y haciendo una petición eficiente a `ProductMethods.GetProductsBySkuAsync`.
+  - **Mapeo Real de Nombres (Business Partner)**: Se inyectó una llamada asíncrona a `BusinessPartnerMethods.GetClientMaAsync` (BP05) al inicio del flujo para recuperar y concatenar el nombre real (`NameFirst`, `Namemiddle`, etc.) y sobreescribir el ID del frontend. En caso de fallar, recae en cadena vacía.
+  - **Fallback de Respuesta Vacía**: Se homologó el comportamiento con el sistema Legacy modificando `CustomerServiceController` para que si `credits.Count == 0`, devuelva estrictamente un string vacío (`Ok("")`) en lugar de un arreglo JSON vacío (`Ok([])`).
+  - **Paso a Producción**: Se eliminaron los `Logger.SAP` de seguimiento internos para mantener limpios los logs en producción y se documentó profesionalmente el método `ObtenerCreditosAsync`.
+  - **Refactorización DMZ (Gateway)**: Se corrigió `CustomerServiceController` en la DMZ para invocar `curl.PostSAP("customerService/obtenerCreditos", request)` (puenteando directamente a SAP) en lugar de utilizar `curl.Post` hacia el obsoleto backend de Intelisis.
+
+**Curl de Prueba Local (DMZ hacia SAP)**:
+```bash
+curl --request POST \
+  --url https://localhost:44302/customerService/obtenerCreditos \
+  --header 'Authorization: Bearer <TU_TOKEN_DMZ>' \
+  --header 'content-type: application/json' \
+  --data '{"cliente_id":"1500007539","uen":1}'
+```
