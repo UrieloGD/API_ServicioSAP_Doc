@@ -15,6 +15,15 @@ Comparativa de paridad de los tres proyectos y plantilla de verificación. Todo 
 
 ---
 
+> [!warning] Este documento fue superado en parte — leer junto con la guía
+> **2026-09-10.** El documento de desarrollo vigente es [[GUIA_MIGRACION_FABLE]]. Esta auditoría se conserva como **respaldo de evidencia**, pero tres cosas de aquí ya **no son válidas**:
+>
+> 1. **`R-03` / `C03` — RETIRADO.** *"Todos los puentes devuelven 200 cuando falla el transporte"*, declarado aquí **causa raíz común de C01, C03 y C06**. **No lo es.** El DMZ es un puente passthrough y ServicioSAP devuelve el resultado de negocio **en el cuerpo con HTTP 200**; el puente nunca necesita el status. Confirmado por el usuario.
+> 2. **§7 "Desalineación del CSV" — SIN EFECTO.** `MAVIDMZSAPConexiones.csv` es **referencia informativa** del universo de endpoints, **no un tracker de progreso**, y **no se modifica**. Caen con ella `C15`, `C20`, `C21` y `C23`. El estado real se deriva del código (guía §3).
+> 3. **`R-06` y `R-12` no son defectos**, son **prerrequisitos de pase** (guía §8.6).
+>
+> Todo lo demás de este documento sigue vigente y está arrastrado a la guía §8.5.
+
 ## 0. Cómo se produjo y qué límites tiene
 
 Tres agentes se repartieron los controladores; cada hallazgo de severidad alta o media pasó por un verificador adversarial independiente cuya instrucción era **refutarlo**, no confirmarlo.
@@ -280,6 +289,13 @@ El changelog del propio SP lo confirma: los cambios de **18-11-2022 y 20-12-2022
 5 | Adaptar el contrato: LAN devuelve `{status:"PROCESANDO", cuenta}` y `order/new` devuelve `{BP, SalesDocument, Message, Resultado}` | Depende de #4 |
 
 **Lo único accionable sin esperar a nadie** es el error de compilación del bloque comentado: esté o no definida la equivalencia del SP, ese código no compila como está escrito y habrá que corregirlo igual.
+
+> [!success] Actualización 2026-09-11 — el #1 y el #2 dejan de estar bloqueados por la equivalencia
+> El negocio definió que **se conserva el flujo del SP de Android que hace las inserciones**: `SP_CREDITO_WEB_DATOS` y `SpVTASInsertArtSolCreditoLinea` no se sustituyen por equivalencias SAP en este alcance. La solicitud **nace al enviar la orden**, con su información de crédito, y el **liberador sólo notifica**.
+>
+> Lo que sigue vivo del #1 es otra cosa, y hay que separarla: `SP_CREDITO_WEB_DATOS` **cruza a `ERPMAVI.IntelisisTmp` por linked server en 3 puntos**. Eso muere con Intelisis y hay que resolverlo antes del apagado — pero es independiente de si el SP se conserva o no.
+>
+> El #3 y el #4 siguen bloqueados: falta la URL del liberador.
 
 **Nota de alcance:** el CSV L89 lo declara `Conectado=No, Generado=No` con la nota *"Mismo flujo que setOrder - Apuntar a order/new pero manteniendo ValidateCredit"*. **La fila está bien**: refleja correctamente que es trabajo pendiente. Lo que faltaba era el diagnóstico de por qué no basta con reapuntar el puente.
 
@@ -844,7 +860,12 @@ Monedero y afectación contable | Hoy son un TODO y un método sin llamador | Ma
 
 ### Crédito y Servicio al Cliente
 
-**Prioridad máxima:** `credit/SaveCredilanaInfo` o un job equivalente que llene `mavi_credilana_info` en la SQLite de ServicioSAP — `credit/GetCreditAmounts` **ya está conectado** y hoy lee de una tabla que ningún proceso llena.
+> [!caution] 🚫 Credilana quedó FUERA DE ALCANCE (2026-09-11) — pero esto necesita un matiz
+> `credit/SaveCredilanaInfo` **sale del pendiente**: es Credilana y no se migra (`SKILL.md` regla 15).
+>
+> **El problema no desaparece.** `credit/GetCreditAmounts` **está conectado hoy** y lee `mavi_credilana_info` de la SQLite a través de `Methods\Credit\CredilanaMethods.cs`, invocado desde `Controllers\CreditController.cs:58-72` con las claves `montos_cte_nuevo`, `montos_cte_nuevo_apertura` y `montos_cte_casa`. Esos montos **no son del préstamo Credilana**: alimentan el checkout de crédito normal. El nombre viene de que la fuente en LAN era `CredYPrestamoMethods.GetCredilanaInfo`.
+>
+> Así que queda una pregunta abierta que no resuelve la decisión de alcance: **si Credilana no se migra, ¿quién llena `mavi_credilana_info`?** Hoy nadie, y `GetCreditAmounts` devuelve una tabla vacía. ⚠️ **Pendiente de definir.**
 
 | Endpoint | Dueño |
 |---|---|

@@ -109,9 +109,14 @@ Endpoints que resuelven contra BP05, wrapper ya construido por Dev 1, más las d
 
 Mismo criterio de riesgo que en Dev 3: más APIs por endpoint significa más formas de quedar a medias. Se ataca después de agotar el Sprint 2.
 
-- [ ] ⏳ **S3-01** `order/generateNewStorepickupCode/{idEcommerce}` — actualiza `TrWDM0285_CteRecoge`(BPRecogePedidos), tabla que Dev 3 crea en SIGMAVI. **Coordinar con Dev 3**
-- [ ] **S3-02** `order/createStorepickupCode/{idEcommerce}/{idOrder}` — cruza `TrWDM0285_CteRecoge` (BPRecogePedidos) en SigMavi, `Venta` (SD36), `Cte` (BP05), `VentaEntrega` (PartnerAddress) y `EcommerceDetPedidos` (SD36). **Coordinar con Dev 3**, que crea la tabla en SIGMAVI
-- [ ] **S3-03** `customerService/obtenerCreditos` — venta por SD36 y artículos ya resueltos. (La tabla `TarjetaSerieMovMAVI` ya no existirá y no se utilizará más).
+- [x] ✅ **S3-01** `order/generateNewStorepickupCode/{idEcommerce}` — actualiza `TrWDM0285_CteRecoge`(BPRecogePedidos), tabla que Dev 3 crea en SIGMAVI. **Coordinar con Dev 3**
+  - *Completado el 09/09/2026. Implementación interna como `GET` puro en `ServicioSAP`. Se removió la exposición en DMZ por ser de uso interno exclusivo. Se migró la tabla a `BpRecogePedidos` (SIGMAVI) y la obtención del UEN se realiza consultando SAP SD36 (`SalesMethods.CheckDocumentExistsSD36Async`), reemplazando definitivamente el JOIN con la tabla Venta de Intelisis.*
+- [x] ✅ **S3-02** `order/createStorepickupCode/{idEcommerce}/{idOrder}` — cruza `TrWDM0285_CteRecoge` (BPRecogePedidos) en SigMavi, `Venta` (SD36), `Cte` (BP05), `VentaEntrega` (PartnerAddress) y `EcommerceDetPedidos` (SD36). **Coordinar con Dev 3**, que crea la tabla en SIGMAVI
+  - *Completado el 11/09/2026. Implementado en `ServicioSAP` utilizando lógica interna que invoca a DMZ para notificar a Magento (`order/setOrderStatus` y `order/sendStorePickupEmail`, responsabilidad de Dev 2) y centraliza el guardado del código generado.*
+- [x] ✅ **S3-03** `customerService/obtenerCreditos` — venta por SD36 y artículos ya resueltos. (La tabla `TarjetaSerieMovMAVI` ya no existirá y no se utilizará más).
+  - *Completado el 15/09/2026. Migrado a `ServicioSAP` utilizando SAP SD36 (`ZAPI_DOCVTAS_CHECK_CDS`) aplicando el filtro OData `Customer eq '{cliente_id}'`. Se añadieron capacidades al wrapper OData (`SalesMethods.GetCreditDocumentsAsync`) para usar un `$expand` simultáneo sobre `to_salesdoc_items`, `to_zsdt_vbak` y `to_zsdt_vbap`. Traducción de estatus consolidada. Refactorizado en DMZ. Deduplicación por `PurchaseNumberC` activa y se implementó un fallback que arroja "" (vacío) en vez de un array JSON vacío `[]` para apegarse al formato Legacy.*
+  - *Curl de validación utilizado:* `curl --request POST --url https://localhost:44302/customerService/obtenerCreditos --header 'content-type: application/json' --data '{"cliente_id":"1500005115","uen":1}'`
+  
 - [ ] **S3-04** `order/estimated-delivery/{ecommerceId}` — SD36 y `ZSRV_SALESDOC_ADDRCHANGE`. Ojo: en SAP designaron la guía como el *tracking*, y el tracking real se desconoce
 - [ ] **S3-05** `order/getOrderInfoAndSet/{incrementId}` — consulta Magento, valida estatus en SD36 y, si procede, genera pedido SD01
 
