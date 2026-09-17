@@ -1,7 +1,7 @@
 ---
 tags: [flujo, migracion, store-pickup, ola-7]
 partidas: [E-15]
-actualizado: 2026-08-31
+actualizado: 2026-09-15
 ---
 
 # Flujo — Recoger en sucursal
@@ -12,6 +12,29 @@ en qué orden y contra qué.
 
 El flujo entero vive hoy en **IntelisisTmp @ MAVICUBOS**, el servidor que sale de servicio.
 Todo lo que aparece abajo apunta ahí salvo lo ya migrado.
+
+> ✅ **Los procesos 2 y 4 ya están migrados — 10 y 11 sep, Dev 2.**
+> `createStorepickupCode` (`8107ede`) y `generateNewStorepickupCode` (`b8f4358`), los dos en
+> `Methods\Order\StorePickupMethods.cs`. Los datos del cliente salen ahora de **SD36 → BP05**
+> en vez de `Venta` ⋈ `Cte` ⋈ `VentaEntrega`, y la clave vive en **`BpRecogePedidos`** de
+> SIGMAVI. Con eso, `eCommerceDetPedidos` se queda **sin ningún lector** y **E-23 se propone
+> como baja** (ver [[E-23_getOrderId]]).
+
+> 🔴 **Dos hallazgos abiertos en lo migrado, verificados el 14 sep.**
+>
+> **a) El aviso a Magento va sin artículos.** `StorePickupMethods.cs:341` manda
+> `products = new object[] { }` donde el legado mandaba SKU y cantidad de cada renglón
+> (`CodigoRecogerSucursal.cs:178`). El dato está disponible en la misma llamada a SD36 que ya
+> se hace, en `to_salesdoc_items`. Falta confirmar con el módulo de Magento si ese arreglo se
+> usa o se ignora.
+>
+> **b) El folio de SD36 llega sin prefijo.** `StorePickupMethods.cs:226` y `:264` pasan el
+> `idEcommerce` crudo a `CheckDocumentExistsSD36Async`, que filtra por `PurchNoC eq '…'`.
+> Probado contra SAP: `ZSD_ZMER_38515` devuelve el documento, `38515` devuelve `[]`. **S3-02**
+> guarda nombre, correo y teléfono vacíos en `BpRecogePedidos` sin marcar error; **S3-01** rota
+> la clave y después devuelve *"No se encontró la orden en SAP SD36"*, dejando al cliente con
+> una clave que nadie le avisó. Los otros seis llamadores del proyecto sí pasan el folio
+> compuesto.
 
 ---
 

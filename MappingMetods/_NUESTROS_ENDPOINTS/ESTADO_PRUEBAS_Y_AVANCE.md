@@ -1462,3 +1462,99 @@ montos de préstamo **menores**, sin error ni aviso. Verificado en APIMagento
 - **Cutover en la DMZ para E-07 y E-08** — aplicado y commiteado el 20 ago (`d933e44`) en `APIMagentoDMZ\Controllers\CreditController.cs:485` y `:221`. Compila en 0 errores. Falta **push y despliegue**
 - **Confirmar quién consume `...\api\images\credit`** antes de desplegar E-08. ServicioSAP escribe ahora en su propia carpeta (`IMAGES_CREDIT_PATH`), y nada en APIMagento ni en APIMagentoDMZ vuelve a leer la del legado — así que si alguien los lee, lo hace desde fuera de estos dos repos y dejaría de encontrarlos
 - **Verificar que la carpeta de imágenes exista y sea escribible en el servidor.** En desarrollo no se pudo crear `C:\inetpub\wwwroot\sap`; el código la crea si falta, pero si el app pool no tiene permiso, E-08 perderá los archivos en silencio
+
+### Ola 8 — cargas de catálogo, 15 sep (cadena DMZ → Magento → SQLite)
+
+Reejecución de las siete cargas con `APIMagentoDMZ` levantado en 44302 y ServicioSAP en 8099,
+apuntando a la copia local de `data.db`. **Cuatro pasan, tres fallan.**
+
+| Partida | Ruta | HTTP | Resultado |
+|---|---|---|---|
+| E-16 | `catalog/attributes` | 200 | `true` |
+| E-17 | `catalog/generalAttributes` | 200 | `true` |
+| E-18 | `catalog/attributeSets` | 200 | `true` |
+| E-20 | `catalog/categories` | 200 | `true` |
+| E-19 | `catalog/attributeSetChildren` | 500 | `JsonReaderException` tras 446 s |
+| E-21 | `catalog/children` | 500 | `JsonReaderException` en la primera página |
+| E-22 | `catalog/productWithWebsites` | 500 | `JsonReaderException` tras 13 páginas y 478 s |
+
+Las tres que fallan son **las paginadas**, y las tres revientan en la misma línea:
+`MagentoCatalogMethods.cs:292` y `:331`, en el `DeserializeObject`, con
+*"Unexpected character encountered while parsing value: \. Path '', line 0, position 0"* —
+es decir, el primer carácter del cuerpo ya transformado es una barra invertida.
+
+**La causa no está aislada.** El mismo GET reproducido fuera del servicio —mismo token, mismo
+`HttpClient`, `BaseAddress` idéntico y las dos mismas transformaciones— devuelve un cuerpo que
+**sí parsea**, con 1 000 ítems. El código de ServicioSAP es además idéntico al del legado en ese
+tramo (`APIMagento\Conn\Magento.cs:267-269` y `:338-340`), así que no es una línea que se haya
+perdido al portar.
+
+**La cadena va al límite con `pageSize = 1000`.** `productWithWebsites` necesitó dos reintentos
+por timeout en las páginas 12 y 13, y una sonda directa a `/1/1000` llegó a devolver un cuerpo
+de **2 bytes** que en otra corrida devolvió 88 036. Los tiempos crecen de forma no lineal:
+100 ítems 2,5 s; 500 ítems 13,4 s; 1 000 ítems 35,7 s.
+
+⚠️ **La copia local de `data.db` quedó incompleta**: `children` en 0 (de 11 265),
+`product_in_stores` en 12 000 (de 32 548) y `atributos_de_magento` en 14 089 (de 24 092). Las
+cargas vacían la tabla antes de rellenarla. **El servidor no se tocó**: `SQLITE_DB_PATH` está
+sobreescrito por `Web.local.config`.
+
+**No se ejecutaron** E-24 `deletePromociones` ni E-25 `deleteReservations` — escriben en Magento
+y esperan autorización expresa. Tampoco E-28 ni E-30, por lo mismo. E-23 no tiene controller.
+
+Los requests quedan en `ServicioSap\ServicioSap\Tests\ServicioSap.Ola8.http`.
+
+> Para reproducir en local hay que sobreescribir `URL_DMZ` a `http://localhost:44302/` en
+> `Web.local.config`: IIS Express sirve el DMZ por http cuando se arranca con `/path` y `/port`.
+> Y las rutas son POST sin cuerpo, así que hay que mandar `Content-Length: 0` o IIS responde 411.
+
+### Ola 8 — segunda corrida tras arreglar `Curl`, 17 sep
+
+La corrida del 15 dejó E-19, E-21 y E-22 fallando con `JsonReaderException`. **La causa no
+estaba en el porteo: estaba en el helper `Curl`**, y con ella arreglada las cargas vuelven a
+pasar.
+
+| Tabla | Antes de la corrida | Después |
+|---|---|---|
+| `children` | 11 265 | **11 265** |
+| `product_in_stores` | 32 548 | **32 548** |
+| `attribute_sets` | 446 | 446 |
+| `categories` | 791 | 791 |
+
+Conteos idénticos: no se pierde ni se duplica una fila. `productWithWebsites` encadenó
+**34 páginas con cero reintentos**; en la corrida del 15 moría en la 13 después de dos
+timeouts.
+
+#### Qué estaba mal
+
+**Autenticaba en cada petición.** El legado saca el token una vez, en el constructor
+(`APIMagento\Helper\Curl.cs:25`), y lo reutiliza. El nuestro llamaba a `login/authenticate`
+antes de cada GET — en una carga de `children` eso son 36 autenticaciones que el original no
+hace. Es una divergencia que introdujo la migración, no una decisión.
+
+**Creaba un `HttpClient` por llamada.** Con la reautenticación, dos conexiones nuevas por
+página. Es el antipatrón que deja sockets en `TIME_WAIT` y agota los puertos efímeros bajo
+carga sostenida, y explica por qué el fallo aparecía **después** de un rato largo y se curaba
+al reiniciar el proceso.
+
+**El plazo por defecto era de 30 s.** Una página de 1 000 artículos tarda 35,7 s medidos, así
+que el cliente cancelaba la petición y el reintento repetía el trabajo completo. De ahí los
+*"Se canceló una tarea"* de las páginas 12 y 13.
+
+#### Qué se cambió
+
+Un solo `HttpClient` estático por proceso, con el plazo por petición gobernado por un
+`CancellationToken` en vez de por el cliente. Token cacheado 20 minutos, con renovación
+automática ante un 401. Las cargas de catálogo construyen su `Curl` con 300 s. **La firma
+pública no cambia**, así que los seis archivos que lo consumen —dos de ellos de Dev 2— no se
+tocan.
+
+Y al fallar un `DeserializeObject` ahora se registra longitud y primeros 300 caracteres del
+cuerpo (`MagentoCatalogMethods.Deserializar<T>`). Sin eso, el síntoma era solo *"carácter
+inesperado en la posición 0"*.
+
+#### Lo que sigue sin probarse
+
+**E-19 `attributeSetChildren`** no se reejecutó tras el arreglo: `atributos_de_magento` sigue
+en 14 089 de 24 092. **E-24, E-25, E-28 y E-30** siguen sin ejecutar, esperando autorización:
+escriben en Magento.
