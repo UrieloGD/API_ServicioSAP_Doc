@@ -136,7 +136,7 @@ En la práctica esto recae sobre los mixtos `M-11`…`M-08` y sobre las partidas
 
 > 🗑️ **`magento/noImagenProduct/{store}` dada de baja el 8 sep, sin ID.** No tiene llamador en APIMagento y su resultado depende por completo de la tienda —`all` devuelve 1 producto, `viu` 1 704, `muebles_america` 1 784, `mavi` 14—, así que sin llamador que copiar no hay forma de saber con cuál se llamaba. Se escribió y probó antes de retirarla. **Pierde su identificador y los posteriores se reindexan una posición**, igual que se hizo con `setRecommenderList` el 31 ago: la serie pasa de 69 entradas a 68 y termina en E-49.
 
-> ✅ **Once de los doce llamadores escritos el 7 sep.** Las siete cargas de catálogo (E-16…E-22) verificadas contra la cadena completa DMZ → Magento → SQLite, sin perder filas y con las diferencias explicadas por catálogo vivo. También el helper compartido **E-28** —el que bloqueaba a Dev 2— y los tres reenvíos **E-24**, **E-25** y **E-30**. Falta solo **E-23** (`getOrderId`), cuyo llamador escribe en IntelisisTmp con `SpVTASeCommerceDetPedidos`. Subido el 14 sep en `c7d582d`.
+> ✅ **Once de los doce llamadores escritos el 7 sep.** Las siete cargas de catálogo (E-16…E-22) verificadas contra la cadena completa DMZ → Magento → SQLite, sin perder filas y con las diferencias explicadas por catálogo vivo. También el helper compartido **E-28** —el que bloqueaba a Dev 2— y los tres reenvíos **E-24**, **E-25** y **E-30**. Falta solo **E-23** (`getOrderId`), que el 14 sep pasó a proponerse como baja. Subido el 14 sep en `c7d582d`.
 
 > ✅ **Las siete cargas vuelven a pasar — 17 sep.** La corrida del 15 dejó tres fallando; la causa era del helper `Curl`, no del porteo. Corregido, `children` vuelve a **11 265 filas** y `product_in_stores` a **32 548**, los conteos exactos de antes. `productWithWebsites` encadena **34 páginas sin un solo reintento**, donde antes moría en la 13.
 
@@ -217,7 +217,7 @@ Las cuatro bajas quedan fuera, así que el denominador de la ola es **26**.
 | Grupo | Entradas | Completas | Qué falta |
 |---|---|---|---|
 | 8.1 · catálogo | 7 | **6** | E-19: MySQL e Intelisis en espera |
-| 8.2 · reenvíos | 5 | **4** | E-23: bloqueado por `SpVTASeCommerceDetPedidos` |
+| 8.2 · reenvíos | 5 | **4** | E-23: propuesta de baja, espera la respuesta sobre `products` |
 | 8.3 · órdenes | 3 | **2** | E-29: lo reconstruye Dev 2 |
 | 8.4 · importación | 8 | **8** | — sin trabajo, su cliente no cambia |
 | 8.5 · sin llamador | 3 | **3** | verificación diferida al apagado |
@@ -347,7 +347,7 @@ La Ola 6 quedó escrita y probada el 25 ago, y **commiteada el 26 ago y subida e
 
 La Ola 7 arrancó el 31 ago con E-15 al **35 %** —escrito y compilando, sin probar— tras descartar `setRecommenderList`. Es la primera partida cuyo bloqueo no es de entorno ni de arquitectura, sino de secuencia: lee una tabla que otro desarrollador todavía no llena.
 
-La Ola 8 arrancó y cerró casi entera el 7 sep: **once de los doce llamadores escritos**, las siete cargas de catálogo verificadas contra la cadena real y los cuatro reenvíos entregados. **No mueve el contador** porque estas entradas no son partidas medibles — son llamadores reubicados, no endpoints migrados. Falta **E-23**, bloqueado por la equivalencia de `SpVTASeCommerceDetPedidos`, y quedan dos dependencias ajenas: el destino de MySQL en E-19 y quién agenda las cargas.
+La Ola 8 arrancó y cerró casi entera el 7 sep: **once de los doce llamadores escritos**, las siete cargas de catálogo verificadas contra la cadena real y los cuatro reenvíos entregados. **No mueve el contador** porque estas entradas no son partidas medibles — son llamadores reubicados, no endpoints migrados. Falta **E-23**, que desde el 14 sep se propone como baja —su consumidor se migró sin la tabla— y queda a la espera de si Magento usa el arreglo `products`. Siguen dos dependencias ajenas: el destino de MySQL en E-19 y quién agenda las cargas.
 
 Todos los cutovers de las olas 1 a 6 están **commiteados y subidos** a `dbAndroid` de APIMagentoDMZ, pero **ninguno desplegado**: en producción el tráfico sigue yendo al legado. E-15 aún no lleva cutover, y la Ola 8 no lo necesita: sus rutas se quedan en la DMZ.
 
