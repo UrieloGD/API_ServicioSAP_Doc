@@ -193,7 +193,9 @@ Leyenda: ✅ paridad · ⚠️ difiere · ❌ falta o es dato falso · 🔵 redi
 | 5 | ¿`mavi` sigue vivo como tienda, o se puede descartar? | | | |
 | 6 | ¿Qué valor corresponde a `Zcompania` y a `toCteCto.Zparentesco` en un alta de ecommerce? | | | |
 | 7 | ¿Se integra `cp` al body de Magento para poder resolver colonia y municipio con SEPOMEX? | | | |
-| 8 | ¿Cuáles de las constantes del payload BP son acuerdo con SAP y cuáles quedaron de pruebas? | | | |
+| 8 | ¿Cuáles de las constantes del payload BP son acuerdo con SAP y cuáles quedaron de pruebas? | Parcial: el `Z1` del pedido (`"0023000125"`) **era de pruebas** y hoy va vacío. `"Tadeo"` y `Zliberado="1234"` siguen sin confirmar. | — | 2026-09-11 |
+| 9 | Pedido de **invitado**: es obligatorio vincular un BP a la orden. ¿Cuál se usa? | Si el pedido trae cuenta, **esa**. Para invitado, un **BP genérico** — ⚠️ **pendiente de que MAVI lo entregue**. | Negocio | 2026-09-11 |
+| 10 | `Zusuariopos`: ¿nómina o interlocutor numérico? | **La nómina**, tal cual llega. `E0xxxxx` en el legado, `30xxxxxx` en SAP. **No se convierte.** | Negocio | 2026-09-11 |
 
 ---
 

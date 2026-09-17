@@ -40,7 +40,7 @@ en producción.
 | E-14 | `product/obtenerImagen` | 6 | — sin cutover, no existe en la DMZ | [[E-14_obtenerImagen]] |
 | E-15 | `order/GetPickUpCode` | 7 | 🔴 **no aplicar solo** — falta migrar el tercer escritor | [[E-15_GetPickUpCode]] |
 | E-19 | `magento/attributeSetChildren/{id}` | 8 | — la ruta se queda en la DMZ | [[E-19_attributeSetChildren]] |
-| E-23 | `order/getOrderId/{idEcommerce}` | 8 | — la ruta se queda en la DMZ | [[E-23_getOrderId]] |
+| E-23 | `order/getOrderId/{idEcommerce}` | 8 | 🗑️ propuesta de baja — su consumidor migró sin la tabla | [[E-23_getOrderId]] |
 
 > **La Ola 8 no lleva ficha por partida.** Sus entradas no son endpoints migrados sino
 > llamadores reubicados: la ruta de la DMZ no cambia, así que no hay contrato nuevo que

@@ -124,6 +124,31 @@ Mismo criterio de riesgo que en Dev 3: más APIs por endpoint significa más for
 
 > **S3-01 y S3-02 comparten la misma tabla de SIGMAVI** (`TrWDM0285_CteRecoge`) — conviene resolverlos juntos con Dev 3.
 
+> 🔴 **Hallazgo de Dev 3 en S3-01 y S3-02, verificado contra SAP el 14 sep.** Las dos
+> consultan SD36 pasando el `idEcommerce` crudo (`StorePickupMethods.cs:226` y `:264`), pero
+> `CheckDocumentExistsSD36Async` filtra por `PurchNoC eq '…'`, y el folio es
+> `ZSD_{docType}_{idEcommerce}`. Comprobado: con `ZSD_ZMER_38515` devuelve el documento, con
+> `38515` devuelve `[]`. Los otros seis llamadores del proyecto sí pasan el folio compuesto.
+>
+> El efecto es silencioso en los dos casos: **S3-02** guarda `Nombre`, `Correo` y `Telefono`
+> vacíos en `BpRecogePedidos` sin marcar error, y **S3-01** rota la clave con
+> `ActualizarClaveAsync` y **después** devuelve *"No se encontró la orden en SAP SD36"*, así
+> que el cliente se queda con una clave nueva que nadie le avisó. Conviene revisar también el
+> orden: verificar antes de escribir, no al revés.
+>
+> Ojo además con el mapeo de UEN: solo contempla `SalesOrg` `04` y `05`, y con cualquier otro
+> valor `uen` se queda en 1 sin avisar. El documento de prueba traía `01`.
+
+> ⚠️ **El aviso de recogida a Magento viaja sin artículos.** `StorePickupMethods.cs:341` manda
+> `products = new object[] { }` donde el legado manda SKU y cantidad de cada renglón
+> (`CodigoRecogerSucursal.cs:178`). El dato está disponible en la misma llamada a SD36 que ya
+> se hace, en `to_salesdoc_items` (`Material`, `Cantidad`). **Falta confirmar con el módulo de
+> Magento si ese arreglo se usa o se ignora**, y de esa respuesta depende además que **E-23** de
+> Dev 3 se dé de baja o no — ver [[E-23_getOrderId]].
+>
+> Relacionado: como el migrado no lee `EcommerceDetPedidos`, esa tabla se queda sin ningún
+> lector. La fuente de artículos y cantidades para S3-02 es SD36, no ella.
+
 ---
 
 ## Sprint 4 — Endpoints de Ventas (SD) y Monedero Electrónico · 29/09/2026 – 13/10/2026 · 15 endpoints

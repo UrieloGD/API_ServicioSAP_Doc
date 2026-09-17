@@ -136,7 +136,17 @@ En la práctica esto recae sobre los mixtos `M-11`…`M-08` y sobre las partidas
 
 > 🗑️ **`magento/noImagenProduct/{store}` dada de baja el 8 sep, sin ID.** No tiene llamador en APIMagento y su resultado depende por completo de la tienda —`all` devuelve 1 producto, `viu` 1 704, `muebles_america` 1 784, `mavi` 14—, así que sin llamador que copiar no hay forma de saber con cuál se llamaba. Se escribió y probó antes de retirarla. **Pierde su identificador y los posteriores se reindexan una posición**, igual que se hizo con `setRecommenderList` el 31 ago: la serie pasa de 69 entradas a 68 y termina en E-49.
 
-> ✅ **Once de los doce llamadores escritos el 7 sep.** Las siete cargas de catálogo (E-16…E-22) verificadas contra la cadena completa DMZ → Magento → SQLite, sin perder filas y con las diferencias explicadas por catálogo vivo. También el helper compartido **E-28** —el que bloqueaba a Dev 2— y los tres reenvíos **E-24**, **E-25** y **E-30**. Falta solo **E-23** (`getOrderId`), cuyo llamador escribe en IntelisisTmp con `SpVTASeCommerceDetPedidos`.
+> ✅ **Once de los doce llamadores escritos el 7 sep.** Las siete cargas de catálogo (E-16…E-22) verificadas contra la cadena completa DMZ → Magento → SQLite, sin perder filas y con las diferencias explicadas por catálogo vivo. También el helper compartido **E-28** —el que bloqueaba a Dev 2— y los tres reenvíos **E-24**, **E-25** y **E-30**. Falta solo **E-23** (`getOrderId`), que el 14 sep pasó a proponerse como baja. Subido el 14 sep en `c7d582d`.
+
+> ✅ **Las siete cargas vuelven a pasar — 17 sep.** La corrida del 15 dejó tres fallando; la causa era del helper `Curl`, no del porteo. Corregido, `children` vuelve a **11 265 filas** y `product_in_stores` a **32 548**, los conteos exactos de antes. `productWithWebsites` encadena **34 páginas sin un solo reintento**, donde antes moría en la 13.
+
+> 🔧 **Dos arreglos en `Curl` (H-03), 17 sep.** Se hacía `login/authenticate` **antes de cada petición** —el legado autentica una vez por instancia (`APIMagento\Helper\Curl.cs:25`)— y se creaba un `HttpClient` nuevo por llamada, que deja sockets en `TIME_WAIT` y agota los puertos efímeros bajo carga. Ahora el cliente es único por proceso y el token se cachea, renovándose ante un 401. Además el plazo por defecto eran **30 s cuando una página de 1 000 artículos tarda 36**: el cliente cancelaba y el reintento repetía el trabajo. Las cargas de catálogo lo suben a 300 s.
+
+> 📌 **Al fallar un `DeserializeObject` ahora se registra el cuerpo** (`MagentoCatalogMethods.Deserializar<T>`). Sin eso, un cuerpo inesperado del DMZ solo dejaba *"carácter inesperado en la posición 0"* y había que reproducir la llamada por fuera para saber qué había pasado.
+
+> 🗑️ **E-23 se propone como baja, no como porteo — 14 sep.** Su llamador existía para rellenar `idOrden` en `eCommerceDetPedidos`, y el único lector de esa columna era el flujo de recoger en sucursal. Dev 2 lo migró el 10 y 11 sep (`b8f4358`, `8107ede`) **sin usar la tabla**: el `idOrder` le llega como parámetro de ruta. `Venta` y `VentaD`, lo único que faltaba por equivaler, son **SD36**. Queda una pregunta antes de cerrarla: si Magento usa el arreglo `products` del aviso de recogida, que hoy viaja vacío. El detalle en [[E-23_getOrderId#6. Lo que cambió · 9 al 15 de septiembre]].
+
+> 🔴 **Hallazgo en la cadena de recogida, verificado el 14 sep.** `StorePickupMethods.cs:226` y `:264` consultan SD36 con el `idEcommerce` crudo, cuando el filtro es `PurchNoC eq '…'`. Probado contra SAP: con `ZSD_ZMER_38515` devuelve el documento, con `38515` devuelve `[]`. S3-02 guarda el contacto vacío sin marcar error y S3-01 rota la clave y luego falla. Para Dev 2.
 
 > ⏸️ **E-19 a medias por dependencia.** Su tramo de SQLite está en paridad; los de **MySQL `aplicaciones_web`** e **IntelisisTmp** esperan a que se cierre la exportación de artículos (Dev 2, Sprint 9). Decisión de magalindo el 7 sep: la migración de `SPexportaArt` está incompleta —la validación de atributos aún no está en `EcommerceMethods.cs`— así que esas tablas **todavía hacen falta** y no se dan de baja.
 
@@ -158,7 +168,7 @@ Se listan aquí para que la serie se pueda verificar sin abrir otro documento. E
 | E-21 | `magento/children/{page}/{size}/{store}` | 8.1 | ✅ llamador reconstruido |
 | E-22 | `magento/productWithWebsites/{page}/{size}` | 8.1 | ✅ llamador reconstruido |
 | 🗑️ | ~~`magento/noImagenProduct/{store}`~~ | — | baja el 8 sep, **sin ID** |
-| E-23 | `magento/getOrderId/{incrementId}` | 8.2 | 🔒 su llamador ejecuta `SpVTASeCommerceDetPedidos` |
+| E-23 | `magento/getOrderId/{incrementId}` | 8.2 | 🗑️ propuesta de baja — su consumidor ya migró sin la tabla |
 | E-24 | `magento/deletePromociones` | 8.2 | ✅ escrito, sin ejecutar |
 | E-25 | `magento/deleteReservations` | 8.2 | ✅ escrito, sin ejecutar |
 | E-26 | `magento/getCuenta` | 8.2 | ya cubierta como **E-11** en la Ola 6 |
@@ -207,7 +217,7 @@ Las cuatro bajas quedan fuera, así que el denominador de la ola es **26**.
 | Grupo | Entradas | Completas | Qué falta |
 |---|---|---|---|
 | 8.1 · catálogo | 7 | **6** | E-19: MySQL e Intelisis en espera |
-| 8.2 · reenvíos | 5 | **4** | E-23: bloqueado por `SpVTASeCommerceDetPedidos` |
+| 8.2 · reenvíos | 5 | **4** | E-23: propuesta de baja, espera la respuesta sobre `products` |
 | 8.3 · órdenes | 3 | **2** | E-29: lo reconstruye Dev 2 |
 | 8.4 · importación | 8 | **8** | — sin trabajo, su cliente no cambia |
 | 8.5 · sin llamador | 3 | **3** | verificación diferida al apagado |
@@ -337,7 +347,7 @@ La Ola 6 quedó escrita y probada el 25 ago, y **commiteada el 26 ago y subida e
 
 La Ola 7 arrancó el 31 ago con E-15 al **35 %** —escrito y compilando, sin probar— tras descartar `setRecommenderList`. Es la primera partida cuyo bloqueo no es de entorno ni de arquitectura, sino de secuencia: lee una tabla que otro desarrollador todavía no llena.
 
-La Ola 8 arrancó y cerró casi entera el 7 sep: **once de los doce llamadores escritos**, las siete cargas de catálogo verificadas contra la cadena real y los cuatro reenvíos entregados. **No mueve el contador** porque estas entradas no son partidas medibles — son llamadores reubicados, no endpoints migrados. Falta **E-23**, bloqueado por la equivalencia de `SpVTASeCommerceDetPedidos`, y quedan dos dependencias ajenas: el destino de MySQL en E-19 y quién agenda las cargas.
+La Ola 8 arrancó y cerró casi entera el 7 sep: **once de los doce llamadores escritos**, las siete cargas de catálogo verificadas contra la cadena real y los cuatro reenvíos entregados. **No mueve el contador** porque estas entradas no son partidas medibles — son llamadores reubicados, no endpoints migrados. Falta **E-23**, que desde el 14 sep se propone como baja —su consumidor se migró sin la tabla— y queda a la espera de si Magento usa el arreglo `products`. Siguen dos dependencias ajenas: el destino de MySQL en E-19 y quién agenda las cargas.
 
 Todos los cutovers de las olas 1 a 6 están **commiteados y subidos** a `dbAndroid` de APIMagentoDMZ, pero **ninguno desplegado**: en producción el tráfico sigue yendo al legado. E-15 aún no lleva cutover, y la Ola 8 no lo necesita: sus rutas se quedan en la DMZ.
 
