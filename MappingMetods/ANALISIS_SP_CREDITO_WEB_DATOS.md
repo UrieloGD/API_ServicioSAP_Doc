@@ -31,12 +31,12 @@ estado: analisis completo · verificacion adversarial NO concluida
 
 Vive en la base **`ServicioAndroid`** (`SP_CREDITO_WEB_DATOS.sql:1` → `USE [ServicioAndroid]`).
 
-| `@Op` | Línea | Qué hace |
-|---|---|---|
-| `Insert` | 172-349 | Alta de la solicitud. 59 columnas |
-| `Update` | 351-368 | Pisa 9 columnas por `id = @Id` |
-| `InsertReferencia` | 370-603 | Referencias personales, con dos caminos |
-| **cualquier otro (incluido `NULL`, su default)** | — | **No escribe, no falla, no devuelve nada** |
+| `@Op`                                            | Línea   | Qué hace                                   |
+| ------------------------------------------------ | ------- | ------------------------------------------ |
+| `Insert`                                         | 172-349 | Alta de la solicitud. 59 columnas          |
+| `Update`                                         | 351-368 | Pisa 9 columnas por `id = @Id`             |
+| `InsertReferencia`                               | 370-603 | Referencias personales, con dos caminos    |
+| **cualquier otro (incluido `NULL`, su default)** | —       | **No escribe, no falla, no devuelve nada** |
 
 Los tres `IF` son **independientes**, no `IF/ELSE IF`.
 
@@ -91,12 +91,12 @@ Confirma §5.3 de [[FLUJO_CREDITO_LAN_VS_SAP]] y valida que ServicioSAP mande `D
 
 El SP hace **3 lecturas** por linked server `ERPMAVI`, y una cuarta que **no** es externa:
 
-| Objeto | Línea | Para qué |
-|---|---|---|
-| `ERPMAVI.IntelisisTMP.dbo.CREDICCondicionArt` | 176-182 | Sólo en la rama `@origen = 'DIMAS MX'` |
-| `ERPMAVI.IntelisisTmp.dbo.TablaStD` ⋈ `CteTel` | 186-191 | `@ValidacionOrigen` |
-| `ERPMAVI.IntelisisTmp.dbo.CteTel` | 194-202 | `@TelefonoValidado` |
-| `TcAAEA00030_EnvioMensajes` | 205-208 | **LOCAL de ServicioAndroid**, no es cruce |
+| Objeto                                         | Línea   | Para qué                                  |
+| ---------------------------------------------- | ------- | ----------------------------------------- |
+| `ERPMAVI.IntelisisTMP.dbo.CREDICCondicionArt`  | 176-182 | Sólo en la rama `@origen = 'DIMAS MX'`    |
+| `ERPMAVI.IntelisisTmp.dbo.TablaStD` ⋈ `CteTel` | 186-191 | `@ValidacionOrigen`                       |
+| `ERPMAVI.IntelisisTmp.dbo.CteTel`              | 194-202 | `@TelefonoValidado`                       |
+| `TcAAEA00030_EnvioMensajes`                    | 205-208 | **LOCAL de ServicioAndroid**, no es cruce |
 
 > [!note] Corrección a nuestros documentos
 > Se venía diciendo *"cruza a Intelisis en 3 puntos y toca `CREDICCondicionArt`, `TablaStD` y `CteTel`"*. Es correcto en los objetos, **pero `TcAAEA00030_EnvioMensajes` se contaba mal como cruce**: es local.
