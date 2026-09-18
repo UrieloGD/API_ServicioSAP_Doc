@@ -126,10 +126,34 @@ parseando el envoltorio OData `d.results` en `:1200`. Hay tambien una **escritur
 > Tambien existe **`ServicioSAP/.git`**, que nadie uso y que resuelve la deriva de citas de todo el corpus.
 > Y existen los **`Fakes/`**, o sea que ya se puede probar sin SAP.
 
-### Lo que falta de verdad en el proyecto
+### Sobre los verbos HTTP: `POST` + `GET` + `PATCH` alcanzan
 
-- **El verbo `PUT` no existe.** `HttpMethod.Put` y `new HttpMethod("PUT")` → **0 coincidencias** en los 210 `.cs`. `Delete` aparece una sola vez (`ProductMethods.cs:1296`); `PATCH` va con `new HttpMethod("PATCH")` ×4. Cualquier unidad que necesite `PUT` no tiene precedente.
-- **No hay upsert OData.** `toCteTel` solo se arma dentro del alta de BP (`BusinessPartnerMethods.cs:656-671`, `OrderMethods.cs:2935-2950`), siempre con `ZidcteTel = ""`. No hay lectura previa en ningun lado.
+`PUT` no existe en el proyecto (`HttpMethod.Put` y `new HttpMethod("PUT")` → **0 coincidencias** en los 210 `.cs`), y **para este SP no hace falta.** Lo que hay cubre las tres operaciones que el SP necesita:
+
+| Operacion del SP | Verbo | Evidencia en `ServicioSAP` |
+|---|---|---|
+| Alta de la entidad completa | **POST** | `SubmitClientInfoAsync` → `BPartnerSet` (`BusinessPartnerMethods.cs:74-157`) |
+| Lectura | **GET** | Toda la superficie de consulta |
+| Actualizacion **parcial** por clave | **PATCH** | `new HttpMethod("PATCH")` ×4: `BusinessPartnerMethods.cs:854`, `DeliveryAddressMethods.cs:124` y `:165`, `ProductMethods.cs:1264` |
+
+> [!important] Para la rama `Update`, un `PUT` seria incorrecto
+> La rama `Update` pisa **9 columnas de 59** (`SP:356-364`). Eso es una actualizacion **parcial** por definicion, y su verbo es `PATCH`.
+>
+> En OData V2 `PUT` **reemplaza la entidad completa**: usarlo ahi borraria los otros 50 campos. No es que falte una capacidad — es que el verbo correcto ya esta implementado.
+
+**De donde salio el requisito de `PUT`, para que quede documentado:** de las Fases 2 y 3 del `PLAN_BP05`, que consisten en portar los endpoints `AS_PUT_ZQBP_EditarCliente_CteTel` y `AS_PUT_ZQBP_EditarCliente_CteLimiteCred`. Verificado: esas rutas de `businesspartner-dev` **si declaran `@app.put`** y **si mandan `session.put()` hacia SAP** (`AS_PUT_ZQBP_EditarCliente_CteTel.py:91`, `AS_PUT_ZQBP_EditarCliente_CteLimiteCred.py:59`).
+
+Pero eso es el proyecto de **exposicion de datos BP05**, no la migracion de este SP. Y si algun dia se portan, tampoco es un hueco: emitir un `PUT` es el mismo patron `new HttpRequestMessage(new HttpMethod("PUT"), url)` que el proyecto ya usa 4 veces para `PATCH` — un cambio de literal, no una capacidad ausente. Por **D7**, ademas, la llamada iria a la API intermedia y el `PUT` viajaria hacia `businesspartner-api.mavi.fun`, no hacia SAP.
+
+**`DELETE`** aparece una sola vez (`ProductMethods.cs:1296`). Ninguna unidad de este SP borra nada, asi que no aplica.
+
+### Lo que si falta de verdad: el upsert de `CteTel`
+
+**No hay lectura previa para decidir entre actualizar e insertar.** `toCteTel` solo se arma dentro del alta de BP (`BusinessPartnerMethods.cs:656-671`, `OrderMethods.cs:2935-2950`), y **siempre con `ZidcteTel = ""`**. No existe en ningun lado un "leer `CteTelSet`, decidir, escribir".
+
+Aplica a este SP **solo si** se escriben telefonos sobre un BP que ya existe — que es el caso del cliente recurrente. En el alta de un cliente nuevo no se necesita: el `POST` del BP los lleva anidados.
+
+Riesgo al implementarlo: `CteTel.cs:15-20` declara `ZenvioNip`, `ZvalTel`, `ZtelExist` y `ZtraeTel` como `bool` **no anulables**, asi que un upsert ingenuo estampa `ZvalTel=false` y **corrompe** el estado de validacion telefonica en SAP.
 
 ---
 
