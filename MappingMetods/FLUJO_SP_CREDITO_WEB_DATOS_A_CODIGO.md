@@ -34,8 +34,9 @@ Tomadas por el usuario el 2026-09-18. No son supuestos: son el marco. Donde el c
 | **D5** | **La base de equivalencias son las OData de `ServicioSAP`.** `businesspartner-dev` se usa para validar que una OData existe, que hace, y **comparar como la usan**. Las fichas de `RSG/` no se usan como base. Si falta una OData, se reporta como *"falta en `ServicioSAP`"* y se planea aparte. |
 | **D6** | **`TrWACW00041_RefSolCredWeb` conserva destino y estructura**: escritura directa a `ServicioAndroid`, mismas columnas, misma relacion 1:N contra `IDSolicitud`, misma cardinalidad. **Las 17 columnas**, no las 8. La informacion se manipula igual para que el flujo de negocio sea el mismo. |
 | **D7** | **Se autoriza el canal de APIs intermedias** (`URL_BP_API` / `URL_ANDROID_API`, `*.mavi.fun`) para lo nuevo, como ya lo usa el proyecto. |
-| **D8** | **`SpCREDICodigoRecomendador`: la logica de codigo recomendador queda deprecada/obsoleta. Su pata de SMS si entra en alcance.** |
+| **D8** | **Codigo recomendador: DEPRECADO. Se quita.** Toda la logica de `SpCREDICodigoRecomendador` y la columna `CodigoRecomendador` del SP salen del alcance y **no se portan**. Si en el codigo existe logica de eso, se retira. Lo unico que entra es su **pata de SMS** (§4.9). |
 | **D9** | **Todas las ramas se consideran.** Ninguna rama de ningun SP del alcance se descarta por no tener invocador identificado. Incluye las **6 ramas restantes de `SpCREDIDatosSolicitudCreditoArt`** (§4.10) y el camino largo de `InsertReferencia`, que no tiene productor identificado en ningun repo. Donde una rama parezca muerta, se porta igual y se anota que no se hallo consumidor — no se omite. |
+| **D10** | **`PUT` no esta habilitado.** Toda actualizacion parcial va por `PATCH`, para no borrar datos al actualizar unicamente los campos solicitados. Donde la implementacion de referencia en Python manda `PUT` (`CteTel`, `CteLimiteCred`), aqui va `PATCH`: **el Python es referencia del contrato y del destino, no del verbo.** Ver §3 para las dos consecuencias a resolver al implementar. |
 
 ### Criterio metodologico
 
@@ -86,6 +87,7 @@ D5 dice que la base son las OData de `ServicioSAP`. Levantarlas requiere saber q
 | **1. Directo** | `Conexion.Data.obtenerUrl(Nodos.ENVIROMENT_DEV, Nodos.SERVICE_URL)` + `/SERVICIO/EntitySet` | `BusinessPartnerMethods.cs:840-841`, `:386` |
 | **2. Path externalizado** | `ConfigurationManager.AppSettings["ZAPI_*"]` | `CreditMethods.cs:304`; `Web.config:46, 49, 52, 53, 89` |
 | **3. API intermedia** | `AppSettings["URL_BP_API"\|"URL_ANDROID_API"]` + ruta `AS_`/`AC_`/`AI_` | `OrderMethods.cs:1190-1192`, `BusinessPartnerMethods.cs:204-210`, `:344-350`, `MovBitaMethods.cs:17-23`, `SepomexMethods.cs:16`, `WalletMethods.cs:35`, `ProductMethods.cs:29, 365-368` |
+| **4. AWS API Gateway** | `AppSettings["AwsBaseUrl"]` + ruta. `Web.config:28` = `https://54wblyc2h6.execute-api.us-east-1.amazonaws.com/` | `ProductMethods.cs:711`, `WalletMethods.cs:19, 35`. **Helper ya escrito:** `WalletMethods.GetCatalogoConfiguracionAsync(nombreCatalogo)` (`:28-51`), modelo `Models/SAP/WalletCustomer/CatalogoConfiguracion.cs` |
 
 **El tercero es el que cambia el encuadre.** `Web.config:30` define `URL_BP_API = https://businesspartner-api.mavi.fun`, y `OrderMethods.cs:1192` llama:
 
@@ -118,13 +120,12 @@ parseando el envoltorio OData `d.results` en `:1200`. Hay tambien una **escritur
 | Persistencia local | `Helpers/ConexionDB/SQLiteDb.cs` (`SetAsync:158`, `GetAsync:240`), ruta en `Web.config:60` | Estado inter-peticion. En uso en `OrderMethods.cs:553-568` y `CredilanaMethods.cs:16-17` |
 | Guardado de expediente | `Methods/Credit/DocumentMethods.cs:33-58`, ruta en `Web.config:63` | Las imagenes ya se guardan en disco |
 | Encolado de SMS | `INSERT INTO TcAAEA00030_EnvioMensajes` ya escrito desde `ServicioSAP` | La pata de SMS ya existe |
-| Shims de prueba | `Fakes/Conexion.fakes`, `Fakes/ConexionSap.fakes`, `FakesAssemblies/` | Probar sin SAP |
 | Capturas reales de SAP | `Logs/sap.log` — **4 pares request/response** (2 order, 2 BP), escritos por `Helpers.Logger.SAP` (`OrderMethods.cs:733`, `BusinessPartnerMethods.cs:852, 863`) | El gate E2E de la regla 25 |
 
-> [!note] Tres cosas declaradas imposibles que si existen
+> [!note] Dos cosas declaradas imposibles que si existen
 > El corpus afirma que *"no hay ni una captura de respuesta exitosa de SAP"*: **`Logs/sap.log` tiene 4 pares reales.** Contiene datos de cliente — tratarlo como PII, no pegarlo en un `.md`.
 > Tambien existe **`ServicioSAP/.git`**, que nadie uso y que resuelve la deriva de citas de todo el corpus.
-> Y existen los **`Fakes/`**, o sea que ya se puede probar sin SAP.
+> **Aviso en contra, confirmado por el usuario: NO se puede probar sin SAP.** Los `Fakes/Conexion.fakes`, `Fakes/ConexionSap.fakes` y `FakesAssemblies/` que estan en el proyecto **se generaron sin querer** y son codigo obsoleto: no son infraestructura de prueba utilizable. No construir ningun plan de verificacion sobre ellos.
 
 ### Sobre los verbos HTTP: `POST` + `GET` + `PATCH` alcanzan
 
@@ -141,9 +142,17 @@ parseando el envoltorio OData `d.results` en `:1200`. Hay tambien una **escritur
 >
 > En OData V2 `PUT` **reemplaza la entidad completa**: usarlo ahi borraria los otros 50 campos. No es que falte una capacidad — es que el verbo correcto ya esta implementado.
 
-**De donde salio el requisito de `PUT`, para que quede documentado:** de las Fases 2 y 3 del `PLAN_BP05`, que consisten en portar los endpoints `AS_PUT_ZQBP_EditarCliente_CteTel` y `AS_PUT_ZQBP_EditarCliente_CteLimiteCred`. Verificado: esas rutas de `businesspartner-dev` **si declaran `@app.put`** y **si mandan `session.put()` hacia SAP** (`AS_PUT_ZQBP_EditarCliente_CteTel.py:91`, `AS_PUT_ZQBP_EditarCliente_CteLimiteCred.py:59`).
+**De donde salio el requisito de `PUT`, y como se resuelve (D10).** De las Fases 2 y 3 del `PLAN_BP05`, que consisten en portar `AS_PUT_ZQBP_EditarCliente_CteTel` y `AS_PUT_ZQBP_EditarCliente_CteLimiteCred`. Verificado: esas rutas de `businesspartner-dev` **si declaran `@app.put`** y **si mandan `session.put()` hacia SAP** (`AS_PUT_ZQBP_EditarCliente_CteTel.py:91`, `AS_PUT_ZQBP_EditarCliente_CteLimiteCred.py:59`).
 
-Pero eso es el proyecto de **exposicion de datos BP05**, no la migracion de este SP. Y si algun dia se portan, tampoco es un hueco: emitir un `PUT` es el mismo patron `new HttpRequestMessage(new HttpMethod("PUT"), url)` que el proyecto ya usa 4 veces para `PATCH` — un cambio de literal, no una capacidad ausente. Por **D7**, ademas, la llamada iria a la API intermedia y el `PUT` viajaria hacia `businesspartner-api.mavi.fun`, no hacia SAP.
+> [!important] D10 · `PUT` no esta habilitado — esas dos operaciones se implementan como `PATCH`
+> Decision del usuario: **no se habilita `PUT` en `ServicioSAP`**, precisamente para **no borrar datos al actualizar unicamente los campos solicitados**. Toda actualizacion parcial va por `PATCH`.
+>
+> Aplica a las dos operaciones de arriba (`CteTel` y `CteLimiteCred`) y a cualquier otra que se porte: **el Python es la referencia del contrato y del destino, no del verbo.** Donde la implementacion de referencia manda `PUT`, aqui va `PATCH` con solo los campos que cambian.
+
+Dos consecuencias de D10 que hay que resolver al implementar, no al planear:
+
+1. **Verificar que el servicio acepte `PATCH`.** Los 4 `PATCH` que ya existen en el proyecto van contra **otros** servicios (`ZSDT_CTE_ENTITYSet`, `API_BUSINESS_PARTNER`, el de producto). Que `ZQBP_EDITARCLIENTE_SRV` acepte `PATCH` esta **SIN EVIDENCIA**: el Python usa `PUT` contra el, y en OData V2 el verbo de actualizacion parcial puede ser `MERGE` en lugar de `PATCH` segun la version del gateway. Si el servicio rechaza `PATCH`, la salida correcta **no** es volver a `PUT`: es usar `MERGE`, o el tunel `X-HTTP-Method: MERGE` sobre un `POST` — que hoy no existe en el proyecto (0 coincidencias de `X-HTTP-Method` y de `"MERGE"`).
+2. **El canal de API intermedia no honra D10 por si solo.** Por **D7** la llamada puede ir a `businesspartner-api.mavi.fun`, pero esas rutas declaran `@app.put` y adentro hacen `session.put()` hacia SAP. Es decir: **pasar por la API intermedia reintroduce el `PUT` que D10 prohibe.** Para respetar la decision hay dos caminos, y es eleccion de implementacion: pedir una variante `PATCH` en la API intermedia, o que `ServicioSAP` arme el `PATCH` directo contra el servicio para estas dos operaciones.
 
 **`DELETE`** aparece una sola vez (`ProductMethods.cs:1296`). Ninguna unidad de este SP borra nada, asi que no aplica.
 
@@ -168,9 +177,16 @@ Riesgo al implementarlo: `CteTel.cs:15-20` declara `ZenvioNip`, `ZvalTel`, `Ztel
 | Lectura | SP | Equivalente | Estado |
 |---|---|---|---|
 | `CREDICCondicionArt` (solo `DIMAS MX`) | `:176-182` | Condicion → `zsb_sd40_condpago` con `$filter` sobre `Zdima`, ya consumido por `CreditMethods.GetCondicionesPagoAsync` (`:297-318`). **Articulo → sin equivalente**: el SP toma `MAX(IdCondicionArt)` sin filtro, semantica que no existe en ninguna OData | PARCIAL |
-| `TablaStD ⋈ CteTel` → `@ValidacionOrigen` | `:186-191` | Catalogo → `ZQBC_CODEMSTRD_SRV/WACODEMSTRDSet` (clave-valor; `ZcodeProgram` hace de `TablaSt`), ya consumido por `GetConsultaAnexosAsync` (`BusinessPartnerMethods.cs:875-898`) | PARCIAL |
+| `TablaStD ⋈ CteTel` → `@ValidacionOrigen` | `:186-191` | **`TablaStD` se convirtio en `CatalogoConfiguracion`**: `AI_GET_CatalogoConfiguracion?NOMBRECATALOGO=<nombre>` por el **canal 4**. Ya invocado (`ProductMethods.cs:711`, `WalletMethods.cs:35`) y con helper listo: `GetCatalogoConfiguracionAsync("ORIGEN VALIDACION NUMERO CTE")` | **SI** |
 | `CteTel` → `@TelefonoValidado` | `:194-202` | `ZAPI_BP05MA_SRV/BusinessPartnerSet(...)?$expand=to_CteTel`, filtrando en codigo `ZtipoCte=='MOVIL' && Zvaltel`. Ya implementado en `IsValidatedAsync` (`OrderMethods.cs:605-649`) | SI |
 | `TcAAEA00030_EnvioMensajes` → `@TelefonoAValidar` | `:205-208` | **No va a OData**: es tabla local de `ServicioAndroid`, no cruce a Intelisis. Se queda como lectura SQL directa, ya escrita **dos veces** (`OrderMethods.cs:573-604` y `CreditMethods.cs:262-295`) | SI |
+
+> [!danger] Falso positivo corregido — no volver a mapear `TablaStD` a `CODEMSTRD`
+> Una version previa de este documento mapeaba `TablaStD` a `ZQBC_CODEMSTRD_SRV/WACODEMSTRDSet` diciendo que `ZcodeProgram` hacia de `TablaSt`. **Es falso.** `GetConsultaAnexosAsync` (`BusinessPartnerMethods.cs:875-898`) consulta ese servicio con `$filter=ZcodeProgram eq '...'` y devuelve `AnexosResult`: es el catalogo de **anexos** (generacion de RFC y similares), no el de configuracion. Se parecen en que los dos son clave-valor, y nada mas.
+>
+> El equivalente correcto es **`CatalogoConfiguracion`** por el canal 4, confirmado por el usuario.
+>
+> Y hay un dato que el propio codigo documenta: `OrderMethods.cs:654-655` describe el SQL legado de esta lectura, y `:669` dice literalmente *"antes se validaba contra catalogo tablastd"*. Es decir, **el codigo actual descarto a sabiendas la validacion contra catalogo** y la degrado a *"`ZappOrig` no vacio"* (`:639`). Con el canal 4 disponible, restituirla es posible; hacerlo o no es decision del usuario, porque hoy la regla esta mas ancha que en el legado.
 
 **Defecto a corregir al portar:** `IsValidatedAsync` hace `FirstOrDefault` **desnudo, sin `OrderBy`** (`OrderMethods.cs:636-641`). El `ORDER BY Fecha DESC` del SP (`:202`) **no esta replicado**: con dos moviles validados, el SP toma el mas reciente y el C# toma el que SAP devuelva primero.
 
@@ -189,7 +205,6 @@ Riesgo al implementarlo: `CteTel.cs:15-20` declara `ZenvioNip`, `ZvalTel`, `Ztel
 | Sucursal y agente | 3 | `SalesOff`/`Vwerk`, validables contra `ZAPI_SUCURSALES_SRV` (`AccountMethods.cs:185-190`) |
 | Monedero | `RedimirMonedero` | `Zredimepos` (`:2415`) + `Zredimepuntos` (`:2427`) |
 | Estado y seguimiento | 3 | `Zsituacion` + `Zsituacionfecha` + `Zsituacionusuario` (`:2392-2394`) |
-| Recomendador | `CodigoRecomendador` | `Cte.ZrecomendPor:24` (+ `ZpartentRec:28`, `ZdirRecom:29`) |
 | Cita | `FechaCita`, `HoraCita` | `Cte.Zcita:76` — **un solo campo para dos columnas**, ver §8 |
 | Capacidad crediticia | `tarjeta`, `tarjetaDigitos`, `creditoHipoteca`, `creditoAutomotriz` | **3 sin equivalente** (§7.3) |
 
@@ -363,7 +378,8 @@ Mas una capa previa de **sustitucion de SKU por region** que solo se activa si `
 | Pieza | Equivalente |
 |---|---|
 | Precio y abono ← `PropreListaDFinal` | **SI** — `ZAPI_PROPRELIST_SRV`, ya consumido por `FinalListProperMethods.cs:22` |
-| `VTASCRegionSku` + `VTASCCodigoPostalRegionCelular` | **Sin equivalente** — 0 coincidencias en ambos repos |
+| Existencia previa al cambio de SKU (`:96-120`) | **SI — DIM11**, indicado por el usuario. `ZCDS_DIM11_EXISTENCIA_CDS/zcds_dim11_existencia`, **ya consumido** en `ProductMethods.cs:103, 173, 219, 263` y con filtro por material y planta en `OrderMethods.cs:2121`. **Pendiente de confirmar:** el SP hace `COALESCE` entre **dos** fuentes (`eCommerceExist.existencia` y `VTASDEcommerceExportaArtExistencia.TotalArticulos`, prefiriendo la segunda); falta saber si DIM11 consolida las dos o corresponde solo a una |
+| `VTASCRegionSku` + `VTASCCodigoPostalRegionCelular` | **Sin equivalente identificado.** Son catalogos, asi que el canal 4 (`AI_GET_CatalogoConfiguracion`) es el candidato natural — pero **no se verifico**: pendiente de que el usuario indique el nombre de catalogo, como hizo con `TablaStD` |
 | `VTASCCondicionesCredVtaLinea` (crosswalk de condicion) | **Sin equivalente** |
 | `spVerCosto` | **Sin equivalente** |
 | `DescuentoCategoria` | **Sin equivalente** — ninguna de las 11 propiedades de `FinalListProper` corresponde |
@@ -403,7 +419,7 @@ El SP son 455 lineas con 17 operaciones (`@opcion` 1 a 17: `:52, 91, 131, 164, 1
 
 **Equivalente:** ninguno en OData, ni hace falta — es el canal de SMS, no SAP. Y `ServicioSAP` **ya escribe esa tabla exacta**, asi que la fila de `PLAN_BP05:131` que la marca como `NUEVO` es pesimista.
 
-**Decision derivada de D8:** al quedar obsoleta la logica de recomendador, `@CodigoRecomendador` (`SP:149`) → columna `CodigoRecomendador` (`SP:272`/`:333`) pierde a su productor. El campo destino existe (`Cte.ZrecomendPor:24`) pero **hay que decidir si la columna se sigue llenando y desde donde**, o si se retira del alcance junto con la logica.
+**Consecuencia de D8, ya decidida:** `@CodigoRecomendador` (`SP:149`) y la columna `CodigoRecomendador` (`SP:272`/`:333`) **no se portan**. No se busca equivalente ni se llena el campo `Cte.ZrecomendPor`. Si al implementar aparece logica de recomendador en el codigo existente, **se retira**, no se migra.
 
 **Defectos del SP, por si algo de el se rescata:** la cadena `ELSE IF` **se rompe en 6 puntos** (`:222, 234, 372, 377, 402, 427` son `IF` independientes); `:67` hace `UPDATE TOP (@Cantidad)` **sin `ORDER BY`** → que codigos se reclaman es no determinista, y `@Cantidad` tiene default `NULL` sin guarda; y la opcion 11 con `@TipoCodigo` fuera de `{0,1,2}` **no devuelve nada, sin error** — el mismo patron del `@Op` desconocido del SP padre.
 
@@ -443,7 +459,6 @@ No es "sin equivalente" ni "ya esta". **El campo SAP existe, `ServicioSAP` ya lo
 | `antiguedadAnios/Meses` (`:236-237`) | `Cte.ZantigAnios/ZantigMeses:11-12` | `0` fijos (`:586-587`, `:2851-2852`) |
 | `CURP` (`:280`) | `Cte.Zcurp:13` | `""` fijo (`:588`, `:2853`) |
 | `estadoCivil` (`:243`) | `ZedoCivil` (`CteCto.cs:25`) | `""` fijo (`:691`, `:2961`) |
-| `CodigoRecomendador` (`:272`) | `Cte.ZrecomendPor:24` | vacio |
 | `FechaCita`/`HoraCita` (`:281-282`) | `Cte.Zcita:76` | vacio (`:2921`) |
 | `rfc`, `sexo`, `fechaNacimiento` (`:229-230, :228`) | varios | `""` (`:878-880, :891`), con un comentario en `:854-855` que dice que **LAN los tomaba del maestro** |
 
@@ -484,9 +499,9 @@ Si eso lanza: `da.Fill` falla → el `catch` se lo traga → `return 0` (`:926-9
 
 ### 7.2 Los 6 "sin equivalente" que eran falsos
 
-Salieron al leer los modelos campo por campo en vez de hacer `grep` por palabra española: `CodigoRecomendador`→`ZrecomendPor`, `viveEnCalidad`→`ZviveencCal`, `sueldo`→`ZingMensCredw`, `CURP`→`Zcurp`, `estadoCivil`→`ZedoCivil`, `antiguedadAnios/Meses`→`ZantigAnios/ZantigMeses`. Candidato por confirmar: `tarjeta`→`ZusValidTarj:74`.
+Salieron al leer los modelos campo por campo en vez de hacer `grep` por palabra española: `viveEnCalidad`→`ZviveencCal`, `sueldo`→`ZingMensCredw`, `CURP`→`Zcurp`, `estadoCivil`→`ZedoCivil`, `antiguedadAnios/Meses`→`ZantigAnios/ZantigMeses`. Candidato por confirmar: `tarjeta`→`ZusValidTarj:74`.
 
-**Leccion metodologica:** `"DIMAS"` da 0 coincidencias y `"Dima"` da 4 (`ZidTipoDima:37`, `ZlimCedDimae:36`, `ZapoyoVtaDima:52`, `Zdima`); `"recomendador"` da 0 y `"Recomend"` da 3. Varias conclusiones de "0 coincidencias" eran artefacto del termino elegido.
+**Leccion metodologica:** `"DIMAS"` da 0 coincidencias y `"Dima"` da 4 (`ZidTipoDima:37`, `ZlimCedDimae:36`, `ZapoyoVtaDima:52`, `Zdima`); Varias conclusiones de "0 coincidencias" eran artefacto del termino elegido.
 
 ### 7.3 Los huecos reales que quedan
 
@@ -497,7 +512,7 @@ Solo **3**, confirmados con grep propio: **`tarjetaDigitos`, `creditoHipoteca`, 
 ### 7.4 Lo que si bloquea: 4 catalogos que mueren con Intelisis, mas una funcion
 
 1. **`fnSplit`** — sin fuente (§4.4). Bloqueo duro del camino largo.
-2. **`TablaStD` `'ORIGEN VALIDACION NUMERO CTE'`** (`SP:186-191`). El equivalente `WACODEMSTRDSet` existe en forma, pero **SIN EVIDENCIA** de con que `ZcodeProgram`. Y degradarlo a *"`ZappOrig` no vacio"* —que es lo que hace el codigo hoy (`OrderMethods.cs:639`)— **ensancha la regla sin decision**: ya no compara contra catalogo.
+2. ~~`TablaStD`~~ — **RESUELTO.** Se convirtio en `CatalogoConfiguracion`, alcanzable por el canal 4 con el helper que ya existe (§4.1). Lo que queda no es un hueco sino una decision: hoy el codigo degrada la regla a *"`ZappOrig` no vacio"* (`OrderMethods.cs:639`) y ya no compara contra catalogo; restituir la comparacion es posible y es llamada del usuario.
 3. **`VTASCRegionSku` + `VTASCCodigoPostalRegionCelular`** — bloquean el SKU efectivo que se escribe en la linea.
 4. **`CREDICCondicionArt`** (`SP:178-182`) — para `@Articulo` el SP toma `MAX(IdCondicionArt)` **sin filtro**: "la ultima config dada de alta". Esa semantica no existe en ninguna OData.
 
@@ -516,10 +531,9 @@ Ninguna se resuelve leyendo mas codigo.
 | **E** | **Los 5 defectos del parser**, uno por uno (§4.4) | Corregirlos cambia el comportamiento observable |
 | **F** | **Rama `DIMAS MX`** (`SP:174-183`) | `ServicioSAP` manda `@origen = "PRODUCTOS MX"` fijo (`:898`), asi que nunca se dispara desde el stack nuevo. ¿Se porta, y desde donde llegaria el origen? |
 | **G** | **Las dos fallas silenciosas de la linea de articulo** (§4.8) | Si se replican, el defecto se muda a SAP. Si se corrigen, aparecen lineas que hoy no aparecen |
-| **H** | **`CodigoRecomendador` sin productor** (§4.9) | D8 deprecia su logica. ¿La columna se sigue llenando, y desde donde? |
 | **I** | ~~Las 6 ramas restantes de `SpCREDIDatosSolicitudCreditoArt`~~ | **RESUELTA por D9: todas las ramas se consideran.** Diseño en §4.10. Lo que si queda por decidir de ahi: el `UPDATE CteTel SET ValidacionTel=0` masivo de `UpdateInfo:286-289`, y que devuelve `CheckCliente` cuando el cliente no existe |
 | **J** | **OData V2 o V4 para lo nuevo** | `CreditMethods.cs:302` ya usa V4; el resto es V2. Determina formato de fecha y handshake |
-| **K** | **Criterio de aceptacion** | La regla 25 exige E2E con request y response exactos. `Logs/sap.log` tiene 4 pares y los `Fakes/` permiten probar sin SAP — eso mueve el gate, pero hay que decidir si basta |
+| **K** | **Criterio de aceptacion, y es mas duro de lo que parecia** | La regla 25 exige E2E con request y response exactos, y **no se puede probar sin SAP** (los `Fakes/` son codigo obsoleto generado sin querer, no sirven). Lo unico disponible hoy son los **4 pares reales de `Logs/sap.log`**, que no cubren la superficie de este SP. Hay que decidir: o se consigue acceso a un SAP de pruebas para las escrituras, o se cierra contra la BD de `ServicioAndroid` con diff de comportamiento y se aplaza el gate de SAP. **Esto condiciona el orden de todas las unidades: lo que solo lee se puede validar antes que lo que escribe** |
 | **L** | **Que se hace con el codigo muerto que se va a tocar** | `isValidated` (`:682`), `datosArray` (`:862`), `HasValidPhoneOriginSAPAsync` (`:658`, 0 invocadores), `LiberateClientCredit` (`:1259`, 0 invocadores), el bloque comentado `:758-792`. La regla 12 obliga, pero borrar cambia firmas publicas |
 | **M** | **Semantica de `CheckClientCreditAsync`** (`:804-817`) | Hoy devuelve `true` si el `BusinessPartner` no esta vacio: es prueba de **existencia** con mensaje de error que dice *"no tiene credito activo en SAP"*. Existen `Zcredito:14`, `ZlimCred:31`, `ZtipoCredito:80` sin usar. Cambiarlo empieza a rechazar pedidos que hoy pasan |
 | **N** | **Datos personales.** El SP mueve CURP, RFC, fecha de nacimiento, sueldo y telefonos | Sin dueño ni criterio de retencion para sacarlos de `ServicioAndroid` hacia SAP. Y hay credenciales en claro en `Web.config` (`:32, 37-40, 42, 56, 86`): hay que decidir como se configura lo nuevo **antes** de añadir claves ahi |
@@ -569,7 +583,7 @@ Marcado asi deliberadamente, no rellenado.
 1. **Ninguna ejecucion.** Nada se probo contra la base ni contra SAP. Todo es lectura de codigo.
 2. **El conteo de propiedades de `Cte.cs`** difiere entre pasadas: 71, 73 y 76. **Hay que fijarlo** antes de usarlo como base de un mapeo.
 3. **Si el PATCH a `ZSDT_CTE_ENTITYSet` acepta mas que `ZidMagento`.** Es la verificacion mas decisoria pendiente (§5).
-4. **El `ZcodeProgram`** que reemplaza a `TablaStD` en `WACODEMSTRDSet`.
+4. **El `NOMBRECATALOGO` exacto** con el que hay que llamar a `AI_GET_CatalogoConfiguracion` para el catalogo de origen de validacion. Por el legado deberia ser `'ORIGEN VALIDACION NUMERO CTE'` (`SP:190`), pero no se verifico contra la respuesta real del endpoint.
 5. **El formato del telefono en `TcAAEA00030_EnvioMensajes`** — con o sin lada. De eso depende si la comparacion de `SP:213` funciona alguna vez. Un `SELECT TOP 100` lo resuelve.
 6. **El `WHERE` correcto de la lectura de SMS.** Tres variantes conviven: el SP filtra solo por `Cliente` (`:207`); `OrderMethods.cs:552-561` hace `INNER JOIN` con `VTASDCodigoVerificacioneCommerce` por telefono; `CreditMethods.cs:271-274` hace un `IN`. No son equivalentes.
 7. **Si `SpCREDIDatosSolicitudCreditoArt` esta desplegado.** Tener el `.sql` no prueba que el objeto exista. Vive en `IntelisisTmp` (`:1`), asi que *"no existe en `MAVICBOSANDROID`"* es esperable y **no** es prueba de que falte.
@@ -601,6 +615,6 @@ Conteos hechos abriendo el archivo, no copiados.
 
 **No existen campos de aval.** `grep -niE 'aval'` da una sola mencion real y es un comentario de changelog de 2018 (`SP:34`). En los 66 parametros y las 76 columnas **no hay ni un campo de aval**. Cualquier documento que los liste describe una version que ya no existe.
 
-**`SP_GeneraConsecutivoCteMavi` esta huerfano.** `SP:16` registra que se le quito la ejecucion en 2017; `grep` de `EXEC` en todo `SPsOrden/` → 0. No es dependencia.
+**`SP_GeneraConsecutivoCteMavi` NO esta huerfano — correccion del 2026-09-18.** Es cierto que `SP_CREDITO_WEB_DATOS` ya no lo llama (`SP:16`, quitado en 2017, y 0 `EXEC` en `SPsOrden/`). Pero **LAN si lo ejecuta**, desde `cte_prospecto()` en `LAN/WebApiMagento/Metodos/Credit/Methods.cs:258-287` y `Metodos/Credit/CredYPrestamo/CredyPrestamoMethods.cs:212-227` (`EXEC SP_GeneraConsecutivoCteMavi 'MAVI'`), para generar el cliente prospecto antes de llamar al SP. Es dependencia del flujo `CreditoWeb_SaveData(_Articulos)`. Ver `PLAN_EJECUCION_SP_CREDITO_A_CODIGO.md` §3.7 y §6-2.
 
 **Lo que el changelog anuncia y ya no existe:** `SP:30` anuncia las operaciones `SaveFirstData` y `UpdateFirstData`, que **no estan** en este SP — solo hay 3 ramas `@Op`. Viven en `SpCREDISolicitudWebPrimerGuardado`.
