@@ -2,7 +2,7 @@
 tags: [contrato, endpoint, migracion, ola-8, e-23, intelisis]
 partida: E-23
 endpoint: order/getOrderId/{idEcommerce}
-actualizado: 2026-09-15
+actualizado: 2026-09-21
 ---
 
 # E-23 — `order/getOrderId/{idEcommerce}` · mapa del llamador paso a paso
@@ -18,9 +18,9 @@ mueve— sino el llamador de la LAN: `OrdersController.getOrderId`, que después
 | Método que hay que portar | `OrderMethods.InsertDetPedido` — `OrderMethods.cs:454` |
 | Bases que toca | **IntelisisTmp** en MAVICUBOS 🟠 · Magento (REST, vía DMZ) |
 | Tablas que escribe | `eCommerceDetPedidos` — nada más |
-| Estado | 🗑️ **propuesta de baja** — su consumidor ya se migró y no la necesita |
+| Estado | 🗑️ **baja confirmada, 21 sep** — Magento ignora el arreglo que justificaba la cadena |
 
-> 🗑️ **Esta partida va camino de darse de baja, no de portarse.** El 14 sep se verificó que
+> 🗑️ **Partida dada de baja el 21 sep. No se porta.** El 14 sep se verificó que
 > el único lector de `eCommerceDetPedidos` —el flujo de recoger en sucursal— ya está migrado
 > por Dev 2 y **no usa la tabla**: el `order_id` que E-23 existía para rellenar ahora llega
 > como parámetro de ruta. El detalle de un pedido se consulta por **SD36**. Ver
@@ -427,3 +427,58 @@ cierran como bajas.
 
 Ver también [[SP_VTASeCommerceDetPedidos]], [[FLUJO_OLA8_REUBICACION_LLAMADORES]] y
 [[FLUJO_RECOGER_EN_SUCURSAL]].
+
+---
+
+## 7. La baja, confirmada · 21 de septiembre
+
+La única pregunta que quedaba era si Magento usa el arreglo `products` del aviso de recogida.
+**No hacía falta preguntar: el módulo que lo recibe está en el repositorio de Magento.**
+
+`app\code\Omnipro\OrderStatus\etc\webapi.xml` declara la ruta:
+
+```xml
+<route url="/V1/omnipro-orderstatus/order" method="POST">
+    <service class="Omnipro\OrderStatus\Api\OrderManagementInterface" method="postOrder"/>
+```
+
+Y `Model\OrderManagement.php:176` arma el arreglo, pero **solo lo consume dentro de un `if`**:
+
+```php
+if (!empty($item['products'])) {
+    $productsSku = array_column($item['products'], 'sku');
+    $productsQty = array_column($item['products'], 'qty');
+    $products = array_combine($productsSku, $productsQty);
+}
+
+if (in_array($item['status'], self::ORDER_STATUSES_INVOICE_SHIP)) {
+    $this->checkProductStock($products, $item['source_code']);
+    $this->createInvoice($order, $products);
+    …
+}
+```
+
+```php
+const ORDER_STATUSES_INVOICE_SHIP = ['store_pickup_complete', 'ship', 'ship_carrier'];
+```
+
+**El aviso de recogida manda `status = "store_pickup"`** (`CodigoRecogerSucursal.cs:175`), que no
+está en esa lista ni en las de cancelación o RMA. El arreglo se calcula y **nunca se lee**.
+
+### Qué cierra esto
+
+La cadena entera se queda sin razón: E-23 rellenaba `idOrden`; `idOrden` servía para que el
+flujo de recogida encontrara las filas; esas filas alimentaban un arreglo que Magento ignora.
+Y el flujo de recogida ya se migró sin usar la tabla.
+
+**También cae la regla de cambio de SKU por región**, cuyo último destino posible era ese
+arreglo. Quedó escrita y subida en `13675c1` de ServicioSAP; su porteo está documentado en
+[[SP_VTASeCommerceDetPedidos]] por si la regla reaparece en otro flujo.
+
+### Lo que NO cae, y conviene vigilar
+
+**`store_pickup_complete` sí consume `products`**, y con esas cantidades Magento factura y
+descuenta inventario. En APIMagento, APIMagentoDMZ y ServicioSAP **nadie manda ese estatus**
+—solo aparece `store_pickup`—, así que el emisor está fuera de estos tres repos: POS o
+Intelisis. Conviene confirmar quién es antes del apagado; si desaparece con la LAN, se cae la
+facturación de las recogidas.

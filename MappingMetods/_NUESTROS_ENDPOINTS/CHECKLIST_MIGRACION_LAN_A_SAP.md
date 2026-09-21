@@ -168,7 +168,7 @@ Se listan aquí para que la serie se pueda verificar sin abrir otro documento. E
 | E-21 | `magento/children/{page}/{size}/{store}` | 8.1 | ✅ llamador reconstruido |
 | E-22 | `magento/productWithWebsites/{page}/{size}` | 8.1 | ✅ llamador reconstruido |
 | 🗑️ | ~~`magento/noImagenProduct/{store}`~~ | — | baja el 8 sep, **sin ID** |
-| E-23 | `magento/getOrderId/{incrementId}` | 8.2 | 🗑️ propuesta de baja — su consumidor ya migró sin la tabla |
+| E-23 | `magento/getOrderId/{incrementId}` | 8.2 | 🗑️ **baja confirmada el 21 sep** — Magento ignora el arreglo que justificaba la cadena |
 | E-24 | `magento/deletePromociones` | 8.2 | ✅ escrito, sin ejecutar |
 | E-25 | `magento/deleteReservations` | 8.2 | ✅ escrito, sin ejecutar |
 | E-26 | `magento/getCuenta` | 8.2 | ya cubierta como **E-11** en la Ola 6 |
@@ -212,25 +212,25 @@ Da igual si eso costó trabajo o no — resuelto es resuelto:
 | Ya cubierta por otra ola | la partida equivalente está cerrada |
 | **Dada de baja** | **no se cuenta** — sale del denominador |
 
-Las cuatro bajas quedan fuera, así que el denominador de la ola es **26**.
+Las bajas quedan fuera. Con E-23 confirmada como baja el 21 sep son **cinco**, así que el denominador de la ola es **25**.
 
 | Grupo | Entradas | Completas | Qué falta |
 |---|---|---|---|
 | 8.1 · catálogo | 7 | **6** | E-19: MySQL e Intelisis en espera |
-| 8.2 · reenvíos | 5 | **4** | E-23: propuesta de baja, espera la respuesta sobre `products` |
+| 8.2 · reenvíos | 4 | **4** | — E-23 sale del conteo |
 | 8.3 · órdenes | 3 | **2** | E-29: lo reconstruye Dev 2 |
 | 8.4 · importación | 8 | **8** | — sin trabajo, su cliente no cambia |
 | 8.5 · sin llamador | 3 | **3** | verificación diferida al apagado |
 | 8.6 · bajas | 4 | — | fuera del conteo |
-| **Total** | **26** | **23** | **88 %** |
+| **Total** | **25** | **23** | **92 %** |
 
 > Igual que en el resto del plan, **completa significa desarrollo terminado, no en producción**.
 > Las tres de 8.5 cierran con una validación diferida —comprobar que siguen operando tras el
 > apagado—, el mismo trato que reciben H-02 y H-04 esperando QA.
 
-> ✅ **Desde el 9 sep este 88 % entra en el total del plan.** No se promedia con el 46,2 %:
-> se suman **partidas equivalentes**. `38 × 46,2 % = 17,6` más `26 × 88,5 % = 23,0`, sobre
-> **64 entradas** —las cuatro bajas quedan fuera—, da **63,4 %**. Cada entrada pesa lo mismo,
+> ✅ **Desde el 9 sep este avance entra en el total del plan.** No se promedia con el 46,2 %:
+> se suman **partidas equivalentes**. `38 × 46,2 % = 17,6` más `25 × 92 % = 23,0`, sobre
+> **63 entradas** —las cinco bajas quedan fuera—, da **64,4 %**. Cada entrada pesa lo mismo,
 > así que una ruta que no requirió trabajo cuenta igual que un endpoint migrado.
 
 > 🔴 **Corrección del 9 sep: el grupo 8.5 tiene tres rutas, no seis.** Los dos checklists decían "6 rutas" y su texto añadía *"y las tres de producto sin llamador en la LAN"*. **Esas tres no existen**: las ocho rutas de producto de la DMZ están todas en 8.4. El rango de identificadores solo da para tres —E-39, E-40 y E-41— y la enumeración de arriba lo confirma.
@@ -323,15 +323,15 @@ Las cuatro bajas quedan fuera, así que el denominador de la ola es **26**.
 
 El contador solo cuenta partidas cerradas, así que esconde el trabajo a medias. El avance ponderado de esas 38 es **46,2 %**; el desglose por endpoint, con el criterio de cálculo y el estado de pruebas de cada uno, está en [[ESTADO_PRUEBAS_Y_AVANCE]].
 
-**Sumando las rutas de la Ola 8, el avance del plan es 63,4 %.**
+**Sumando las rutas de la Ola 8, el avance del plan es 64,4 %.**
 
 | | Entradas | Avance |
 |---|---:|---:|
 | Partidas medibles | 38 | 46,2 % |
 | Rutas de la Ola 8, sin las bajas | 26 | 88,5 % |
-| **Total** | **64** | **63,4 %** |
+| **Total** | **63** | **64,4 %** |
 
-> ⚙️ **Cambio de criterio del 9 sep.** Hasta ahora las 30 rutas de la Ola 8 quedaban fuera del promedio porque se miden con otra vara — completas cuando su llamador queda resuelto, sin hitos de cutover ni de ficha. Dejarlas fuera escondía trabajo real: once llamadores escritos y probados que no movían el porcentaje. Ahora se suman como **partidas equivalentes**, `38 × 46,2 % + 26 × 88,5 % = 40,6` sobre **64**.
+> ⚙️ **Cambio de criterio del 9 sep.** Hasta ahora las 30 rutas de la Ola 8 quedaban fuera del promedio porque se miden con otra vara — completas cuando su llamador queda resuelto, sin hitos de cutover ni de ficha. Dejarlas fuera escondía trabajo real: once llamadores escritos y probados que no movían el porcentaje. Ahora se suman como **partidas equivalentes**, `38 × 46,2 % + 25 × 92 % = 40,6` sobre **63**.
 >
 > El denominador excluye las **cuatro bajas**. Y cada entrada pesa lo mismo, así que las ocho rutas que pasan sin cambio cuentan igual que un endpoint migrado con sus pruebas — es lo que implica contarlas.
 
