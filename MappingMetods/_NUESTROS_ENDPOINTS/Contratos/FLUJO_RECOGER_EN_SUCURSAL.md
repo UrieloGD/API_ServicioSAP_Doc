@@ -17,8 +17,8 @@ Todo lo que aparece abajo apunta ahí salvo lo ya migrado.
 > `createStorepickupCode` (`8107ede`) y `generateNewStorepickupCode` (`b8f4358`), los dos en
 > `Methods\Order\StorePickupMethods.cs`. Los datos del cliente salen ahora de **SD36 → BP05**
 > en vez de `Venta` ⋈ `Cte` ⋈ `VentaEntrega`, y la clave vive en **`BpRecogePedidos`** de
-> SIGMAVI. Con eso, `eCommerceDetPedidos` se queda **sin ningún lector** y **E-23 queda de baja**,
-> confirmada el 21 sep (ver [[E-23_getOrderId]]).
+> SIGMAVI. Con eso, `eCommerceDetPedidos` se queda **sin ningún lector** y **`getOrderId` queda de baja**,
+> confirmada el 21 sep (ver [[BAJA_getOrderId]]).
 
 > **Dos hallazgos en lo migrado, verificados el 14 sep.** El primero resultó inocuo; el segundo ya está corregido.
 >
@@ -27,7 +27,7 @@ Todo lo que aparece abajo apunta ahí salvo lo ya migrado.
 > (`CodigoRecogerSucursal.cs:178`). **Comprobado el 21 sep: Magento lo ignora.**
 > `Omnipro\OrderStatus\Model\OrderManagement.php:176` solo consume ese arreglo cuando el
 > estatus está en `['store_pickup_complete', 'ship', 'ship_carrier']`, y este aviso manda
-> `store_pickup`. No hay que llenarlo. De paso, con eso **E-23 queda de baja**.
+> `store_pickup`. No hay que llenarlo. De paso, con eso **`getOrderId` queda de baja**.
 >
 > **b) El folio de SD36 llegaba sin prefijo — corregido el 21 sep** en
 > `CheckDocumentExistsSD36Async`, que ahora lo normaliza. `StorePickupMethods.cs:226` y `:264` pasan el

@@ -1,13 +1,13 @@
 ---
 tags: [sp, intelisis, mapeo, migracion, ola-8, sd36]
-partida: E-23
+partida: `getOrderId`
 actualizado: 2026-09-08
 ---
 
 # `SpVTASeCommerceDetPedidos` — mapeo de lógica
 
 Procedimiento de **IntelisisTmp** que guarda el detalle de los pedidos hechos en Magento.
-Es lo que bloquea **E-23** (`getOrderId`): el reenvío en sí es limpio, pero su llamador
+Es lo que bloquea **`getOrderId`** (`getOrderId`): el reenvío en sí es limpio, pero su llamador
 `InsertDetPedido` termina aquí.
 
 | | |
@@ -36,14 +36,14 @@ Tres ramas según `@Opc`: **`Insertar`**, **`Limpiar`** y **`PrecioIncorrecto`**
 
 | Llamador | Rama | Notas |
 |---|---|---|
-| `OrderMethods.InsertDetPedido` (:456, :482) | `Limpiar` y luego `Insertar` por línea | Lo dispara **E-23** `order/getOrderId`. Lee `Venta`+`VentaD` para armar las líneas |
+| `OrderMethods.InsertDetPedido` (:456, :482) | `Limpiar` y luego `Insertar` por línea | Lo dispara **`getOrderId`** `order/getOrderId`. Lee `Venta`+`VentaD` para armar las líneas |
 | `OrderMethods.SetPedido` (:582, :599) | `Limpiar` y luego `Insertar` por línea | Partida de Dev 2 |
 | `OrderMethods` (:1324) | `PrecioIncorrecto` | Pasa `numpagos` en el hueco de `@Cantidad` |
 
-> 🔴 **E-23 nunca ejercita la lógica de región.** `InsertDetPedido` pasa `codigoPostal = "1"`
+> 🔴 **`getOrderId` nunca ejercita la lógica de región.** `InsertDetPedido` pasa `codigoPostal = "1"`
 > y `recogerSucursal = 0` fijos (`OrderMethods.cs:482`). Un CP de un carácter no está en
 > `VTASCCodigoPostalRegionCelular`, así que **siempre** cae por la rama "no es región
-> celular". Solo `SetPedido` manda el CP real. Al portar E-23 hay que decidir si se conserva
+> celular". Solo `SetPedido` manda el CP real. Al portar `getOrderId` hay que decidir si se conserva
 > ese placeholder o se corrige.
 
 > Se salta el artículo `SEGU00001` — el seguro — antes de insertar.
@@ -186,7 +186,7 @@ Las dos se comprueban y se eliminan al entrar y al salir, con el patrón
 
 De ellas, cuatro son de la lógica de región —`VTASCRegionSku`,
 `VTASCCodigoPostalRegionCelular`, `eCommerceExist`, `VTASDEcommerceExportaArtExistencia`— y
-**podrían no hacer falta para E-23**, porque su llamador pasa el CP fijo en `"1"` y nunca
+**podrían no hacer falta para `getOrderId`**, porque su llamador pasa el CP fijo en `"1"` y nunca
 entra por esa rama. Confirmarlo antes de arrastrar cuatro tablas que quizá nadie use por este
 camino.
 

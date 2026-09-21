@@ -143,7 +143,7 @@ Mismo criterio de riesgo que en Dev 3: más APIs por endpoint significa más for
 > se hace, en `to_salesdoc_items` (`Material`, `Cantidad`). **Comprobado el 21 sep: Magento lo ignora** para el estatus
 > `store_pickup` que manda este aviso — `Omnipro\OrderStatus\Model\OrderManagement.php:176`
 > solo lo lee con `store_pickup_complete`, `ship` o `ship_carrier`—, así que el arreglo vacío no
-> rompe nada y no hay que llenarlo. Con eso E-23 de Dev 3 queda de baja — ver [[E-23_getOrderId]].
+> rompe nada y no hay que llenarlo. Con eso `getOrderId` de Dev 3 queda de baja — ver [[BAJA_getOrderId]].
 >
 > Relacionado: como el migrado no lee `EcommerceDetPedidos`, esa tabla se queda sin ningún
 > lector. La fuente de artículos y cantidades para S3-02 es SD36, no ella.

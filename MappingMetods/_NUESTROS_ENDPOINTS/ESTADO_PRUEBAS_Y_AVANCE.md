@@ -63,10 +63,10 @@ Para que el número signifique algo y no sea una impresión, cada partida se mid
 | E-13 | `customer/cashCustomerReport` | 6 | **80 %** | 🔶 Validación y escritura local verificadas el 25 ago. **La copia al share no es verificable desde desarrollo** | Se valida en QA |
 | E-14 | `product/obtenerImagen` | 6 | **55 %** ⁽⁵⁾ | 🔶 Solo el 401. **No es verificable desde desarrollo**: la impersonación falla antes de la copia | Se valida en QA |
 | E-15 | `order/GetPickUpCode` | 7 | **90 %** ⁽⁶⁾ | ✅ Probado el 14 sep: 200 con clave, 404 sin fila, 400 con body nulo (paridad) | Falta el cutover, que va con los tres escritores |
-| E-46    | `credit/SolicitudMercancia`           | 7   | 0 %      | —                       | Conexión a definir por equipo SAP |
-| E-47    | `credit/codigoPromocion`              | 8   | 0 %      | —                       | 🟠 Origen IntelisisTmp            |
-| E-48    | `credit/getPlazos`                    | 8   | 0 %      | —                       | 🟠 Origen IntelisisTmp            |
-| E-49    | `customerService/obtenerTipoGarantia` | 8   | 0 %      | —                       | 🔒 Estructura de Miguel Marín     |
+| E-45    | `credit/SolicitudMercancia`           | 7   | 0 %      | —                       | Conexión a definir por equipo SAP |
+| E-46    | `credit/codigoPromocion`              | 8   | 0 %      | —                       | 🟠 Origen IntelisisTmp            |
+| E-47    | `credit/getPlazos`                    | 8   | 0 %      | —                       | 🟠 Origen IntelisisTmp            |
+| E-48    | `customerService/obtenerTipoGarantia` | 8   | 0 %      | —                       | 🔒 Estructura de Miguel Marín     |
 | ➡️ | ~~`credit/GetUnificationWalletStatus`~~ | — | — | — | **Reasignado a Dev 2** el 12 ago |
 | ➡️ | ~~`credit/SetUnificationWalletData`~~ | — | — | — | **Reasignado a Dev 2** el 12 ago |
 
@@ -1162,22 +1162,22 @@ para diagnosticar, no para reponer el archivo.**
 
 | ID | Estado | Por qué |
 |---|---|---|
-| E-24 `deletePromociones` | escrito, **sin ejecutar** | Vacía las categorías OUTLET en Magento |
-| E-25 `deleteReservations` | escrito, **sin ejecutar** | Vacía las reservas de inventario |
-| E-28 `setOrderStatus` | escrito, **payload verificado** | El helper compartido |
-| E-30 `setCAccount` | escrito, **payload verificado** | Modifica una orden real |
+| E-23 `deletePromociones` | escrito, **sin ejecutar** | Vacía las categorías OUTLET en Magento |
+| E-24 `deleteReservations` | escrito, **sin ejecutar** | Vacía las reservas de inventario |
+| E-27 `setOrderStatus` | escrito, **payload verificado** | El helper compartido |
+| E-29 `setCAccount` | escrito, **payload verificado** | Modifica una orden real |
 
 Los dos primeros escriben en Magento y no son cargas de lectura, así que no se dispararon. Los
 dos últimos se verificaron **sin HTTP**: cargando el ensamblado compilado y comparando el JSON
 que producen contra las cadenas que el legado arma a mano. **Idéntico en los tres casos de
-E-28 y en el de E-30.**
+E-27 y en el de E-29.**
 
 #### Qué queda
 
-**E-23** (`getOrderId`) es el único llamador sin escribir: su llamador ejecuta
+**`getOrderId`** (`getOrderId`) es el único llamador sin escribir: su llamador ejecuta
 `SpVTASeCommerceDetPedidos` en IntelisisTmp, mapeado en [[SP_VTASeCommerceDetPedidos]].
 
-Se dio de baja `magento/noImagenProduct` y la serie se reindexó: **68 entradas, hasta E-49**.
+Se dio de baja `magento/noImagenProduct` y la serie se reindexó: **68 entradas, hasta E-48**.
 
 #### Cómo se mide esta ola — 23 de 26
 
@@ -1189,8 +1189,8 @@ costado trabajo o no. Las cuatro bajas salen del denominador.
 | Grupo | Entradas | Completas |
 |---|---|---|
 | 8.1 · catálogo | 7 | 6 — falta E-19 |
-| 8.2 · reenvíos | 5 | 4 — falta E-23 |
-| 8.3 · órdenes | 3 | 2 — E-29 es de Dev 2 |
+| 8.2 · reenvíos | 5 | 4 — falta `getOrderId` |
+| 8.3 · órdenes | 3 | 2 — E-28 es de Dev 2 |
 | 8.4 · importación | 8 | 8 |
 | 8.5 · sin llamador | 3 | 3 |
 | **Total** | **26** | **23 · 88 %** |
@@ -1444,9 +1444,9 @@ montos de préstamo **menores**, sin error ni aviso. Verificado en APIMagento
 
 | Tema | Bloquea | Quién decide |
 |---|---|---|
-| Equivalencia de `IntelisisTmp` | E-47, E-48 y los 12 mixtos | Arquitectura |
+| Equivalencia de `IntelisisTmp` | E-46, E-47 y los 12 mixtos | Arquitectura |
 | Convención de conexiones: fábricas estáticas del stash vs métodos de instancia de la Ola 0 | Integrar el stash del 29-jul (M-14, M-08) | Líder técnico |
-| Estructura de garantías | E-49 | Miguel Marín (PCP) |
+| Estructura de garantías | E-48 | Miguel Marín (PCP) |
 | ~~Definición de monedero~~ | ➡️ Dev 2 desde el 12 ago | — |
 | ~~¿Se elimina `ExistRFCAndPhoneCte`?~~ | — | ✅ Descartado el 11 ago |
 
@@ -1499,8 +1499,8 @@ de **2 bytes** que en otra corrida devolvió 88 036. Los tiempos crecen de forma
 cargas vacían la tabla antes de rellenarla. **El servidor no se tocó**: `SQLITE_DB_PATH` está
 sobreescrito por `Web.local.config`.
 
-**No se ejecutaron** E-24 `deletePromociones` ni E-25 `deleteReservations` — escriben en Magento
-y esperan autorización expresa. Tampoco E-28 ni E-30, por lo mismo. E-23 no tiene controller.
+**No se ejecutaron** E-23 `deletePromociones` ni E-24 `deleteReservations` — escriben en Magento
+y esperan autorización expresa. Tampoco E-27 ni E-29, por lo mismo. `getOrderId` no tiene controller.
 
 Los requests quedan en `ServicioSap\ServicioSap\Tests\ServicioSap.Ola8.http`.
 
@@ -1556,5 +1556,5 @@ inesperado en la posición 0"*.
 #### Lo que sigue sin probarse
 
 **E-19 `attributeSetChildren`** no se reejecutó tras el arreglo: `atributos_de_magento` sigue
-en 14 089 de 24 092. **E-24, E-25, E-28 y E-30** siguen sin ejecutar, esperando autorización:
+en 14 089 de 24 092. **E-23, E-24, E-27 y E-29** siguen sin ejecutar, esperando autorización:
 escriben en Magento.

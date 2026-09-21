@@ -1,11 +1,11 @@
 ---
 tags: [contrato, endpoint, migracion, ola-8, e-23, intelisis]
-partida: E-23
+partida: `getOrderId`
 endpoint: order/getOrderId/{idEcommerce}
 actualizado: 2026-09-21
 ---
 
-# E-23 — `order/getOrderId/{idEcommerce}` · mapa del llamador paso a paso
+# `getOrderId` — `order/getOrderId/{idEcommerce}` · mapa del llamador paso a paso
 
 Lo que la partida reubica **no es el reenvío a Magento** —ése ya vive en la DMZ y no se
 mueve— sino el llamador de la LAN: `OrdersController.getOrderId`, que después de traer el
@@ -22,7 +22,7 @@ mueve— sino el llamador de la LAN: `OrdersController.getOrderId`, que después
 
 > 🗑️ **Partida dada de baja el 21 sep. No se porta.** El 14 sep se verificó que
 > el único lector de `eCommerceDetPedidos` —el flujo de recoger en sucursal— ya está migrado
-> por Dev 2 y **no usa la tabla**: el `order_id` que E-23 existía para rellenar ahora llega
+> por Dev 2 y **no usa la tabla**: el `order_id` que `getOrderId` existía para rellenar ahora llega
 > como parámetro de ruta. El detalle de un pedido se consulta por **SD36**. Ver
 > [[#6. Lo que cambió · 9 al 15 de septiembre]] antes de leer el resto.
 
@@ -282,9 +282,9 @@ Mapeo desde este llamador:
 
 **Las cuatro marcadas ⚪ solo se alcanzan con un CP real**, y este llamador manda `"1"`
 fijo. `ecomerceexportaart` y `#DetalleeCommerceDetPedidos` pertenecen a la rama
-`PrecioIncorrecto`, que E-23 no invoca.
+`PrecioIncorrecto`, que `getOrderId` no invoca.
 
-> Para portar E-23 hacen falta, en el peor caso, **tres tablas**: `Venta`, `VentaD` y
+> Para portar `getOrderId` hacen falta, en el peor caso, **tres tablas**: `Venta`, `VentaD` y
 > `eCommerceDetPedidos`. Las otras cuatro entran solo si se decide corregir el CP fijo, y esa
 > es una desviación de paridad que hay que aprobar aparte.
 
@@ -328,7 +328,7 @@ llamador no se porta.
 ### Para qué existía la tabla
 
 `eCommerceDetPedidos` era un **buzón**, no un registro de la venta. Se llenaba dos veces —en
-el alta, y otra vez desde E-23 ya con el `order_id` de Magento— y se leía **una sola**, en
+el alta, y otra vez desde `getOrderId` ya con el `order_id` de Magento— y se leía **una sola**, en
 `CodigoRecogerSucursal.cs:151`:
 
 ```sql
@@ -338,7 +338,7 @@ WHERE idorden = @Id AND idPedido = @idEcommerce
 
 Con esos artículos se armaba el aviso de *"puede recoger en la tienda"*. La consulta filtra
 por `idorden`, que el alta no conocía: **rellenar esa columna era toda la razón de ser de
-E-23**.
+`getOrderId`**.
 
 ### Por qué deja de hacer falta
 
@@ -467,7 +467,7 @@ está en esa lista ni en las de cancelación o RMA. El arreglo se calcula y **nu
 
 ### Qué cierra esto
 
-La cadena entera se queda sin razón: E-23 rellenaba `idOrden`; `idOrden` servía para que el
+La cadena entera se queda sin razón: `getOrderId` rellenaba `idOrden`; `idOrden` servía para que el
 flujo de recogida encontrara las filas; esas filas alimentaban un arreglo que Magento ignora.
 Y el flujo de recogida ya se migró sin usar la tabla.
 
