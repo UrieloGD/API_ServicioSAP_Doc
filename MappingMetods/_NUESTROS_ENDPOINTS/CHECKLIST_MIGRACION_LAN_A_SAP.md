@@ -7,7 +7,7 @@ agente: Nexo (con asistencia de Claude)
 
 # Checklist — Migración LAN → SAP
 
-Lista de control del plan de migración. La serie vigente es **H-01…H-04**, **E-01…E-48** y **M-01…M-15**: 67 entradas. **No todas son partidas de desarrollo:** 29 de ellas, `E-16`…`E-44`, son las rutas de reapunte de la Ola 8, y ahí lo que se reconstruye son los llamadores, no las rutas. Descontadas ésas, quedan **38 partidas medibles** — las que se promedian en [[ESTADO_PRUEBAS_Y_AVANCE]]. Se va marcando aquí conforme se completa cada una. Alcance: todo lo que **no es Intelisis** (ServicioAndroid, SQLite, SIGMAVI, DMZ/SMB); los mixtos (Intelisis + otros) quedan documentados pero pendientes de decisión de arquitectura. La única pieza que toca SAP directamente (E-45) se deja preparada para que el equipo de SAP la conecte.
+Lista de control del plan de migración. La serie vigente es **H-01…H-04**, **E-01…E-47** y **M-01…M-15**: 66 entradas. **No todas son partidas de desarrollo:** 28 de ellas, `E-16`…`E-43`, son las rutas de reapunte de la Ola 8, y ahí lo que se reconstruye son los llamadores, no las rutas. Descontadas ésas, quedan **38 partidas medibles** — las que se promedian en [[ESTADO_PRUEBAS_Y_AVANCE]]. Se va marcando aquí conforme se completa cada una. Alcance: todo lo que **no es Intelisis** (ServicioAndroid, SQLite, SIGMAVI, DMZ/SMB); los mixtos (Intelisis + otros) quedan documentados pero pendientes de decisión de arquitectura. La única pieza que toca SAP directamente (E-44) se deja preparada para que el equipo de SAP la conecte.
 
 > 🎫 **El `#` de cada ola es su work item.** Van del **12551** al **12563**, más el **12550** del mapeo Android/SQLite/SigMavi, que no es una ola. Es el número que va en el `Refs` de los commits.
 >
@@ -31,7 +31,7 @@ La nueva API **no va a seguir apuntando a IntelisisTmp**. Criterio acordado:
 
 Las partidas afectadas quedan marcadas 🟠. No se escriben ni se prueban contra el origen viejo mientras el destino no esté definido: probar contra IntelisisTmp da un verde que no significa nada.
 
-En la práctica esto recae sobre los mixtos `M-11`…`M-08` y sobre las partidas que hoy cruzan a Intelisis (`E-45`, `E-46`, `E-47`), que ya estaban fuera de la ruta principal.
+En la práctica esto recae sobre los mixtos `M-11`…`M-08` y sobre las partidas que hoy cruzan a Intelisis (`E-44`, `E-45`, `E-46`), que ya estaban fuera de la ruta principal.
 
 ---
 
@@ -132,11 +132,11 @@ En la práctica esto recae sobre los mixtos `M-11`…`M-08` y sobre las partidas
 
 ## Ola 8 — Reubicación de llamadores hacia la DMZ · #12559
 
-29 rutas con identificador, **E-16 a E-44**, más dos dadas de baja que lo perdieron. No se portan: lo que se reubica son sus llamadores, que hoy viven en APIMagento. Once se reconstruyen —siete de catálogo hacia SQLite, tres reenvíos y un helper compartido para `order/setOrderStatus`—, ocho pasan sin cambio porque las atiende la herramienta de importación, tres solo se verifican, dos ya están cubiertas por la Ola 6 y cuatro se dan de baja.
+28 rutas con identificador, **E-16 a E-43**, más tres dadas de baja que lo perdieron. No se portan: lo que se reubica son sus llamadores, que hoy viven en APIMagento. Once se reconstruyen —siete de catálogo hacia SQLite, tres reenvíos y un helper compartido para `order/setOrderStatus`—, ocho pasan sin cambio porque las atiende la herramienta de importación, tres solo se verifican, dos ya están cubiertas por la Ola 6 y cuatro se dan de baja.
 
-> 🗑️ **`magento/noImagenProduct/{store}` dada de baja el 8 sep, sin ID.** No tiene llamador en APIMagento y su resultado depende por completo de la tienda —`all` devuelve 1 producto, `viu` 1 704, `muebles_america` 1 784, `mavi` 14—, así que sin llamador que copiar no hay forma de saber con cuál se llamaba. Se escribió y probó antes de retirarla. **Pierde su identificador y los posteriores se reindexan una posición**, igual que se hizo con `setRecommenderList` el 31 ago: la serie pasa de 69 entradas a 68 y termina en E-48.
+> 🗑️ **`magento/noImagenProduct/{store}` dada de baja el 8 sep, sin ID.** No tiene llamador en APIMagento y su resultado depende por completo de la tienda —`all` devuelve 1 producto, `viu` 1 704, `muebles_america` 1 784, `mavi` 14—, así que sin llamador que copiar no hay forma de saber con cuál se llamaba. Se escribió y probó antes de retirarla. **Pierde su identificador y los posteriores se reindexan una posición**, igual que se hizo con `setRecommenderList` el 31 ago: la serie pasa de 69 entradas a 68 y termina en E-47.
 
-> ✅ **Once de los doce llamadores escritos el 7 sep.** Las siete cargas de catálogo (E-16…E-22) verificadas contra la cadena completa DMZ → Magento → SQLite, sin perder filas y con las diferencias explicadas por catálogo vivo. También el helper compartido **E-27** —el que bloqueaba a Dev 2— y los tres reenvíos **E-23**, **E-24** y **E-29**. Falta solo **`getOrderId`** (`getOrderId`), que el 14 sep pasó a proponerse como baja. Subido el 14 sep en `c7d582d`.
+> ✅ **Once de los doce llamadores escritos el 7 sep.** Las siete cargas de catálogo (E-16…E-22) verificadas contra la cadena completa DMZ → Magento → SQLite, sin perder filas y con las diferencias explicadas por catálogo vivo. También el helper compartido **E-27** —el que bloqueaba a Dev 2— y los tres reenvíos **E-23**, **E-24** y **E-28**. Falta solo **`getOrderId`** (`getOrderId`), que el 14 sep pasó a proponerse como baja. Subido el 14 sep en `c7d582d`.
 
 > ✅ **Las siete cargas vuelven a pasar — 17 sep.** La corrida del 15 dejó tres fallando; la causa era del helper `Curl`, no del porteo. Corregido, `children` vuelve a **11 265 filas** y `product_in_stores` a **32 548**, los conteos exactos de antes. `productWithWebsites` encadena **34 páginas sin un solo reintento**, donde antes moría en la 13.
 
@@ -174,25 +174,25 @@ Se listan aquí para que la serie se pueda verificar sin abrir otro documento. E
 | E-25 | `magento/getCuenta` | 8.2 | ya cubierta como **E-11** en la Ola 6 |
 | E-26 | `magento/setCuenta` | 8.2 | ya cubierta como **E-12** en la Ola 6 |
 | E-27 | `order/setOrderStatus` | 8.3 | ✅ helper compartido, lo consume Dev 2 |
-| E-28 | `order/jsonOrders/{incrementId}` | 8.3 | lo reconstruye **Dev 2** dentro de `getOrderInfoAndSet` |
-| E-29 | `order/setCAccount` | 8.3 | ✅ escrito, sin ejecutar |
-| E-30 | `product/updateProduct/{store}` | 8.4 | sin cambio — herramienta de importación |
-| E-31 | `product/updateConfigurableProduct/{store}` | 8.4 | sin cambio |
-| E-32 | `product/updateConfigurableProductLink/{sku}` | 8.4 | sin cambio |
-| E-33 | `product/updateStock` | 8.4 | sin cambio |
-| E-34 | `product/getStockByStore` | 8.4 | sin cambio |
-| E-35 | `product/updatePrice` | 8.4 | sin cambio |
-| E-36 | `product/uploadImage` | 8.4 | sin cambio |
-| E-37 | `product/uploadImagesToMagento` | 8.4 | sin cambio |
-| E-38 | `order/authorizationResult` | 8.5 | solo verificar tras el apagado |
-| E-39 | `order/sendStorePickupEmail` | 8.5 | solo verificar tras el apagado |
-| E-40 | `order/getOrderInfo/{incrementId}` | 8.5 | solo verificar tras el apagado |
-| E-41 | `customerService/ActualizarCamposConfigurables` | 8.6 | 🗑️ baja — proxy colgante |
-| E-42 | `customerService/InsertarDesdeTablerateNativo` | 8.6 | 🗑️ baja — proxy colgante |
-| E-43 | `customerService/InsertarDesdeTablerateCustom` | 8.6 | 🗑️ baja — proxy colgante |
-| E-44 | `order/getprueba` | 8.6 | 🗑️ baja — stub de diagnóstico |
+| 🗑️ | `order/jsonOrders/{incrementId}` | 8.3 | lo reconstruye **Dev 2** dentro de `getOrderInfoAndSet` |
+| E-28 | `order/setCAccount` | 8.3 | ✅ escrito, sin ejecutar |
+| E-29 | `product/updateProduct/{store}` | 8.4 | sin cambio — herramienta de importación |
+| E-30 | `product/updateConfigurableProduct/{store}` | 8.4 | sin cambio |
+| E-31 | `product/updateConfigurableProductLink/{sku}` | 8.4 | sin cambio |
+| E-32 | `product/updateStock` | 8.4 | sin cambio |
+| E-33 | `product/getStockByStore` | 8.4 | sin cambio |
+| E-34 | `product/updatePrice` | 8.4 | sin cambio |
+| E-35 | `product/uploadImage` | 8.4 | sin cambio |
+| E-36 | `product/uploadImagesToMagento` | 8.4 | sin cambio |
+| E-37 | `order/authorizationResult` | 8.5 | solo verificar tras el apagado |
+| E-38 | `order/sendStorePickupEmail` | 8.5 | solo verificar tras el apagado |
+| E-39 | `order/getOrderInfo/{incrementId}` | 8.5 | solo verificar tras el apagado |
+| E-40 | `customerService/ActualizarCamposConfigurables` | 8.6 | 🗑️ baja — proxy colgante |
+| E-41 | `customerService/InsertarDesdeTablerateNativo` | 8.6 | 🗑️ baja — proxy colgante |
+| E-42 | `customerService/InsertarDesdeTablerateCustom` | 8.6 | 🗑️ baja — proxy colgante |
+| E-43 | `order/getprueba` | 8.6 | 🗑️ baja — stub de diagnóstico |
 
-**7 + 4 + 3 + 8 + 3 + 4 = 29**, más las dos bajas sin identificador. Verificado el 9 sep contra las rutas declaradas en `APIMagentoDMZ\Controllers\`: `MagentoController` (13), `ProductsController` (8), `OrdersController` (7 de las suyas) y `CustomerServiceController` (3 de las suyas).
+**7 + 4 + 2 + 8 + 3 + 4 = 28**, más las tres bajas sin identificador. Verificado el 9 sep contra las rutas declaradas en `APIMagentoDMZ\Controllers\`: `MagentoController` (13), `ProductsController` (8), `OrdersController` (7 de las suyas) y `CustomerServiceController` (3 de las suyas).
 
 ### Cómo se cuentan — criterio propio de la Ola 8 (9 sep)
 
@@ -218,31 +218,31 @@ Las bajas quedan fuera. Con `getOrderId` confirmada como baja el 21 sep son **ci
 |---|---|---|---|
 | 8.1 · catálogo | 7 | **6** | E-19: MySQL e Intelisis en espera |
 | 8.2 · reenvíos | 4 | **4** | — `getOrderId` sale del conteo |
-| 8.3 · órdenes | 3 | **2** | E-28: lo reconstruye Dev 2 |
+| 8.3 · órdenes | 2 | **2** | — `jsonOrders` sale del conteo |
 | 8.4 · importación | 8 | **8** | — sin trabajo, su cliente no cambia |
 | 8.5 · sin llamador | 3 | **3** | verificación diferida al apagado |
 | 8.6 · bajas | 4 | — | fuera del conteo |
-| **Total** | **25** | **23** | **92 %** |
+| **Total** | **24** | **23** | **96 %** |
 
 > Igual que en el resto del plan, **completa significa desarrollo terminado, no en producción**.
 > Las tres de 8.5 cierran con una validación diferida —comprobar que siguen operando tras el
 > apagado—, el mismo trato que reciben H-02 y H-04 esperando QA.
 
 > ✅ **Desde el 9 sep este avance entra en el total del plan.** No se promedia con el 46,2 %:
-> se suman **partidas equivalentes**. `38 × 46,2 % = 17,6` más `25 × 92 % = 23,0`, sobre
-> **63 entradas** —las cinco bajas quedan fuera—, da **64,4 %**. Cada entrada pesa lo mismo,
+> se suman **partidas equivalentes**. `38 × 46,2 % = 17,6` más `24 × 96 % = 23,0`, sobre
+> **62 entradas** —las seis bajas quedan fuera—, da **65,5 %**. Cada entrada pesa lo mismo,
 > así que una ruta que no requirió trabajo cuenta igual que un endpoint migrado.
 
-> 🔴 **Corrección del 9 sep: el grupo 8.5 tiene tres rutas, no seis.** Los dos checklists decían "6 rutas" y su texto añadía *"y las tres de producto sin llamador en la LAN"*. **Esas tres no existen**: las ocho rutas de producto de la DMZ están todas en 8.4. El rango de identificadores solo da para tres —E-38, E-39 y E-40— y la enumeración de arriba lo confirma.
+> 🔴 **Corrección del 9 sep: el grupo 8.5 tiene tres rutas, no seis.** Los dos checklists decían "6 rutas" y su texto añadía *"y las tres de producto sin llamador en la LAN"*. **Esas tres no existen**: las ocho rutas de producto de la DMZ están todas en 8.4. El rango de identificadores solo da para tres —E-37, E-38 y E-39— y la enumeración de arriba lo confirma.
 
 > El desglose por identificador está en [[Checklists/CHECKLIST_DEV3_NOSAP_NOINTELISIS#Ola 8 — Reubicación de llamadores hacia la DMZ|el checklist de Dev 3]].
 
 ## Ola 9 — Mixtos SAP · #12560
 
-- [ ] **E-45** `credit/SolicitudMercancia` — lee el Business Partner de SAP e inserta en `CRED_SOLICITUD_WEB_DATOS_TEMP` de `ServicioAndroid`. Requiere el helper de conversión de cuenta `C%` → BP.
-- [ ] **E-46** `credit/codigoPromocion` — tabla `VentaCupon` en SIGMAVI. **Ya construido** como `HandlePromoCode`; falta alinear el nombre de la tabla, que hoy es `VentasCupones`.
-- [ ] **E-47** `credit/getPlazos` — tabla `CondicionesCredVtaLinea` en SIGMAVI + condiciones contra TZ01.
-- [ ] **E-48** `customerService/obtenerTipoGarantia` — tabla `DM0415` en SIGMAVI, poblada exportando desde Intelisis, + artículo contra DM01. Estructura pendiente de **Valentin y Humberto**.
+- [ ] **E-44** `credit/SolicitudMercancia` — lee el Business Partner de SAP e inserta en `CRED_SOLICITUD_WEB_DATOS_TEMP` de `ServicioAndroid`. Requiere el helper de conversión de cuenta `C%` → BP.
+- [ ] **E-45** `credit/codigoPromocion` — tabla `VentaCupon` en SIGMAVI. **Ya construido** como `HandlePromoCode`; falta alinear el nombre de la tabla, que hoy es `VentasCupones`.
+- [ ] **E-46** `credit/getPlazos` — tabla `CondicionesCredVtaLinea` en SIGMAVI + condiciones contra TZ01.
+- [ ] **E-47** `customerService/obtenerTipoGarantia` — tabla `DM0415` en SIGMAVI, poblada exportando desde Intelisis, + artículo contra DM01. Estructura pendiente de **Valentin y Humberto**.
 
 > Regla de reparto: Dev 3 construye la tabla en SIGMAVI, el método y la conexión a nuestras bases; **las conexiones a SAP que no existan se anotan y se entregan a Dev 2**.
 
@@ -311,7 +311,7 @@ Las bajas quedan fuera. Con `getOrderId` confirmada como baja el 21 sep son **ci
 
 ### Del plan original
 
-- [ ] Estructura de `DM0415`, garantías — **Valentin y Humberto** (corregido el 12 ago) — bloquea E-48
+- [ ] Estructura de `DM0415`, garantías — **Valentin y Humberto** (corregido el 12 ago) — bloquea E-47
 - [x] ~~Definición de monedero (Valentin)~~ — ya no nos bloquea: reasignado a Dev 2 el 12 ago
 - [x] ~~Validar alcance de red a los shares SMB (`\\172.16.200.2`, `\\172.16.202.4`) antes de integrar E-13~~ — cerrado el 5 ago, ambos responden en el puerto 445
 - [ ] Medir en producción el uso real de los `op` sin caché (afecta el tamaño de la Ola 10)
@@ -323,15 +323,15 @@ Las bajas quedan fuera. Con `getOrderId` confirmada como baja el 21 sep son **ci
 
 El contador solo cuenta partidas cerradas, así que esconde el trabajo a medias. El avance ponderado de esas 38 es **46,2 %**; el desglose por endpoint, con el criterio de cálculo y el estado de pruebas de cada uno, está en [[ESTADO_PRUEBAS_Y_AVANCE]].
 
-**Sumando las rutas de la Ola 8, el avance del plan es 64,4 %.**
+**Sumando las rutas de la Ola 8, el avance del plan es 65,5 %.**
 
 | | Entradas | Avance |
 |---|---:|---:|
 | Partidas medibles | 38 | 46,2 % |
 | Rutas de la Ola 8, sin las bajas | 26 | 88,5 % |
-| **Total** | **63** | **64,4 %** |
+| **Total** | **62** | **65,5 %** |
 
-> ⚙️ **Cambio de criterio del 9 sep.** Hasta ahora las 30 rutas de la Ola 8 quedaban fuera del promedio porque se miden con otra vara — completas cuando su llamador queda resuelto, sin hitos de cutover ni de ficha. Dejarlas fuera escondía trabajo real: once llamadores escritos y probados que no movían el porcentaje. Ahora se suman como **partidas equivalentes**, `38 × 46,2 % + 25 × 92 % = 40,6` sobre **63**.
+> ⚙️ **Cambio de criterio del 9 sep.** Hasta ahora las 30 rutas de la Ola 8 quedaban fuera del promedio porque se miden con otra vara — completas cuando su llamador queda resuelto, sin hitos de cutover ni de ficha. Dejarlas fuera escondía trabajo real: once llamadores escritos y probados que no movían el porcentaje. Ahora se suman como **partidas equivalentes**, `38 × 46,2 % + 24 × 96 % = 40,6` sobre **62**.
 >
 > El denominador excluye las **cuatro bajas**. Y cada entrada pesa lo mismo, así que las ocho rutas que pasan sin cambio cuentan igual que un endpoint migrado con sus pruebas — es lo que implica contarlas.
 

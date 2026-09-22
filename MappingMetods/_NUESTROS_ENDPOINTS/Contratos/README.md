@@ -59,7 +59,7 @@ Cuando una partida es una pieza de algo más grande, el flujo entero va aparte:
 | [[FLUJO_RECOGER_EN_SUCURSAL]] | los seis procesos del código de recogida, sus tablas y equivalencias en SIGMAVI y SAP | E-15 y cinco partidas de Dev 2 |
 | [[PLAN_RECOGER_EN_SUCURSAL]] | qué se construye para cada rama, y el análisis de `SpCodigoRecogeSucursal` | idem |
 | [[FLUJO_GETAPIKEY]] | obtención de la llave de Multipagos | E-10 |
-| [[FLUJO_OLA8_REUBICACION_LLAMADORES]] | las dos entradas de la Ola 8, sus 17 pasos, y qué base y tabla toca cada uno | E-16…E-44 |
+| [[FLUJO_OLA8_REUBICACION_LLAMADORES]] | las dos entradas de la Ola 8, sus 17 pasos, y qué base y tabla toca cada uno | E-16…E-43 |
 | [[SP_VTASeCommerceDetPedidos]] | las 3 ramas del SP de Intelisis, con sus tablas temporales y permanentes | 🗑️ |
 
 ## Los dos patrones de la DMZ, uno al lado del otro
