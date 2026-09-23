@@ -413,6 +413,7 @@ curl --request GET \
   - La lógica de recolección de datos extrae el Customer ID mediante `CheckDocumentExistsSD36Async` (SD36), luego invoca `BusinessPartnerMethods.GetClientAsync` (BP05) para obtener correo, teléfono y nombre.
   - Genera el código Hash/CRC, e inserta o actualiza la base local `BpRecogePedidos`.
   - Finalmente, utiliza `Curl.cs` (conector DMZ) para enviar las peticiones a Magento de `order/setOrderStatus` y `order/sendStorePickupEmail` (endpoints a cargo de Dev 2), devolviendo un estado final e ignorando fallos silenciosos de Magento para garantizar la entrega del código al cliente. Se limpió el código de comentarios innecesarios y quedó listo para producción.
+  - **Bugfix 17/09/2026**: Se identificó que SAP devuelve cadenas vacías `""` en las propiedades de nombre de BusinessPartner en vez de `null`. Se aplicó una estrategia de fallback exhaustiva sobre `Nombre`, `PrimerNombre`, `NombrePila`, y las extensiones MAVI (`znombre`, `zapellidop`) validando contra `string.IsNullOrWhiteSpace` para garantizar la correcta extracción del nombre hacia la tabla local.
 
 **Curl de Prueba Local (ServicioSAP)**:
 ```bash
