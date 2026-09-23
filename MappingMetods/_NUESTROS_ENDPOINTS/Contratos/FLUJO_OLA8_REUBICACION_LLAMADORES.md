@@ -1,6 +1,6 @@
 ---
 tags: [flujo, migracion, ola-8, catalogo, sqlite]
-partida: E-16…E-45
+partida: E-16…E-44
 actualizado: 2026-09-08
 ---
 
@@ -9,7 +9,7 @@ actualizado: 2026-09-08
 Mapa de punta a punta: dónde arranca el flujo, por dónde pasa, qué base y qué tabla toca en
 cada paso, y dónde termina. Levantado leyendo `APIMagento` y `APIMagentoDMZ` el 7-sep-2026.
 
-> **La Ola 8 no porta rutas.** Las 30 rutas de la DMZ (`E-16`…`E-45`) se quedan donde están.
+> **La Ola 8 no porta rutas.** Las 30 rutas de la DMZ (`E-16`…`E-44`) se quedan donde están.
 > Lo que desaparece al apagar APIMagento es **quién las llama**. Este documento existe para
 > saber exactamente qué hay que reconstruir y qué arrastra cada pieza.
 
@@ -36,7 +36,7 @@ que reconstruye Dev 3; los 🟥 son de la herramienta de importación y hoy van 
 | # | Paso | ID | Destino | Base · tabla |
 |---|---|---|---|---|
 | 1 | `pm.createBackup()` | 🟥 | LAN | **IntelisisTmp** — respaldo |
-| 2 | `mage.deletePromociones()` | 🟦 E-24 | DMZ → Magento | *ninguna* — vacía las categorías `OUTLET` en Magento |
+| 2 | `mage.deletePromociones()` | 🟦 E-23 | DMZ → Magento | *ninguna* — vacía las categorías `OUTLET` en Magento |
 | 3 | `mage.getProductWithWebsites()` | 🟦 E-22 | DMZ → Magento | **SQLite** · `product_in_stores` (borra y recarga) |
 | 4 | `mage.getAttributes()` | 🟦 E-16 | DMZ → Magento | **SQLite** · `attribute_options` (borra y recarga) |
 | 5 | `mage.getGeneralAttributes()` | 🟦 E-17 | DMZ → Magento | **SQLite** · `attributes` (borra y recarga) |
@@ -47,9 +47,9 @@ que reconstruye Dev 3; los 🟥 son de la herramienta de importación y hoy van 
 | 10 | `pm.DeleteProducts()` | 🟥 | local | **SQLite** · `products`, `product_history` |
 | 11 | `pm.exporta_art(viu / muebles_america / mavi)` | 🟥 | LAN | **IntelisisTmp** — lectura del catálogo |
 | 12 | `pm.ejecutarSp("truncate …")` | 🟥 | LAN | **IntelisisTmp** · `VTASDEcommerceExportaArtExistencia` |
-| 13 | `pm.BuildJsonAndSendWithImage()` | 🟥 | DMZ → Magento | `product/uploadImage` (E-37) + share SMB |
+| 13 | `pm.BuildJsonAndSendWithImage()` | 🟥 | DMZ → Magento | `product/uploadImage` (E-36) + share SMB |
 | 14 | `tm.generaEtiqueta()` | 🟥 | LAN | **IntelisisTmp** — etiquetas |
-| 15 | `pm.BuildJsonAndSend(×3)` | 🟥 | DMZ → Magento | `product/updateProduct/{store}` (E-31) |
+| 15 | `pm.BuildJsonAndSend(×3)` | 🟥 | DMZ → Magento | `product/updateProduct/{store}` (E-30) |
 | 16 | `pm.BuildCSV(×3)` | 🟥 | local | filesystem — CSV de salida |
 
 **Los pasos 2 a 8 son la parte de Dev 3.** Están intercalados entre trabajo de Intelisis, así
@@ -95,7 +95,7 @@ servidor** o el paso revienta al arrancar.
 | 2 | `mage.getChildren("all")` | 🟦 E-21 | DMZ → Magento | **SQLite** · `children` — acumula |
 | 3 | `mage.getChildren("viu")` | 🟦 E-21 | DMZ → Magento | **SQLite** · `children` — acumula |
 | 4 | `mage.getChildren("muebles_america")` | 🟦 E-21 | DMZ → Magento | **SQLite** · `children` — acumula |
-| 5 | `pm.BuildJsonAndSendConfigurable(×2)` | 🟥 | DMZ → Magento | `product/updateConfigurableProduct/{store}` (E-32) |
+| 5 | `pm.BuildJsonAndSendConfigurable(×2)` | 🟥 | DMZ → Magento | `product/updateConfigurableProduct/{store}` (E-31) |
 
 El vaciado va **una sola vez** y las tres tiendas se acumulan encima. Es la única carga de
 las siete que funciona así; las otras seis borran y recargan dentro del mismo método.
@@ -108,27 +108,27 @@ No cuelgan de las dos entradas anteriores.
 
 | ID | Llamador en la LAN | Ruta que lo expone | Qué toca |
 |---|---|---|---|
-| **E-25** `deleteReservations` | `Conn\Magento.cs:285` | `product/updateStock` (`ProductsController.cs:179`) | Magento REST `mavi-truncate-inventoryreservation`. Ninguna base propia |
-| **E-23** `getOrderId` | `OrdersController.cs:417` | `order/getOrderId/{idEcommerce}` | 🟠 tras la respuesta llama `InsertDetPedido` → lee `Venta`/`VentaD` y ejecuta `SpVTASeCommerceDetPedidos` en **IntelisisTmp** |
-| **E-30** `SetCAccount` | `Conn\Magento.cs:413` | lo invoca `OpenpayMethods.cs:285` | Magento REST `monedero/contado/setCAccount`. Ninguna base propia |
+| **E-24** `deleteReservations` | `Conn\Magento.cs:285` | `product/updateStock` (`ProductsController.cs:179`) | Magento REST `mavi-truncate-inventoryreservation`. Ninguna base propia |
+| 🗑️ `getOrderId` | `OrdersController.cs:417` | `order/getOrderId/{idEcommerce}` | 🟠 tras la respuesta llama `InsertDetPedido` → lee `Venta`/`VentaD` y ejecuta `SpVTASeCommerceDetPedidos` en **IntelisisTmp** |
+| **E-29** `SetCAccount` | `Conn\Magento.cs:413` | lo invoca `OpenpayMethods.cs:285` | Magento REST `monedero/contado/setCAccount`. Ninguna base propia |
 
-> 🟠 **E-23 arrastra Intelisis.** El reenvío en sí es limpio, pero su llamador escribe el
+> 🟠 **`getOrderId` arrastra Intelisis.** El reenvío en sí es limpio, pero su llamador escribe el
 > detalle del pedido en IntelisisTmp. Reubicarlo sin resolver esa equivalencia deja el flujo a
 > medias.
 
 ---
 
-## Órdenes — E-28 y E-29
+## Órdenes — E-27 y E-28
 
 | ID | Ruta de la DMZ | Quién la llama hoy |
 |---|---|---|
-| **E-28** `order/setOrderStatus` | Magento REST `omnipro-orderstatus/order` | **Cinco sitios**: `OrdersController.cs:338`, tres puntos de `OpenpayMethods` (130, 145, 189) y `CodigoRecogerSucursal.cs:192` |
-| **E-29** `order/jsonOrders/{incrementId}` | Magento REST `jsonOrders/{id}` | `Magento.getOrderInfoAndSet` (`Conn\Magento.cs:361`), expuesto en `order/getOrderInfoAndSet/{incrementId}` |
+| **E-27** `order/setOrderStatus` | Magento REST `omnipro-orderstatus/order` | **Cinco sitios**: `OrdersController.cs:338`, tres puntos de `OpenpayMethods` (130, 145, 189) y `CodigoRecogerSucursal.cs:192` |
+| **E-28** `order/jsonOrders/{incrementId}` | Magento REST `jsonOrders/{id}` | `Magento.getOrderInfoAndSet` (`Conn\Magento.cs:361`), expuesto en `order/getOrderInfoAndSet/{incrementId}` |
 
-**E-28 se reconstruye como un único helper compartido**, decisión del 12-ago: cinco copias de
+**E-27 se reconstruye como un único helper compartido**, decisión del 12-ago: cinco copias de
 la misma petición son lo que termina divergiendo. Lo entrega Dev 3 y lo consume Dev 2.
 
-**E-29 se reconstruye del lado de Dev 2**: su llamador está dentro de `getOrderInfoAndSet`,
+**E-28 se reconstruye del lado de Dev 2**: su llamador está dentro de `getOrderInfoAndSet`,
 que además ejecuta `ReSetPedido` y `SetPedido` contra IntelisisTmp. No es nuestro.
 
 ---
@@ -159,8 +159,8 @@ E-19; el resto las lee la herramienta de importación al armar los JSON de produ
 
 ### Magento — vía DMZ, sin base propia
 
-Las siete cargas leen de Magento REST y no escriben nada allá. **Tres sí escriben**: E-24
-vacía las categorías `OUTLET`, E-25 vacía las reservas de inventario y E-30 fija
+Las siete cargas leen de Magento REST y no escriben nada allá. **Tres sí escriben**: E-23
+vacía las categorías `OUTLET`, E-24 vacía las reservas de inventario y E-29 fija
 la cuenta de contado.
 
 ### 🔴 MySQL `aplicaciones_web` — `172.16.202.29`
@@ -169,7 +169,7 @@ Solo la toca E-19, tramo 2. **Destino no contemplado por ninguna regla del proye
 
 ### 🟠 IntelisisTmp en MAVICUBOS
 
-La tocan E-19 (tramo 3) y el llamador de E-23, más todo el bloque 🟥 del importador
+La tocan E-19 (tramo 3) y el llamador de `getOrderId`, más todo el bloque 🟥 del importador
 (`createBackup`, `agruparconfigurables`, `exporta_art`, `ejecutarSp`, `generaEtiqueta`).
 
 ---

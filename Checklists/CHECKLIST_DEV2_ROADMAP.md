@@ -142,9 +142,10 @@ Mismo criterio de riesgo que en Dev 3: más APIs por endpoint significa más for
 > ⚠️ **El aviso de recogida a Magento viaja sin artículos.** `StorePickupMethods.cs:341` manda
 > `products = new object[] { }` donde el legado manda SKU y cantidad de cada renglón
 > (`CodigoRecogerSucursal.cs:178`). El dato está disponible en la misma llamada a SD36 que ya
-> se hace, en `to_salesdoc_items` (`Material`, `Cantidad`). **Falta confirmar con el módulo de
-> Magento si ese arreglo se usa o se ignora**, y de esa respuesta depende además que **E-23** de
-> Dev 3 se dé de baja o no — ver [[E-23_getOrderId]].
+> se hace, en `to_salesdoc_items` (`Material`, `Cantidad`). **Comprobado el 21 sep: Magento lo ignora** para el estatus
+> `store_pickup` que manda este aviso — `Omnipro\OrderStatus\Model\OrderManagement.php:176`
+> solo lo lee con `store_pickup_complete`, `ship` o `ship_carrier`—, así que el arreglo vacío no
+> rompe nada y no hay que llenarlo. Con eso `getOrderId` de Dev 3 queda de baja — ver [[BAJA_getOrderId]].
 >
 > Relacionado: como el migrado no lee `EcommerceDetPedidos`, esa tabla se queda sin ningún
 > lector. La fuente de artículos y cantidades para S3-02 es SD36, no ella.
