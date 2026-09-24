@@ -1,0 +1,5 @@
+- [Convenciones de la migración LAN → SAP](convenciones-migracion-sap.md) — fuente de verdad de endpoints, archivos retirados, regla 16 y acceso al share Z:.
+- [Nomenclatura trazable DMZ → ServicioSAP](convencion-nombres-dmz-sap.md) — los métodos se nombran como la ruta que el DMZ invoca; los pasos internos, como la operación SAP.
+- [Auditoría de paridad SetPedido → SetOrder](auditoria-paridad-setorder.md) — dónde vive la comparativa LAN vs SAP y cuáles son los 7 hallazgos de severidad alta.
+- [Solo S/4HANA: nada de CPI ni ABAP](solo-s4-no-cpi-ni-abap.md) — catálogo de destinos: qué se resuelve por Web.config y qué por obtenerUrl.
+- [Guía de migración para Fable 5.1](guia-migracion-fable.md) — el documento consolidado de desarrollo y las reglas de qué cuenta como evidencia.

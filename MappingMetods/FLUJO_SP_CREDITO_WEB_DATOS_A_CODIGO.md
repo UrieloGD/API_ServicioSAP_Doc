@@ -34,7 +34,7 @@ Tomadas por el usuario el 2026-09-18. No son supuestos: son el marco. Donde el c
 | **D5** | **La base de equivalencias son las OData de `ServicioSAP`.** `businesspartner-dev` se usa para validar que una OData existe, que hace, y **comparar como la usan**. Las fichas de `RSG/` no se usan como base. Si falta una OData, se reporta como *"falta en `ServicioSAP`"* y se planea aparte. |
 | **D6** | **`TrWACW00041_RefSolCredWeb` conserva destino y estructura**: escritura directa a `ServicioAndroid`, mismas columnas, misma relacion 1:N contra `IDSolicitud`, misma cardinalidad. **Las 17 columnas**, no las 8. La informacion se manipula igual para que el flujo de negocio sea el mismo. |
 | **D7** | **Se autoriza el canal de APIs intermedias** (`URL_BP_API` / `URL_ANDROID_API`, `*.mavi.fun`) para lo nuevo, como ya lo usa el proyecto. |
-| **D8** | **Codigo recomendador: DEPRECADO. Se quita.** Toda la logica de `SpCREDICodigoRecomendador` y la columna `CodigoRecomendador` del SP salen del alcance y **no se portan**. Si en el codigo existe logica de eso, se retira. Lo unico que entra es su **pata de SMS** (§4.9). |
+| **D8** | 🔴 **CORREGIDA el 2026-09-21 — ver §4.9, que es la version vigente.** La redaccion original decia *"se quita todo, lo unico que entra es su pata de SMS"*: **las dos mitades eran falsas**. Lo vigente son cuatro piezas: **D8.1** la columna `CodigoRecomendador` **se queda** en el destino sin recibir valor (ya es el comportamiento del codigo: `OrderMethods.cs:868` liga por nombre y no la manda); **D8.2** la **opcion 17** (login de empleados) **se mantiene**, y abre las decisiones Q/R/S; **D8.3** los 5 mapeos de `RecomenderController/` son insumo, y la opcion 9 **ya tiene equivalente SAP vivo** (`AS_GET_EncontrarCteCodigoMenudeo`); **D8.4** `setRecommenderList` / `@opcion = 2` deprecada, y con ella **la pata de SMS tampoco se porta** — `ServicioSAP` ya tiene productor propio en `CreditMethods.cs:137`. Neto: **del SP no se porta nada al flujo de credito**, y lo unico vivo es la opcion 17, que sigue en Intelisis |
 | **D9** | **Todas las ramas se consideran.** Ninguna rama de ningun SP del alcance se descarta por no tener invocador identificado. Incluye las **6 ramas restantes de `SpCREDIDatosSolicitudCreditoArt`** (§4.10) y el camino largo de `InsertReferencia`, que no tiene productor identificado en ningun repo. Donde una rama parezca muerta, se porta igual y se anota que no se hallo consumidor — no se omite. |
 | **D10** | **`PUT` no esta habilitado.** Toda actualizacion parcial va por `PATCH`, para no borrar datos al actualizar unicamente los campos solicitados. Donde la implementacion de referencia en Python manda `PUT` (`CteTel`, `CteLimiteCred`), aqui va `PATCH`: **el Python es referencia del contrato y del destino, no del verbo.** Ver §3 para las dos consecuencias a resolver al implementar. |
 
@@ -103,6 +103,487 @@ parseando el envoltorio OData `d.results` en `:1200`. Hay tambien una **escritur
 > Y `businesspartner-dev` no es solo documentacion: **es dependencia de runtime de `ServicioSAP` hoy**. Eso no contradice D1 (el destino sigue siendo `ServicioSAP`) pero si cambia que cuenta como "equivalente existente".
 
 **Conteo:** 31 identificadores distintos de servicio en los `.cs` + 7 rutas por API intermedia. El numero "22 servicios OData" que circulaba coincide exactamente con las 22 rutas del DMZ puenteadas con `PostSAP`/`GetSAP`/`PatchSAP`: son dos cosas distintas conflacionadas.
+
+### 3.0 · El mapeo SP → API que dio el usuario (2026-09-21) — ESTA ES LA BASE
+
+> [!important] Este mapeo lo dio el usuario directamente. **Manda sobre cualquier equivalencia inferida** en el resto de este documento o en el corpus. Lo que sigue esta transcrito literal; la columna de verificacion la rellena quien lea el contrato real de cada ruta en `businesspartner-dev`.
+
+#### Bloque de telefonos
+
+| Logica del SP | Endpoint que la cubre | Verificacion del contrato |
+|---|---|---|
+| `SELECT … FROM CteTel WHERE Cliente = @cliente` | `AI_GET_ZSDT_CTETEL` | pendiente |
+| `@TelefonoValidado` (ultimo movil con `ValidacionTel=1`) | `A_GET_TelefonoValidado` | 🔴 **no replica los 4 criterios del SP** — ver §4.6 |
+| **Calculo de `@ValidacionTelefono`** | `A_POST_ValidarTelefono` | pendiente |
+| `TcAAEA00030_EnvioMensajes` (SMS) | `A_POST_EnviarSMS` / `A_POST_SMSEnviar` | pendiente |
+| **Alta/actualizacion del movil** | `A_POST_GuardarTelefonoCte` | pendiente |
+| **CRUD completo de `CteTel`** | `AS_POST_` / `AS_PUT_` / `AS_DELETE_` / `AS_GET_ZQBP_EditarCliente_CteTel` | pendiente |
+| — *(nuevo, no existia en el SP)* | `A_POST_BPValidarTelefonoCOFETEL`, `A_GET_BPValidaTelefonoCOFETEL` | catalogo `1138ValAutLadaTel` confirmado |
+
+#### Bloque de cliente y credito
+
+| Columnas del SP | Endpoint que las cubre | Verificacion del contrato |
+|---|---|---|
+| `apellidoP`, `apellidoM`, `nombre`, `nombre2`, `rfc`, `sexo`, `fechaNacimiento`, `email`, `domicilio`, `estadoCivil`, `viveEnCalidad` | `AS_POST_BusinessPartner` | pendiente |
+| **Cliente prospecto (`'P'`)** | `AS_POST_ClienteContado` | pendiente |
+| Actualizacion posterior | `AS_PATCH_BusinessPartner` / `AI_POST_UpdateBPartner` | pendiente |
+| `sueldo` | `AS_POST_ZQBP_EditarCliente_CteCto_Empleo` | pendiente |
+| `tarjeta`, `tarjetaDigitos`, `creditoHipoteca`, `creditoAutomotriz` | `AS_GET_ZCTE_CREDITO`, `AS_GET_ZQBP_EditarCliente_CteCredito`, `AS_PUT_ZQBP_EditarCliente_CteLimiteCred` | pendiente |
+| `die`, `condicion`, `codigo` | `AS_GET_ZB_DATOS_CLIENTE`, `AS_GET_TipoCredito` | pendiente |
+
+#### Tres lineas de este mapeo cierran huecos que el corpus daba por abiertos
+
+Si los contratos lo confirman, hay que retirar tres afirmaciones vigentes del corpus:
+
+1. 🔴 **§7.3 dice que quedan exactamente 3 huecos reales sin equivalente SAP: `tarjetaDigitos`, `creditoHipoteca`, `creditoAutomotriz`.** El usuario asigna esas tres columnas —mas `tarjeta`— a `AS_GET_ZCTE_CREDITO` / `AS_GET_ZQBP_EditarCliente_CteCredito` / `AS_PUT_ZQBP_EditarCliente_CteLimiteCred`. **Si los payloads las llevan, §7.3 pasa a cero huecos duros** y `TransactionExtSet` deja de ser necesario como portador generico.
+2. 🔴 **La decision §6-2 del plan de ejecucion pregunta si el cliente prospecto es un numero de BP o el consecutivo `'P…'`** de `cte_prospecto()` / `SP_GeneraConsecutivoCteMavi`. El usuario lo asigna a **`AS_POST_ClienteContado`**. Eso apunta a que el prospecto se crea por API, no por consecutivo de Intelisis — **cerraria la duda §6-2**, que era una de las tres que bloqueaban. Queda por confirmar que devuelve, y si el prefijo `'P'` sobrevive (importa: `SP:216` decide "es prospecto" por ese prefijo).
+3. **`sueldo` → `AS_POST_ZQBP_EditarCliente_CteCto_Empleo`.** §5 lista `sueldo` como "cubierto pero estampado en blanco" (`Cte.ZingMensCredw`, hoy `"0.00"` fijo). El usuario le da un endpoint **de escritura** propio. Hay que decidir si el sueldo se escribe por ahi o por el PATCH de `ZSDT_CTE`, porque los dos caminos existen.
+
+#### Y una linea que ya sabemos que NO cumple
+
+**`A_GET_TelefonoValidado` no replica `@TelefonoValidado`.** El usuario lo asigna a esa logica y el endpoint existe, pero su implementacion no hace lo que el SP: el SP filtra `Tipo='Movil'` **y** `ValidacionTel=1`, ordena por `Fecha DESC` y devuelve `CONCAT(Lada, Telefono)`; la ruta hace `max(tels, key=(Zfecha, ZfechaCap, ZidcteTel))` **sin filtro de tipo, sin filtro de validacion y sin lada**. O sea: puede devolver un fijo, puede devolver un telefono no validado, y devuelve el numero sin lada. **El endpoint es el sitio correcto; la implementacion hay que corregirla.** Es reimplementacion, no mapeo.
+
+#### Lo que este mapeo NO cubre, y sigue abierto
+
+El mapeo del usuario cubre el bloque de telefonos y el de cliente/credito. **No asigna endpoint a:**
+
+- Las dos tablas destino del SP (`CRED_SOLICITUD_WEB_DATOS_TEMP` y `TrWACW00041_RefSolCredWeb`) — y no hace falta: por **D4 + D6** se quedan en `ServicioAndroid` con escritura directa por ADO.NET.
+- La pre-solicitud completa (`SpCREDISolicitudWebPrimerGuardado`, 11 operaciones, 4 tablas locales) — tambien Android.
+- El satelite de linea de articulo (`VTASdArtCreditoWeb`) — Android, y **ya lo escribe `ServicioSAP`**.
+- `GetCuenta` del satelite de datos: el `INSERT` de 23 columnas a `CteEnviarA`, que **es tabla de Intelisis** y por tanto si necesita endpoint. Sigue sin uno nombrado.
+- Los catalogos de region/SKU, `spVerCosto`, la tabla `art` y `MAVIDM0138HistInsertCorreo`.
+
+### 3.0b · Captura real de BP05 (`Partner='1500004598'`, `Client='110'`) — lo que fija y lo que rompe
+
+> Response completo aportado por el usuario el 2026-09-21 desde `ZAPI_BP05MA_SRV/BusinessPartnerSet(Partner='1500004598',Client='110')`. **Es la primera captura con `to_Cte` poblado de verdad**, asi que sustituye a varias suposiciones del corpus. Todo lo de abajo esta leido de ese JSON.
+
+#### 1. RESUELTA la decision del prospecto (§6-2 del plan de ejecucion)
+
+**El discriminador es `to_Cte.ZtipoCliente`**, y el usuario fija su semantica: `"Prospecto"` = sigue siendo prospecto; `"Nuevo"` = ya paso de prospecto a cliente. En esta captura vale `"Nuevo"`.
+
+Eso **cierra la duda §6-2** y descarta las dos hipotesis que estaban sobre la mesa:
+
+| Hipotesis anterior | Veredicto |
+|---|---|
+| El prospecto es el consecutivo `'P…'` de `SP_GeneraConsecutivoCteMavi` en Intelisis | ❌ **No.** El id del cliente es el numero de BP (`1500004598`), sin prefijo |
+| Se distingue por el prefijo `'P'`, como hace `SP:216` | ❌ **No.** Se distingue por un campo propio |
+
+**Consecuencia para `SP:216`:** la condicion del legado (*"es prospecto si el cliente empieza con `'P'`"*) **no se porta**. Se reemplaza por `to_Cte.ZtipoCliente == "Prospecto"`. Eso hay que reflejarlo en `ContextoValidacionTelefono.EsProspecto`, cuya fuente estaba marcada como pendiente.
+
+> [!warning] Ojo: hay **dos** campos y solo uno manda.
+> `to_Cte` trae **`Zprospecto: ""`** *y* **`ZtipoCliente: "Nuevo"`**. El que decide es `ZtipoCliente`. `Zprospecto` esta vacio en esta captura y **no** se debe usar como discriminador ni escribir sin decision.
+
+#### 2. Los tipos de `to_Cte` no son los que el corpus asumia
+
+Esto cambia el DTO. En `to_Cte` **las fechas NO viajan como `/Date(epoch_ms)/`**:
+
+| Campo | Valor real | Tipo efectivo |
+|---|---|---|
+| `Zfecha4` | `"20260817091824"` | **string `YYYYMMDDHHMMSS`** |
+| `ZfechValid` | `"0"` | **string**, no fecha |
+| `ZfechCateg` | `"0"` | **string** |
+| `ZfechaIrreg`, `ZfecUltPag` | `null` | nullable de verdad |
+
+El formato `/Date(ms)/` **si** aparece, pero solo en la cabecera (`Birthdt`, `Crdat`, `Chdat`, `ValidFrom`, `ValidTo`) y en `to_CteTel.Zfecha`/`ZfechaCap`. **Dentro de `to_Cte` es string numerico.** Escribir `/Date(...)/` ahi seria un error.
+
+**Numeros contra strings, tambien mezclado:**
+
+| Llegan como NUMERO | Llegan como STRING |
+|---|---|
+| `ZantigAnios: 0`, `ZantigMeses: 0`, `ZantigNeg: 0`, `ZidMagento: 0`, `ZcodSms: 0`, `ZapoyoVtaDima: 0`, `ZidCtaClDisp: 0`, `ZintSolApoy: 0`, `ZtotalAsign: 0`, `ZnumPag: 0` | `ZingMensCredw: "0.000"`, `Zcrmimporte: "12345678.200"`, `Zcrmcantidad: "12345678.20"`, `ZlimCred: "60000.000"`, `ZimporRent: "0.000"`, `Zlcaxsi: "0.000"`, `ZvalorPagMay: "0.00"` |
+
+Y **la precision de los decimales no es uniforme**: `Zcrmimporte` trae 3, `Zcrmcantidad` 2, `ZlimCred` 3, `ZvalorPagMay` 2. Un DTO con un solo formato los deforma.
+
+#### 3. 🔴 `Zcrmcantidad` y `ZlimCred` son numeros MUY distintos
+
+| Campo | Valor en esta captura |
+|---|---|
+| `Zcrmcantidad` | **`"12345678.20"`** |
+| `ZlimCred` | **`"60000.000"`** |
+
+Una revision previa concluyo que *"no hay dos campos rivales para el limite de credito"*. **Con datos reales si los hay, y difieren en tres ordenes de magnitud.** Lo que fija la captura: `GetSaldo` del SP lee `CRMCantidad`, cuya imagen 1:1 es **`Zcrmcantidad`** — ese es el que se usa. Pero **elegir mal no da un error, da un limite absurdo**, y eso no lo atrapa ninguna prueba de compilacion.
+
+Y **`Zcredito` no es un numero**: vale `"0.1 CLIENTE (AAA)"`. Es el codigo/descripcion de la politica de credito — coherente con que `AS_GET_ZQBP_EditarCliente_CteCredito` filtre justamente por `Zcredito`.
+
+#### 4. 🔴 `ZrecomendPor` NO esta vacio en datos reales — y el C# lo borraria
+
+`to_Cte.ZrecomendPor` vale **`"002"`** en esta captura.
+
+`ServicioSAP` lo manda **quemado a `""`** en los dos constructores de BP (`BusinessPartnerMethods.cs:599` y `OrderMethods.cs:2869`), igual que `ZdirRecom` (`:604`, `:2874`). Si esos constructores se usan para **actualizar** un BP existente, **pisan el `"002"` con vacio**.
+
+**Es exactamente el razonamiento de D8.1 aplicado a otro campo:** el usuario decidio conservar la columna `CodigoRecomendador` porque *"el que no se llene o se use en este flujo no significa que otro servicio no la consuma"*. `ZrecomendPor` esta en la misma situacion, **pero aqui no se deja vacio: se sobreescribe con vacio**, que no es lo mismo. Hay que decidir si esos dos campos se omiten del payload (y no se tocan) en vez de mandarse `""`.
+
+#### 5. El casing de `CteTel`: en BP05 es `Zvaltel`
+
+`to_CteTel` trae **`Zvaltel`** (t minuscula), junto con `ZidcteTel`, `ZtipoCte`, `ZtelCte`, `Zfecha`, `Zenvionip`, `ZappOrig`, `ZfechaCap`, `ZtelExist`, `ZtraeTel`, `Zintentos`, `ZtipoValid`. **Queda cerrada la mitad de lectura del casing.** Falta confirmar el de escritura en `ZAPI_BP01_PARTNER_SRV`, donde el C# hoy escribe `ZvalTel`.
+
+#### 6. 🔴 Los datos reales de `CteTel` rompen el filtro del SP
+
+Los 6 telefonos de este BP demuestran tres problemas que **no se ven leyendo codigo**:
+
+| `ZidcteTel` | `ZtipoCte` | `ZtelCte` | `Zfecha` | `Zvaltel` |
+|---|---|---|---|---|
+| `"1"` | `"particular"` | `7584925` | `/Date(1766966400000)/` | false |
+| `"1211"` | `"FIJO"` | `3336345297` | **null** | false |
+| `"0000001212"` | `"MOVIL"` | `3338007830` | **null** | false |
+| `"0000000002"` | `"MOVIL"` | `7481532` | **null** | false |
+| `"0"` | `"TRABAJO"` | `+523333333333` | **null** | **true** |
+| `"0000001213"` | `"MOVIL"` | `5522122584` | `/Date(1786579200000)/` | **true** |
+
+1. **`ZtipoCte` no esta normalizado:** `"particular"` en minusculas contra `"FIJO"`, `"MOVIL"`, `"TRABAJO"` en mayusculas. Un `$filter=ZtipoCte eq 'MOVIL'` es **sensible a mayusculas** y se saltaria cualquier fila mal capitalizada. El `Tipo='Movil'` del SP corria en SQL Server con collation case-insensitive; **en OData no**.
+2. **`ZidcteTel` no tiene padding uniforme:** convive `"1"`, `"1211"`, `"0"` con `"0000001212"`, `"0000000002"`, `"0000001213"`. La generacion en cliente formatea a 10 digitos, pero **las llaves existentes no lo estan**, asi que un lookup por entidad tiene que usar el valor **tal cual viene**, no el rellenado.
+3. **`Zfecha` es null en 4 de 6.** El `ORDER BY Fecha DESC` del SP se apoya en una columna mayormente vacia, y **el tratamiento de nulls en `$orderby` de OData no es el mismo que en SQL Server**.
+
+Y **`ZtelCte` tampoco tiene formato**: `7584925` (7 digitos), `3336345297` (10), `+523333333333` (con lada de pais). El `CONCAT(Lada, Telefono)` del SP no tiene equivalente directo.
+
+#### 7. 🔴 Demostracion con datos reales: `A_GET_TelefonoValidado` devuelve el telefono EQUIVOCADO
+
+Esta captura permite ejecutar los dos algoritmos a mano y compararlos.
+
+**Lo que devuelve el SP** (`SP:194-202`): filtra `Tipo='Movil'` **y** `ValidacionTel=1`, ordena `Fecha DESC`. Solo una fila cumple las dos: `ZidcteTel='0000001213'`.
+→ **`5522122584`** (movil, validado).
+
+**Lo que devuelve la ruta Python**: `max(tels, key=(str(Zfecha), str(ZfechaCap), int(ZidcteTel)))`, **sin filtrar tipo ni validacion**. Y ahi esta la trampa: `str(None)` da la cadena `"None"`, y `"None" > "/Date(…)"` porque `'N'` (0x4E) es mayor que `'/'` (0x2F). **Las 4 filas con `Zfecha` null ganan la comparacion.** Entre ellas desempata `int(ZidcteTel)`, cuyo maximo es `1212`.
+→ **`3338007830`** (movil, **NO validado**).
+
+**Son telefonos distintos, y el de la API no esta validado.** No es una diferencia teorica de criterios: con los datos de este BP la ruta entrega un numero que el SP habria rechazado. Confirma que §4.6 debe **reimplementarse**, y ademas explica por que: el bug no es solo el filtro ausente, es que **ordenar fechas como cadenas invierte el resultado cuando hay nulls**.
+
+#### 8. Dos cosas que confirman los cambios de BP ya aplicados
+
+`to_CteSociedad` trae `Akont: ""`, `Eikto: ""` (en `to_CteDatosComerciales`), `Antlf: "0"` y **`Altkn: "1234567890"`** — los cuatro coinciden con los valores que se fijaron en los dos constructores. Y `to_CteImpuestos` trae `Aland: "MX"`, `Tatyp: "TMX1"`, `Taxkd: "1"`, tambien como se fijo.
+
+**Pero `Kvgr4` no es uniforme:** vale `"SI"` en cuatro areas de ventas, `"NO"` en `02/02/00` y `""` en `03/02/00`. Se fijo a `"SI"` en el codigo; **al actualizar un BP existente eso cambiaria el valor de las areas que hoy tienen otro**.
+
+> [!note] Y un dato que contradice un supuesto de escritura
+> Las 6 filas de `to_CteDatosComerciales` y las 25 de `to_CteFuncInterlocutor` traen **`Spart: "00"`**, no `"01"`. La migracion congelo `Division` en `"01"` porque SAP devolvia el error `CZ 115` con `"00"`. Las dos cosas pueden ser ciertas —`"01"` para **escribir** y `"00"` en lo ya existente— pero **el codigo de lectura no debe asumir `"01"`** al buscar el area de ventas de un cliente, o no encontrara nada.
+
+### 3.0c · Las tres capturas de `CteTel` (`Partner='1500008218'`) — el caso limpio
+
+> Aportadas por el usuario el 2026-09-21: `AI_GET_ZSDT_CTETEL`, `AS_GET_ZQBP_EditarCliente_CteTel` y `A_GET_TelefonoValidado`, las tres contra el mismo BP. Sirven para tres cosas que una sola no daba: fijar la forma de la respuesta, **probar que dos de los endpoints son redundantes**, y **cazar un renombrado de campo** que rompe la deserializacion.
+
+#### Los datos
+
+| `ZidcteTel` | `ZtipoCte` | `ZtelCte` | `Zfecha` | `Zvaltel` | `ZappOrig` |
+|---|---|---|---|---|---|
+| `"1"` | `"PARTICULAR"` | `3334523423` | `/Date(1788825600000)/` | **false** | `CteXpressFrontSAP` |
+| `"0000000002"` | `"MOVIL"` | `3352323422` | `/Date(1788825600000)/` | **false** | `CteXpressFrontSAP` |
+
+**Ninguno de los dos esta validado.** Ese es el valor de esta captura.
+
+#### 1. `AI_GET_ZSDT_CTETEL` y `AS_GET_ZQBP_EditarCliente_CteTel` devuelven lo MISMO
+
+Los dos responses son **identicos campo por campo y valor por valor**. Confirma lo que se leyo del codigo: `AI_GET_ZSDT_CTETEL` es un **wrapper puro** de la misma funcion interna `_get_ctetelset`.
+
+**Consecuencia para el C#: solo se implementa uno de los dos.** El util es `AS_GET_ZQBP_EditarCliente_CteTel`, que acepta **9 query params** contra los 2 de su gemelo (`Partner`, `ZtelCte`). Implementar los dos seria exactamente el defecto que la **regla 28** prohibe: dos caminos con nombre distinto para el mismo dato.
+
+#### 2. La forma de la respuesta: son **14** campos, no 13
+
+`Client, Partner, ZidcteTel, ZtipoCte, ZtelCte, Zfecha, Zenvionip, Zvaltel, ZappOrig, ZfechaCap, ZtelExist, ZtraeTel, Zintentos, ZtipoValid`.
+
+**`Client` (`"110"`) no estaba en el inventario previo**, que listaba 13. Va en la respuesta pero **no** en la clave de la entidad: el `__metadata.id` es `CteTelSet(Partner='1500008218',ZidcteTel='1')` — clave de **dos** campos, sin `Client`. Conviene tenerlo en el DTO y no en la clave.
+
+Tipos observados: `Zenvionip`, `Zvaltel`, `ZtelExist`, `ZtraeTel` son **booleanos** de verdad (`false`, no `"false"`). `Zfecha`/`ZfechaCap` **si** vienen como `/Date(epoch_ms)/` aqui — al contrario de las fechas de `to_Cte`, que son string numerico (§3.0b). Y `Zintentos` vale `""`, no `"0"`, mientras en el BP `1500004598` habia filas con `"0"` y con `""`. **Sin normalizar.**
+
+#### 3. 🔴 El casing esta confirmado en los dos servicios… y la ruta lo renombra
+
+| Origen | Como llega el campo |
+|---|---|
+| `ZQBP_EDITARCLIENTE_SRV/CteTelSet` (esta captura) | **`Zvaltel`** |
+| `ZAPI_BP05MA_SRV` → `to_CteTel` (§3.0b) | **`Zvaltel`** |
+| **`A_GET_TelefonoValidado`** (su salida) | 🔴 **`ZvalTel`** |
+
+**Los dos servicios de SAP coinciden en `Zvaltel` con t minuscula.** Y `A_GET_TelefonoValidado` **cambia el nombre del campo en su salida** a `ZvalTel`.
+
+Eso cierra la duda del casing y explica un sintoma que ya estaba en el corpus: **el C# tiene el campo escrito de las dos formas en sitios distintos**. La forma de SAP es `Zvaltel`; `ZvalTel` es una invencion de esa ruta. Si el C# deserializa la salida de la ruta con un modelo que espera `Zvaltel`, **el booleano llega siempre `false` por defecto** — que es justo el valor que enmascara el bug.
+
+**Decision que esto fuerza:** el C# consume `CteTelSet` **directo** y usa `Zvaltel`. No se porta el renombrado.
+
+#### 4. 🔴 El caso limpio: el SP devolveria VACIO y la API devuelve un telefono
+
+Con estos datos:
+
+| | Resultado |
+|---|---|
+| **El SP** (`SP:194-202`): `WHERE Tipo='Movil' AND ValidacionTel=1` | **vacio** — ninguno de los dos esta validado |
+| **`A_GET_TelefonoValidado`** | **`3352323422`** con `ZvalTel: false` |
+
+**Esto es la decision pendiente reducida a su forma mas simple:** el SP dice *"este cliente no tiene telefono validado"*; la API dice *"toma este, que no esta validado"*. No son dos implementaciones del mismo criterio: son **dos respuestas incompatibles a la misma pregunta**. Y el consumidor no puede distinguirlas sin mirar el `ZvalTel` que, por el punto 3, probablemente le llegue mal deserializado.
+
+**Hay que elegir, y es decision de negocio:** ¿el contrato del metodo C# es *"devuelve el movil validado, o vacio"* (fidelidad al SP) o *"devuelve el mas reciente, con su bandera"* (lo que hace la ruta hoy)? Lo segundo obliga a que **todos** los llamadores revisen la bandera, y hoy ninguno lo hace.
+
+#### 5. Por que este BP no delata el bug del `max()` y el otro si
+
+En esta captura los dos telefonos tienen **exactamente el mismo `Zfecha` y el mismo `ZfechaCap`**, asi que el `max()` desempata por `int(ZidcteTel)`: `2 > 1` → gana `3352323422`, que **resulta ser** el movil. **Coincide con lo que el SP habria elegido si hubiera alguno validado.** Acierta por casualidad.
+
+En el BP `1500004598` (§3.0b) **no coincide**: ahi hay nulls en `Zfecha`, `str(None) = "None"` gana la comparacion de cadenas, y la ruta devuelve un telefono distinto del que da el SP.
+
+> [!warning] **El defecto es intermitente segun los datos**, y eso es lo peor para detectarlo. Con `Zfecha` poblado en todas las filas el algoritmo parece correcto; con un solo null se invierte. Una prueba contra este BP pasaria y contra el otro fallaria. **No basta con un caso de prueba.**
+
+#### 6. `ZtipoCte` sin normalizar: confirmado con dos BPs
+
+| BP | Valor |
+|---|---|
+| `1500008218` (esta captura) | **`"PARTICULAR"`** |
+| `1500004598` (§3.0b) | **`"particular"`** |
+
+**El mismo valor logico con dos capitalizaciones, en el mismo entity set.** Un `$filter=ZtipoCte eq 'MOVIL'` en OData es sensible a mayusculas: el `Tipo='Movil'` del SP funcionaba por la collation case-insensitive de SQL Server y **no es portable tal cual**. Hay que normalizar en el cliente (`ToUpperInvariant`) y aceptar que el `$filter` del servidor no puede ser la unica defensa — o traer las filas del cliente y filtrar en memoria, que es lo contrario de lo que conviene por rendimiento. **Es una decision, no un detalle.**
+
+#### 7. `ZappOrig = "CteXpressFrontSAP"` — y lo que eso significa para `@ValidacionOrigen`
+
+Los dos telefonos traen ese origen. El SP cruza `TablaStD` con `CteTel` por el origen (`SP:186-191`) para resolver `@ValidacionOrigen`, y el catalogo es `ORIGEN VALIDACION NUMERO CTE`.
+
+**Esta captura no prueba que el catalogo contenga `CteXpressFrontSAP`** — solo que el origen no esta vacio. Importa porque el codigo actual **degrado la regla** a *"`ZappOrig` no vacio"* (`OrderMethods.cs:639`) en vez de comparar contra el catalogo. Con estos datos los dos caminos dan el mismo resultado, asi que **la captura no distingue entre el codigo correcto y el degradado**. Para eso hace falta el contenido del catalogo.
+
+#### 8. Dato de infraestructura: son dos puertos distintos
+
+| Servicio | Host:puerto del `__metadata.id` |
+|---|---|
+| `ZQBP_EDITARCLIENTE_SRV` | `10.30.2.135:20400` |
+| `ZAPI_BP05MA_SRV` (§3.0b) | `10.30.2.135:44300` |
+
+**Mismo host, puertos distintos.** Coincide con que el repo tenga dos bases separadas (`SERVICE_URL` sobre `hostS4IP` y `S4_ODATA_DEV_BASE_URL` sobre `hostS4`). Para el C#: **son dos destinos de configuracion, no uno**, y el `Web.config` de `ServicioSAP` hoy no tiene ninguna clave `ZQBP_` (0 resultados). Hay que añadirla.
+
+### 3.0d · `A_GET_BPValidaTelefonoCOFETEL` (`telefono=3334523423`) — y la contradiccion con `CteTel`
+
+> Captura aportada por el usuario el 2026-09-21, mas lectura del codigo completo de la ruta.
+
+```json
+{ "existe": true, "tipoRed": "MOVIL", "razonSocial": null,
+  "modalidad": null, "poblacion": null, "estado": null }
+```
+
+#### 1. 🔴 El hallazgo: COFETEL y `CteTel` NO coinciden sobre el mismo telefono
+
+Es **el mismo numero** que la captura de `CteTel` del BP `1500008218` (§3.0c):
+
+| Fuente | Que dice de `3334523423` |
+|---|---|
+| `CteTel` (`ZidcteTel='1'`) | **`ZtipoCte: "PARTICULAR"`** |
+| COFETEL (`tipoRed`) | **`"MOVIL"`** |
+
+**Y el SP filtra por el primero.** `SP:194-202` hace `WHERE Tipo='Movil'`, que lee `CteTel`. Con estos datos el SP **descarta** ese telefono; COFETEL afirma que **si es un movil**.
+
+**Para que sirve este endpoint, entonces:** es la **fuente autorizada del tipo de red**, mientras `ZtipoCte` es lo que capturo la aplicacion que dio de alta el telefono. Encaja con que el usuario lo marcara como *"nuevo, no existia en el SP"*: no reemplaza ninguna logica del SP, **la corrige**. Y resuelve el problema de normalizacion de §3.0c desde la raiz, porque no depende de como haya escrito el tipo quien capturo el dato.
+
+> [!important] **Decision de negocio que esto abre, y no es menor:** ¿quien decide si un telefono es movil — **`ZtipoCte`** (lo que capturo la app, y lo que replicaria la fidelidad al SP) o **`tipoRed`** de COFETEL (lo que dice el operador)? Replicar el SP es usar `ZtipoCte` y aceptar que el dato puede estar mal. Usar COFETEL es mas correcto **pero cambia el comportamiento observable**: telefonos que hoy el SP descarta pasarian a contar. Es la decision **G** (replicar contra corregir) aplicada a este punto.
+
+#### 2. El catalogo `1138ValAutLadaTel` NO es un catalogo de validacion: es una tabla de longitud de lada
+
+El codigo lo deja claro (`A_GET_BPValidaTelefonoCOFETEL.py:23-38`). Su unico uso es **decidir si la lada tiene 2 o 3 digitos**:
+
+```python
+result_lada2 = conn.procedure(sql_lada, ["1138ValAutLadaTel", telefono[:2]])
+if result_lada2["result"]:                    # los 2 primeros digitos estan en el catalogo
+    nir, serie, numero = telefono[:2], telefono[2:6], telefono[6:]
+else:                                          # si no, la lada es de 3
+    nir, serie, numero = telefono[:3], telefono[3:7], telefono[7:]
+```
+
+Eso corrige como lo clasificaba el plan, que lo metia en el mismo saco que los demas catalogos pendientes. **No sustituye a ninguna tabla del SP**: es infraestructura para partir el numero antes de consultar a COFETEL. Los tres trozos (`nir`, `serie`, `numero`) van como `int` a la lambda.
+
+**Y la respuesta no dice que rama tomo.** No devuelve `nir`/`serie`/`numero`, asi que ante un resultado raro no se puede saber si partio el numero como 2+4+4 o como 3+4+3. Para el port conviene **exponer los tres valores** o al menos registrarlos, porque una lada mal partida da un `existe: false` silencioso.
+
+#### 3. 🔴 Un endpoint, CUATRO formas de respuesta distintas — todas con HTTP 200 salvo la ultima
+
+Esto impide escribir un DTO unico en C#:
+
+| Cuando | Forma |
+|---|---|
+| El telefono no tiene 10 digitos, o no es numerico | `{"valido": false, "motivo": "..."}` (`:12-15`) |
+| El telefono empieza con `0` | `{"valido": false, "motivo": "..."}` (`:18`) |
+| Falla la consulta a HANA | `{"error": "..."}` (`:31`) |
+| Todo bien | **lo que devuelva la lambda, verbatim** (`:40-43`) → `{existe, tipoRed, razonSocial, modalidad, poblacion, estado}` |
+| Cualquier excepcion | HTTP **500** con `{"detail": "..."}` (`:46-47`) |
+
+**Las tres primeras devuelven 200.** Un cliente C# que deserialice a la forma de exito recibe todos los campos en `null`/`false` y **no puede distinguir "el telefono es invalido" de "COFETEL no lo encontro"**. Para el port hacen falta dos cosas: (a) validar los 10 digitos y el `0` inicial **antes** de llamar, en el propio C#, y (b) un modelo que contemple las tres formas, o un `JsonDocument` y ramificar.
+
+#### 4. La forma de exito es de la LAMBDA, no de la ruta
+
+`:40-43` hace `return invoke_lambda_function("L_GET_BPValidaTelefonoCOFETEL", {...})` **sin tocar el resultado**. Asi que los 6 campos —`existe`, `tipoRed`, `razonSocial`, `modalidad`, `poblacion`, `estado`— son el contrato de **`L_GET_BPValidaTelefonoCOFETEL`**, cuyo codigo **no esta en el share**.
+
+Consecuencia practica: **4 de los 6 campos volvieron `null`** en esta captura, con `existe: true`. O sea que la lambda encontro el numero y su tipo de red pero no la razon social, modalidad, poblacion ni estado. No se puede saber desde aqui si es que esas columnas estan vacias en `CREDICCOFETEL` para ese rango o si la lambda solo las llena en algunos casos.
+
+**Para el DTO: los cuatro van nullable, y ninguna logica puede depender de ellos.** Los dos unicos campos sobre los que se puede construir una regla son `existe` y `tipoRed`.
+
+#### 5. Lo que sigue sin resolverse
+
+**Ninguna de las dos fuentes de este endpoint esta en S/4HANA**, y eso no lo cambia la captura: el catalogo vive en **HANA Cloud** (`CONFIGURACIONCATALOGOS` via `ConexionHANA`) y COFETEL en **SQL Server `SIGMavi`** (tabla `CREDICCOFETEL`, alcanzada por **lambda AWS**). Sigue en pie la decision de arquitectura: o el C# consume esta ruta por HTTP, o se replica el acceso a HANA, o el catalogo se migra a S/4.
+
+Y ojo con la duplicacion que ya estaba anotada: **la particion 2-vs-3 digitos y la validacion de formato estan repetidas** en `A_GET_BPValidaTelefonoCOFETEL.py:11-18` y `:23-38` y en `A_POST_BPValidarTelefonoCOFETEL.py:27-34`, que son las dos de tu lista. En C# **debe ser un solo validador** — es el caso de manual de la regla 28.
+
+> [!note] Hay una tercera copia en `A_GET_CXCValidaTelefono.py:9-13` y `:22`, que usa el mismo catalogo `1138ValAutLadaTel`. **`A_GET_CXCValidaTelefono` NO viene en el listado del usuario [FUERA DE TU LISTA - la introdujo Claude]**: salio de un analisis previo y se pidio expresamente en la busqueda. Se deja anotada como dato de la triplicacion, **no** como endpoint del alcance, y no se migra sin que el usuario la incorpore.
+
+### 3.0e · `AS_GET_TipoCredito` sin filtros — el catalogo `ZTIPO_CTE` completo (21 tipos)
+
+> Captura aportada por el usuario el 2026-09-21. Es la tabla entera: `ZID_TIPO_CTE` de `0000000001` a `0000000021`, **los 21 consecutivos, sin huecos**.
+
+#### 1. La forma: NO es OData, es un envoltorio propio
+
+```json
+{ "statusCode": 200, "result": [ { …12 columnas… } ] }
+```
+
+Coherente con que la ruta sea **SQL directo a HANA** (`hdbcli`), no OData. Pero hay un detalle que el C# tiene que respetar: **el status viaja DOS veces** — en el HTTP y en `statusCode` del cuerpo. El codigo de la ruta devuelve `{"error": ...}` cuando `statusCode != 200`, asi que **un cliente que solo mire el HTTP puede tomar un error por exito**. Hay que leer el del cuerpo.
+
+Las 12 columnas: `MANDT`, `ZID_TIPO_CTE`, `ZTIPO_CREDITO`, `ZTEXT_MOSTRAR`, `ZDESCRIP`, `ZMOSTRAR_CTE_EXP`, `ZMENS_USUAR`, `ZREF_PERS1`, `ZDOM_REF1`, `ZREF_PERS2`, `ZDOM_REF2`, `ZSOLIC_DOM_CAMP`. Coinciden con los 12 query params. `MANDT` vale `"110"` en las 21.
+
+#### 2. 🔴 El orden no es determinista — hay que indexar por id
+
+El orden de llegada es `20, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 4, 3, 5, 1, 21, 2, 19`. Casi descendente, **pero con la cola desordenada**. Confirma que la consulta **no lleva `ORDER BY`**: el orden es el que devuelva HANA y puede cambiar.
+
+**Para el C#: nunca por posicion. Se indexa por `ZID_TIPO_CTE`** (un `Dictionary<string, TipoCredito>`), y si hace falta mostrarlos ordenados, se ordena en el cliente.
+
+#### 3. 🔴 Los cinco campos "booleanos" tienen TRES estados, no dos
+
+`ZREF_PERS1`, `ZDOM_REF1`, `ZREF_PERS2`, `ZDOM_REF2`, `ZSOLIC_DOM_CAMP` llegan como `"1"`, `"0"` **y `""`**:
+
+| `ZID_TIPO_CTE` | Tipo | Los cinco campos |
+|---|---|---|
+| `0000000012` | Credito Venta Cruzada | **los 5 en `""`** |
+| `0000000008` | Credito Seguro Express | **los 5 en `""`** |
+| `0000000006` | Credito Agil Calzado | **los 5 en `""`** |
+| `0000000019` | Credito Cambaceo | **`ZREF_PERS1: ""`** y los otros cuatro en `"0"` — mezclado dentro de la misma fila |
+
+**Un `bool.Parse` reventaria y un `== "1"` trata `""` igual que `"0"` sin decirlo.** Para el DTO van como `string` o como tri-estado, nunca `bool`. Y queda una pregunta de negocio: **`""` significa `0`, o significa "no configurado"?** Con 3 tipos enteros en ese estado no es un dato sucio aislado.
+
+#### 4. 🔴 `"0"` es el centinela de "sin texto" en dos columnas de texto libre
+
+`ZDESCRIP` y `ZMENS_USUAR` traen **el literal `"0"`** cuando no hay texto, en vez de `""` o `null`:
+
+| Tipo | `ZDESCRIP` | `ZMENS_USUAR` |
+|---|---|---|
+| `0000000020` App credilana | `"0"` | `"0"` |
+| `0000000015` Dineralia | `"0"` | `"0"` |
+| `0000000012` Vta Cruzada | `"0"` | `"0"` |
+| `0000000009` Internet | `"0"` | `"0"` |
+| `0000000019` Cambaceo | `"0"` | `"0"` |
+| `0000000021` APP Viu | `"0"` | `"0"` |
+| `0000000017` Referenciado | texto real | **`"0"`** |
+| `0000000016` Internet 2 | texto real | **`"0"`** |
+
+**Si el C# pinta `ZMENS_USUAR` en pantalla, le muestra un `0` al usuario.** Hay que tratar `"0"` como vacio en esas dos columnas — y **solo en esas dos**, porque en las cinco banderas `"0"` si significa cero.
+
+#### 5. `ZTEXT_MOSTRAR` trae formato de presentacion dentro del dato
+
+`"I N T E R N E T"`, `"I N T E R N E T 2"`, `"E X P R E S S"` — espacios intercalados como decoracion. **Nada puede comparar por ese campo**: un `== "INTERNET"` falla. Es etiqueta para pintar, y la llave es `ZID_TIPO_CTE`.
+
+(De paso: `ZDESCRIP` tiene faltas de tipeo repetidas — *"tal como secede"* en cuatro filas, *"Referecias"* en varias. Confirma que es texto capturado a mano: **no se puede parsear**, solo mostrar.)
+
+#### 6. 🔴 El hallazgo de fondo: el tipo de credito de ecommerce NO pide referencias, y el flujo las captura
+
+Los candidatos para el credito web de ecommerce son dos, y los dos llevan `ZSOLIC_DOM_CAMP: "1"`:
+
+| id | `ZTIPO_CREDITO` | `ZDESCRIP` | `ZREF_PERS1` | `ZDOM_REF1` | `ZREF_PERS2` | `ZDOM_REF2` |
+|---|---|---|---|---|---|---|
+| `0000000009` | **Credito Internet** | `"0"` | **0** | **0** | **0** | **0** |
+| `0000000016` | **Credito Internet 2** | *"Captura corta, solicitud sin consulta a buro"* | **0** | **0** | **0** | **0** |
+
+**Los dos declaran que no se piden referencias personales ni sus domicilios.**
+
+Y el SP hace lo contrario: tiene la rama **`InsertReferencia`** completa (`SP:370-603`, 17 columnas, el parser multiplexado) y `CreditoWeb_SaveData_Articulos` inserta **hasta 3 referencias** segun los flags `data[40]`, `data[48]`, `data[56]`.
+
+> [!important] **Pregunta de negocio, y es de primer orden:** si el tipo de credito del flujo web es *Internet* o *Internet 2*, **¿por que el flujo captura referencias que el catalogo dice que no se piden?** Hay tres respuestas posibles y cambian el alcance:
+> 1. El tipo del flujo web **no es** ninguno de esos dos — entonces hace falta saber cual es.
+> 2. El catalogo **no se consulta** en el flujo web: las referencias se capturan siempre, y estas banderas gobiernan otra aplicacion (el punto de venta). Entonces `InsertReferencia` se porta tal cual y este catalogo **no entra** en el alcance del SP.
+> 3. Las banderas **si** gobiernan, y el flujo actual esta capturando datos que no deberia. Entonces la rama de referencias es la que hay que revisar.
+> **Hasta que esto se responda, la rama `InsertReferencia` no se puede declarar migrada con criterio**, aunque el codigo se escriba.
+
+#### 7. Y la misma contradiccion, por duplicado, en Credilana
+
+| id | `ZTIPO_CREDITO` | `ZTEXT_MOSTRAR` | Las 5 banderas |
+|---|---|---|---|
+| `0000000020` | Credito App credilana | `APP CREDILANA` | **todas `"0"`** |
+| `0000000021` | Credito APP Viu | `APP VIU PRESTAMOS` | **todas `"0"`** |
+
+Esos dos son la variante **Credilana** del codigo (`CredyPrestamoMethods`) y la de **VIU**. El catalogo dice que **ninguna pide referencias**… y el hallazgo bloqueante de §7 del plan de ejecucion es justamente que **`CredyPrestamoMethods.cs:131-204` inserta hasta 3 referencias**.
+
+**Las dos variantes del flujo insertan referencias que el catalogo declara innecesarias.** Eso refuerza la hipotesis 2 de arriba (el catalogo gobierna otra aplicacion), pero **no la prueba**, y la diferencia importa: si gobierna, el bloqueante deja de ser "hay que portar las 3 referencias de Credilana" y pasa a ser "hay que decidir si se portan".
+
+#### 8. Lo que este catalogo SI resuelve
+
+**`Cte.ZtipoCredito` tiene ahora dominio conocido.** El campo existe en el modelo C# (`Cte.cs:80`, añadido en esta migracion) y hoy **se manda vacio**. Los valores validos son los 21 `ZID_TIPO_CTE`, o los 21 `ZTIPO_CREDITO` si lo que se guarda es el texto — **eso hay que confirmarlo**, porque el campo del BP es `ZtipoCredito` (texto) y la llave del catalogo es `ZID_TIPO_CTE` (numerico de 10 posiciones). En la captura de BP05 del §3.0b ese campo venia `""`, asi que no hay ejemplo de cual de los dos formatos espera.
+
+**Y `ZtipoCliente` no se confunde con esto:** son dos cosas distintas. `ZtipoCliente` ∈ {`Nuevo`, `Prospecto`} decide si es prospecto (§3.0b); `ZtipoCredito` es uno de estos 21 y decide la modalidad del credito.
+
+### 3.0f · `AS_GET_ZCTE_CREDITO` sin filtros — el catalogo `ZCTE_CREDITO`, 45 politicas
+
+> Captura aportada por el usuario el 2026-09-21, mas lectura del codigo de las dos rutas de catalogo.
+
+#### 1. ✅ Cierra el enlace de `to_Cte.Zcredito`
+
+En la captura de BP05 (§3.0b) `to_Cte.Zcredito` vale **`"0.1 CLIENTE (AAA)"`**. Y en este catalogo **existe exactamente esa fila**, con `ZCALIDAD_EN_QUE_VIVE: "PROPIETARIO, NO PAGA E INTESTADO"`.
+
+**Enlace confirmado: `to_Cte.Zcredito` → `ZCTE_CREDITO.ZCREDITO`.** Y con eso queda claro por que `Zcredito` no es un numero: **la llave de este catalogo es texto libre**, la descripcion completa de la politica.
+
+Coherente con que `AS_GET_ZQBP_EditarCliente_CteCredito` filtre por `Zcredito` y no por cliente: **es la llave del catalogo, no del BP**.
+
+#### 2. 🔴 El catalogo NO lleva limites de credito, y eso cierra una pregunta
+
+`ZLIMITE_CREDITO` vale **`0` en las 45 filas**. Igual `ZLIMITE_PEDIDOS`. Y son los unicos dos campos numericos; los otros 11 son string.
+
+**Consecuencias:**
+- **El limite es por cliente, no por politica.** Confirma que `GetSaldo` tiene que leer `Zcrmcantidad` del BP (que en la captura vale `"12345678.20"`) y que **este catalogo no aporta nada al limite**.
+- **Ninguna columna trae SALDO** (lo dispuesto o adeudado). La pregunta de si alguno de los endpoints de credito cerraba el hueco del **saldo CXC** queda respondida: **no**. Sigue sin equivalente.
+
+De hecho **casi todo el catalogo es constante**. Solo varian tres columnas:
+
+| Columna | Valor |
+|---|---|
+| `ZCREDITO` | la llave, 45 valores distintos |
+| `ZCALIDAD_EN_QUE_VIVE` | 20 valores distintos |
+| `ZCON_LIMITE_PEDID` | `"0"` en 40 filas, **`""` en 5** (DINERALIA, CREDILANA EMPRESARIO, CLIENTE HUESPED SIN BURO, AFILIADOR DIMA, 0.1 CLIENTE (AAA)) |
+
+Las otras diez son iguales en las 45: `MANDT "110"`, `ZCON_CREDITO "1"`, `ZCON_LIMITE_CRED "0"`, `ZLIMITE_CREDITO 0`, `ZLIMITE_PEDIDOS 0`, `ZMONEDA_CRED "Pesos"`, `ZCON_DIAS "0"`, **`ZDIAS ""`**, `ZCON_CONDICIONES "0"`, **`ZCONDICIONES ""`**.
+
+**`ZDIAS` y `ZCONDICIONES` estan vacias en las 45**: columnas que existen y no se usan. Nada que migrar de ahi.
+
+#### 3. La estructura: 19 politicas × 2 variantes + 7 sueltas
+
+**19 politicas numeradas**, cada una en dos versiones — con y sin el sufijo `(COLOCACION)` — y con **todos los demas campos identicos**:
+
+`1.1 PROP COMPRUEBA` · `1.1.1 AVAL PROP COMPRUEBA` · `1.2 PROP ESPECIAL` · `1.2.1 AVAL POLITICA ESPECIAL` · `1.3 PROP NO COMPRUEBA C/BURO` · `1.3.1 AVAL CON BURO` · `1.4 PRP NO COMPUEBA DE RIESGO` · `1.4.1 AVAL DE RIESGO` · `2.2 CLIENTE POLITICA ESPECIAL` · `2.2.1 AVAL NP/INTS SI COMPROBO` · `2.3 CLIENTE NP/INTS NO COMP C/BURO` · `2.3.1 AVAL NP/INTS SI COMP C/BURO` · `2.4 CLIENTE NP/INTS NO COMP DE RIESGO` · `2.4.1 AVAL NO COMPRUEBA DE RIESGO` · `3.3 CLIENTE RENTA C/BURO` · `3.3.1 AVAL RENTA CON BURO` · `3.4. CLIENTA RENTA DE RIESGO` · `3.4.1 AVAL RENTA DE RIESGO` · `4.1 CLIENTE HUESPED CON BURO`
+
+**7 sueltas, sin par:** `DINERALIA`, `CREDILANA EMPRESARIO`, `CLIENTE HUESPED SIN BURO`, `CLIENTE EXPRESS R/P`, `AFILIADOR DIMA`, `0.1 CLIENTE (AAA)`, `0.0 CLIENTE EXPRESS`.
+
+**El problema:** la unica diferencia entre las dos variantes de una politica **esta en el texto de la llave**. No hay columna que marque cual es "de colocacion". Si el codigo busca por `ZCREDITO` con el texto normalizado o recortado, **coge la equivocada sin avisar**.
+
+#### 4. 🔴 Una llave esta TRUNCADA a 50 caracteres exactos
+
+```
+"2.4 CLIENTE NP/INTS NO COMP DE RIESGO  (COLOCACION"
+```
+
+**Le falta el `)` de cierre.** Son exactamente 50 caracteres, y su pareja sin sufijo cabe de sobra — asi que no es un typo: es **truncamiento de columna**, probablemente `VARCHAR(50)`.
+
+Y `ZCREDITO` **es la llave**. Consecuencias directas:
+- Una busqueda por el nombre completo *"…DE RIESGO  (COLOCACION)"* **no la encuentra**.
+- Si algun cliente tiene esa politica en su `to_Cte.Zcredito`, el valor que trae el BP puede estar truncado igual, o no — y entonces **no casaria con el catalogo**.
+- Cualquier validacion del tipo *"el `Zcredito` del cliente existe en el catalogo"* puede dar falso negativo por esa fila.
+
+**Es un dato sucio en produccion, no un defecto del codigo.** Hay que decidir si el C# normaliza (recorte a 50 y comparacion por prefijo) o si se corrige el dato en origen.
+
+#### 5. `ZCALIDAD_EN_QUE_VIVE`: es un atributo, NO una tabla de derivacion
+
+Los 20 valores observados: `NO APLICA`, `HUESPED SIN BURO`, `EXPRESS`, `HUESPED CON BURO`, `AVAL RENTA`, `RENTA`, `AVAL RENTA CON BURO`, `RENTA CON BURO`, `AVAL RIESGO`, `NO PAGA - INTESTADO NO COMPRUEBA`, `AVAL NO PAGA - INTESTADO CON BURO`, `NO PAGA - INTESTADO NC CON BURO`, `AVAL NO PAGA - INTESTADO`, `NO PAGA - INTESTADO`, `PROP NO COMPRUEBA`, `AVAL CON BURO`, `PROP NC CON BURO`, `AVAL PROPIETARIO`, `PROPIETARIO`, `PROPIETARIO, NO PAGA E INTESTADO`.
+
+Tentador leerlo como *"la tabla que deriva la politica de credito desde la calidad en que vive"* — el SP tiene la columna `viveEnCalidad` y el BP tiene `ZviveencCal` (vacio en la captura) y `ZidVivEnCalid` (tambien vacio).
+
+**Pero no lo es: la relacion es many-to-one.** `AVAL RIESGO` aparece en `2.4.1` y en `1.4.1`; `NO PAGA - INTESTADO` en `2.2` y `1.2`; `AVAL NO PAGA - INTESTADO` en `2.2.1` y `1.2.1`. **Desde la calidad en que vive no se puede derivar la politica**, porque varias politicas comparten la misma calidad. Es un **atributo descriptivo** de la politica, no una llave de busqueda.
+
+Lo que si aporta: **el dominio de valores** que puede tomar la calidad en que vive, util para validar `ZviveencCal` — pero no como fuente de la politica.
+
+#### 6. 🔴 Dos rutas hermanas, dos envoltorios distintos
+
+Verificado en codigo, y es una trampa para el cliente C#:
+
+| Ruta | Que devuelve | Forma |
+|---|---|---|
+| `AS_GET_TipoCredito` | `return result` (`AS_GET_TipoCredito.py:83`) | **`{"statusCode": 200, "result": [...]}`** |
+| `AS_GET_ZCTE_CREDITO` | `return result["result"]` (`AS_GET_ZCTE_CREDITO.py:59`) | **`[...]` array pelado** |
+
+Las dos leen HANA con el mismo `conn.procedure` y las dos devuelven `{"error": ...}` si el `statusCode` interno no es 200 (`:81` y `:57`) — **con HTTP 200**.
+
+**Para el C#: hacen falta dos deserializadores distintos para dos catalogos hermanos**, y en los dos casos hay que mirar el status del CUERPO, no el del HTTP. Es exactamente el tipo de inconsistencia que conviene normalizar en el cliente con un envoltorio propio.
 
 ### Dos cosas del inventario que hay que fijar antes de escribir
 
@@ -411,17 +892,223 @@ GetSaldo no emite result set
 
 ---
 
-### 4.9 · La pata de SMS de `SpCREDICodigoRecomendador` (D8)
+### 4.9 · `SpCREDICodigoRecomendador` — D8 CORREGIDA: no es "todo deprecado"
 
-**La logica de codigo recomendador queda deprecada. Solo entra su pata de SMS.**
+> [!important] Correccion del 2026-09-21. La version anterior de esta seccion decia que del SP "solo entra su pata de SMS" y que la columna `CodigoRecomendador` "no se porta". **Las dos afirmaciones eran incorrectas.** Se corrigen abajo con las tres decisiones del usuario. Tambien se retira la descripcion previa del SP como satelite menor: son **455 lineas con 17 operaciones**, no un apendice.
 
-El SP son 455 lineas con 17 operaciones (`@opcion` 1 a 17: `:52, 91, 131, 164, 171, 179, 198, 215, 222, 234, 244, 331, 351, 372, 377, 402, 427`). De todo eso, lo que se toma es el encolado de mensajes: `INSERT` a `MAVIANDROID01.ServicioAndroid.DBO.TcAAea00030_EnvioMensajes` (`:119-120`, con lecturas de `TcAAEA00030_Mensajes` en `:115` y `:135`, e insercion en `:149`), con **`Cliente='CW00001'` cableado**.
+**D8 queda en tres piezas, no en una.**
 
-**Equivalente:** ninguno en OData, ni hace falta — es el canal de SMS, no SAP. Y `ServicioSAP` **ya escribe esa tabla exacta**, asi que la fila de `PLAN_BP05:131` que la marca como `NUEVO` es pesimista.
+| # | Decision del usuario (2026-09-21) | Consecuencia de diseno |
+|---|---|---|
+| **D8.1** | **La columna `CodigoRecomendador` se queda en el destino, y no se le manda valor.** Literal: *"no se le va a enviar valor para que el funcionamiento sea el mismo; el que no se llene o se use en este flujo no significa que otro servicio no la consuma y utilice ese valor"* | Se conserva la **estructura**; lo que no se porta es la **logica que la calculaba**. La columna queda en el `INSERT` recibiendo su DEFAULT, igual que hoy cuando el SP se invoca sin `@CodigoRecomendador`. **No se elimina del modelo ni del INSERT de 59 columnas** |
+| **D8.2** | **La opcion 17 (login de empleados) se mantiene** | Deja de ser codigo a retirar y pasa a ser **superficie viva**. Trae consigo un cruce a Intelisis que no estaba en el inventario de la §4 — ver abajo |
+| **D8.3** | **Los 5 mapeos de `MappingMetods\RecomenderController\` se leen como contexto**, y si sirven se determina **al iniciar esa investigacion**, contra el flujo vigente y bajo las reglas del corpus | No se archivan. No se dan por vigentes tampoco: son insumo, no conclusion |
+| **D8.4** | **`setRecommenderList` / `@opcion = 2` queda deprecada** | Se lleva consigo el `INSERT` a la cola de SMS (`:119-120`, dentro de `:91-130`). **No se pierde nada**: `ServicioSAP` ya tiene productor propio en `CreditMethods.cs:137`. Resultado: del SP **no se porta nada** al flujo de credito — ver D8.4 abajo |
 
-**Consecuencia de D8, ya decidida:** `@CodigoRecomendador` (`SP:149`) y la columna `CodigoRecomendador` (`SP:272`/`:333`) **no se portan**. No se busca equivalente ni se llena el campo `Cte.ZrecomendPor`. Si al implementar aparece logica de recomendador en el codigo existente, **se retira**, no se migra.
+**Lo que esto cambia respecto a la version anterior:** antes se decia *"si al implementar aparece logica de recomendador en el codigo existente, se retira"*. **Eso ya no aplica.** La instruccion de retirar se limita a la logica de *calculo* del codigo; ni la columna ni la opcion 17 se tocan.
 
-**Defectos del SP, por si algo de el se rescata:** la cadena `ELSE IF` **se rompe en 6 puntos** (`:222, 234, 372, 377, 402, 427` son `IF` independientes); `:67` hace `UPDATE TOP (@Cantidad)` **sin `ORDER BY`** → que codigos se reclaman es no determinista, y `@Cantidad` tiene default `NULL` sin guarda; y la opcion 11 con `@TipoCodigo` fuera de `{0,1,2}` **no devuelve nada, sin error** — el mismo patron del `@Op` desconocido del SP padre.
+#### La opcion 17, leida (`SP:427-448`)
+
+```sql
+IF (@opcion = 17) --Verifica el Logeo para empleados de Recomienda y gana
+  IF ((SELECT COUNT(*) FROM MAVIANDROID01.ServicioAndroid.DBO.PA_USUARIOS_ANDROID WITH (NOLOCK)
+       WHERE Nomina = @Nomina AND PASSWORD = @search) > 0)
+    SELECT A.Agente AS NOMINA, A.Nombre AS NOMBRE, S.wUEN AS UEN
+    FROM Agente A WITH (NOLOCK)
+    INNER JOIN Sucursal S WITH (NOLOCK) ON A.SucursalEmpresa = S.Sucursal
+    WHERE A.Tipo IN ('VENDEDOR','GERENTE') AND A.Estatus = 'ALTA' AND A.Agente = @NOMINA
+```
+
+Son **dos mitades con clasificacion distinta**, y por eso importa que se mantenga:
+
+| Mitad | Objeto | Base | Clasificacion |
+|---|---|---|---|
+| Verificacion de credenciales | `PA_USUARIOS_ANDROID` | `MAVIANDROID01.ServicioAndroid` | **Android — ya migrado.** No es hueco |
+| Datos del empleado que devuelve | `Agente` ⋈ `Sucursal` (`wUEN`) | Intelisis (`USE [IntelisisTmp]`, tablas sin prefijo) | 🔴 **Cruce a Intelisis NUEVO.** No estaba en el inventario de 7 cruces de la §4 |
+
+**Consecuencia para el inventario:** mantener la opcion 17 **abre un cruce que estaba contado como cerrado**. `Agente` y `Sucursal.wUEN` necesitan equivalente; sin el, la opcion 17 no puede salir de Intelisis. Es el unico hueco que aparece *por* esta decision, y hay que resolverlo antes de que la opcion 17 se considere migrable.
+
+**Dos defectos objetivos de la opcion 17** (se reportan, no se corrigen sin decision):
+
+1. **La contrasena se compara en claro**: `PASSWORD = @search`, sin hash ni salt, y viaja en el parametro generico `@search VARCHAR`. Si la opcion 17 se porta tal cual, el defecto se muda al stack nuevo. **Decision N** (datos personales) ya cubre el criterio; esto le anade la autenticacion.
+2. **Falla silenciosa**: si las credenciales no coinciden, el `IF` no tiene `ELSE` — no devuelve nada, ni error ni marca. El llamador no puede distinguir *"credenciales malas"* de *"empleado sin sucursal ALTA"* ni de *"el SP no entro a la rama"*. Es el mismo patron del `@Op` desconocido del SP padre y de la opcion 11 con `@TipoCodigo` fuera de `{0,1,2}`.
+
+#### La superficie que LAN expone del SP: 3 de 17 operaciones
+
+De los 5 mapeos de `MappingMetods\RecomenderController\`, leidos completos:
+
+| Ruta LAN | `@opcion` quemada | Metodo de negocio | Que hace la rama |
+|---|---|---|---|
+| `POST /recommender/setCodes` | `"1"` | `RecommenderMethods.TraerCodigosRecomendadoscliente` | Genera N codigos para un cliente (`SP:52-89`) |
+| `POST /recommender/setRecommenderList` | `"2"` | `RecommenderMethods.CodigoRecomendador` | Asigna codigo + encola SMS (`SP:91-129`) — 🔴 **DEPRECADA (D8.4)** |
+| `POST /recommender/getRecommender` | `"9"` | `RecommenderMethods.GetRecommender` | Info del cliente autentificado (`SP:222-233`) |
+
+Las tres van contra `IntelisisTmp` en `MAVICUBOS.grupomavi.com` via `Connection.sCadenaConexion`, con el SP ejecutado **como texto SQL**, no con `CommandType.StoredProcedure`.
+
+**Dato que decide D8.3: la opcion 17 no tiene endpoint en este controlador.** Las 14 operaciones restantes —incluida la 17— no son alcanzables desde el API de ecommerce. Si la opcion 17 sigue viva, **su consumidor esta fuera de este controlador** (lo esperable: la app de Recomienda y gana). Eso hay que confirmarlo antes de disenar su migracion: determina si el endpoint nuevo lo expone `ServicioSAP` o no le corresponde.
+
+**Defectos de los 3 endpoints, documentados por dos analisis independientes:**
+
+- 🔴 **Parametros cruzados en `setCodes`**: el controlador llama `("1", customerAccount, requestedCodes, "WEB", uen)` contra la firma `(string op, string search, int uen, string aplicacion, int cantidad)`. Por posicion, **`requestedCodes` cae en `uen` y `uen` cae en `cantidad`**. El SP recibe `@Uen = requestedCodes` y `@Cantidad = uen`. Hay que decidir si se replica el cruce o se corrige: corregirlo **cambia el comportamiento observable** (cuantos codigos se generan y para que UEN).
+- `@Nombre`, `@Telefono` y `@Parentesco` van como **literales fijos en el texto SQL**, no parametrizados, en la llamada de `setCodes`.
+- `getRecommender` y `setRecommenderList` devuelven **JSON doble-escapado**: el metodo de negocio serializa a `string` y el controlador lo envuelve en `Ok(...)`, que lo vuelve a serializar.
+- `getRecommender` **no tiene manejo de excepciones** en la accion; cualquier error fuera del `catch (SqlException)` interno sale como HTTP 500 de Web API.
+- `CodigoRecomendador` devuelve, si `ds.Tables.Count <= 0`, un `List<List<string>>` degenerado que **parte el literal "vacio" caracter por caracter**.
+
+#### D8.2 caracterizada: la opcion 17 se queda, pero hoy no puede salir de Intelisis
+
+Se mantiene por decision del usuario. Lo que la busqueda dirigida sobre las 8 carpetas del share (`LAN`, `DMZ`, `ServicioSAP`, `businesspartner-dev`, `salesanddistribution-dev`, `Magento248`) establece es **donde puede vivir y donde no**:
+
+**1. No tiene consumidor en este share. Cero.**
+
+| Busqueda | Ambito | Resultado |
+|---|---|---|
+| Llamador con `@opcion = 17` | todo `Z:\` | **0** |
+| `SpCREDICodigoRecomendador` en codigo | `DMZ`, `ServicioSAP`, los dos repos `-dev`, `Magento248` | **0** (solo LAN) |
+| `PA_USUARIOS_ANDROID` en codigo | todo `Z:\` | **0** (solo el `.sql` y un doc) |
+| Codigo que pase `@Nomina` al SP | todo `Z:\` | **0** |
+| Login de empleado **con validacion de password** | todo `Z:\` | **0** |
+
+Y hay una razon estructural, no solo de ausencia de llamadas: **`@Nomina` es el parametro posicional 11** (`SP:39`), y la invocacion mas larga del arbol pasa **8 posicionales** (`RecommenderMethods.cs:141`). Ninguna usa parametros nombrados mas alla de los primeros. Por tanto `@Nomina` **siempre llega `NULL`**, y el `COUNT(*)` de `SP:429-434` no puede dar `> 0` con datos reales **ni aunque alguien forzara `@opcion = 17`**.
+
+**Conclusion:** el cliente de la opcion 17 es **externo al share** — lo coherente es la app movil de Recomienda y gana pegando directo a `IntelisisTmp`, lo que encaja con que valide contra `MAVIANDROID01.ServicioAndroid`. **Quien la consume es un dato que hay que traer de fuera**, y sin el no se puede decidir quien debe exponerla.
+
+**2. Lo que existe y NO la reemplaza** (los tres candidatos por nombre, verificados abriendo el codigo):
+
+| Candidato | Donde | Por que no sirve |
+|---|---|---|
+| `POST customerService/GetEmpleadoByNomina` | `LAN/…/CustomerServiceController.cs:236-239`, logica en `CustomerServiceMethods.cs:1952-2000` (SQL inline, **no** el SP), proxy DMZ en `CustomerServiceController.cs:375-385` | **No valida password.** Filtra por `Comercializadora.dbo.Personal` ⋈ `TablaStD` (`TablaSt = 'Codigo de promotor'`), no por `Tipo IN ('VENDEDOR','GERENTE')`. Y **devuelve `Agente` + `Nombre` sin UEN**: no hay JOIN a `Sucursal` |
+| Magento `Mavi\RegisterSeller` — `POST /V1/mavi-registerseller/loginemployee` | `Magento248/…/RegisterSeller/etc/webapi.xml:3`, impl. `Model/RegisterSellerManagement.php:92-113` | **El nombre engana: no valida contrasena.** Recibe `cartId` + `payroll` y escribe `employee_id` en el quote. Su hermano `getemployee` (`:142-171`) reenvia el body si trae `Nomina` y lee `{Nombre, Nomina}` — o sea consume `GetEmpleadoByNomina`, no la opcion 17 |
+| `GET partner/successfactor/employee/{userId}` | `ServicioSAP/…/BusinessPartnerController.cs:169-170` | SuccessFactors. **Sin password y sin UEN** |
+
+**3. El hueco real: `Sucursal.wUEN` no tiene equivalente en ninguna parte.**
+
+Las dos mitades de la opcion 17 estan en situaciones opuestas:
+
+| Mitad | Estado |
+|---|---|
+| Credenciales (`PA_USUARIOS_ANDROID`) | **Android — ya migrado.** No es hueco |
+| `Agente` (maestro de agente) | 🟡 **Hay zona de aterrizaje**: `businesspartner-dev/apps/api/routes/AS_ZQBP_AGENTE.py` expone 7 endpoints sobre `ZQBP_AGENTE_SRV` (`GET/POST/PATCH/DELETE /AS_*_ZQBP_AGENTE`, `+exist`, `UPDATEAGENTE`, `CREATEAGENTE`), con `Partner`, `Zagente`, `Werks`, `Zcategoria`, `Zestatus`. **Sin password** |
+| `Sucursal.wUEN` | 🔴 **Sin equivalente. 0 resultados en todo el arbol** |
+
+`wUEN` aparece **solo 3 veces en todo `Z:\`**, y las tres son en este mismo documento declarando el hueco (`:434`, `:445`, `:447`). En codigo: **0 en `LAN`, 0 en `ServicioSAP`, 0 en los dos repos `-dev`**. En el corpus de equivalencias, todo esta sin resolver:
+
+- `Resources/lan_tables_to_sap_master.md:39` — `SpCREDICodigoRecomendador` → **"En Evaluacion (SAP)"**; `:65` lista `Agente` y `Sucursal` sin destino OData asignado.
+- `_GLOBAL_MASTER_DB.csv:9-11` — `Agente`, `Sucursal`, `VTASCVentaCupon` → **"Por Definir, SAP Promotions"**.
+- `_GLOBAL_MASTER_DB.csv:95-102` — las 8 filas del SP → **"Pendiente SAP, Pendiente SAP"**, y **cubren solo las opciones 1, 2 y 9: no hay ni una fila para la opcion 17**.
+- `_GLOBAL_MASTER_DB.csv:105` — `VENTAD` con columnas `Agente, Sucursal, SucursalOrigen, UEN` → **"Pendiente SAP"**.
+
+**Cuidado con el falso amigo:** `master_test_plan.md:232` mapea `Sucursal`/`SucursalEmpresa` → **`Werks`**, y `COMPARATIVA_BP_LAN_VS_SAP.md:55, 82, 168` mapea `storeCode` → UEN (1/2/3) → `Vkorg` (04/05). **Ninguno de los dos es `wUEN`**: el primero es el centro, el segundo es la UEN *del cliente* derivada del storeCode de Magento. La opcion 17 necesita la UEN **de la sucursal del empleado**, que es un tercer concepto sin mapeo.
+
+**4. Lo unico parecido a autenticacion en el stack nuevo es un stub.**
+
+`businesspartner-dev/apps/api/routes/AI_GET_InformacionUsuario.py:7` — `GET /AI_GET_InformacionUsuario`, cuyo docstring dice *"Autorizar NIP de Usuario"* pero **el cuerpo hace `return True` sin llamar a nada** (`:18`). Es la forma de un endpoint de autorizacion, vacio. Y `apps/api/TokenMavi.py:84-85` (`getNomina()`) **lee la nomina de un JWT ya emitido**: no autentica, asume que alguien mas lo hizo.
+
+**Consecuencia de diseno de D8.2, explicita:** mantener la opcion 17 **no la hace migrable hoy**. Le faltan tres cosas, y ninguna se resuelve leyendo mas codigo: **(a)** quien la consume, **(b)** el equivalente de `Sucursal.wUEN`, **(c)** decidir donde vive la autenticacion de empleado en el stack nuevo, que hoy no existe en ningun sitio. Hasta entonces la opcion 17 **sigue viviendo en Intelisis**, y eso es lo que hay que decir en el plan: se queda, y se queda donde esta.
+
+#### D8.1 ya esta satisfecha por el codigo — no hay nada que cambiar
+
+`CrearSolicitudCreditoAsync` (`OrderMethods.cs:862`) invoca el SP como **`CommandType.StoredProcedure`** (`:868`), es decir **binding por nombre, no por posicion**, y agrega **38 parametros** (`:873-910`, contados: 38). La lista exacta es:
+
+```
+@Id @Op @apellido_p @apellido_m @nombre @fecha_nacimiento @rfc @sexo @email @direccion
+@exterior @interior @entre_calles @codigo_postal @delegacion @poblacion @estado @colonia
+@estado_civil @articulo @uen @condicion @cliente @utmSource @sucursal @origen @idMagento
+@MetodoEnvio @lada_particular @telefono_particular @lada_celular @telefono_celular
+@sucursalDestino @RedimirMonedero @ValidacionTelefono @OrigenIdMagento @LadaValidar @TelefonoValidar
+```
+
+**`@CodigoRecomendador` no esta en la lista** (verificado: 0 coincidencias de `recomend` en `:840-915`). Y como los 66 parametros del SP tienen DEFAULT, omitirlo por nombre es seguro: el SP entra con `@CodigoRecomendador = NULL` (`SP_CREDITO:149`) y **escribe la columna vacia** en `:272`/`:333`.
+
+**Eso es exactamente D8.1.** La columna sigue en el `INSERT` de 59, el otro consumidor puede seguir leyendola, y este flujo no le manda valor. **No hay cambio que aplicar**: el comportamiento pedido ya es el actual. Lo unico que habia que corregir era el documento, que decia que la columna "no se porta".
+
+> [!note] El comentario del metodo (`:845-852`) dice "los mismos 38 parametros… los demas parametros del SP tienen default y se omiten, igual que en LAN". La cuenta **si cuadra** (38 agregados, 38 documentados). Queda pendiente de otra revision si los 28 omitidos coinciden uno a uno con los que LAN omite; este documento solo verifica el de recomendador.
+
+#### D8.3 RESUELTA: de los 3 mapeos, uno tiene equivalente SAP vivo y otro no sirve
+
+Determinacion hecha contra el flujo vigente, como se pidio:
+
+| Mapeo | `@opcion` | Equivalente SAP hallado | Veredicto |
+|---|---|---|---|
+| `Post_GetRecommender_Mapping.md` | `9` | ✅ **`GET /AS_GET_EncontrarCteCodigoMenudeo`** (`businesspartner-dev/apps/api/routes/AS_GET_EncontrarCteCodigoMenudeo.py:6`) | **Sirve como insumo.** Es la misma intencion, ya resuelta por SAP |
+| `Post_SetRecommenderList_Mapping.md` | `2` | ❌ ninguno | Insumo valido, pero la operacion no tiene destino todavia |
+| `Post_SetCodes_Mapping.md` / `Post_setCodes_Mapping2.md` | `1` | ❌ ninguno | 🔴 **No sirve tal cual**: documenta el cruce de parametros como comportamiento. Ver defecto abajo |
+
+**El hallazgo que justifica leer los mapeos:** la opcion 9 **ya esta cubierta por SAP**, y de una forma mas completa que el legado. `AS_GET_EncontrarCteCodigoMenudeo` recibe `bp` ("BP asociado al codigo recomendado") mas `cliente`, lee el CDS `ZB_DATOS_ALL_CLIENT_CDS/ZB_DATOS_ALL_CLIENT` filtrando por `BusinessPartner` (`:22-23`), y devuelve `nombre` y `domicilio` armados desde `PrimerNombre`/`PrimerApellido` y `Calle`/`NumExt` (`:41-42`). **Incluye ademas la regla de negocio que el legado no tenia explicita**: rechaza si `Cliente == cliente` con *"El cliente no puede canjear su propio codigo"* (`:38-39`).
+
+**Tres defectos de esa ruta, que hay que arreglar antes de apoyarse en ella:**
+
+1. 🔴 **La regla de negocio devuelve 500, no 400.** Los dos `raise HTTPException(400, ...)` (`:34`, `:39`) estan **dentro del `try`**, y el `except Exception as e` de `:47-48` los captura y los reemplaza por `HTTPException(500, detail=str(e))`. O sea: *"El cliente no puede canjear su propio codigo"* sale como **HTTP 500**. Es el mismo patron de `except` ciego que ya se documento en otras 11 rutas del repo.
+2. 🔴 **`IndexError` antes del 400.** `...get('results', [{}])[0]` (`:30`): el default `[{}]` solo aplica si falta la clave `results`. Si SAP devuelve `results: []` —el caso normal de "no existe ese BP"— el `[0]` revienta con `IndexError`, y el `if not cliente_data` de `:33` **es inalcanzable para ese caso**. Otro 500 donde deberia haber 400.
+3. **Interpolacion sin escapar en el `$filter`**: `f"...BusinessPartner eq '{bp}'..."` (`:22`). Un `'` en `bp` rompe o altera el filtro OData. Mas `verify=False` en `:27`.
+
+**Y el defecto que invalida el mapeo de `setCodes`:** los argumentos van cruzados contra la firma. `RecomenderController.cs:45` llama `("1", customerAccount, requestedCodes, "WEB", uen)` contra `TraerCodigosRecomendadoscliente(string op, string search, int uen, string aplicacion, int cantidad)` (`RecommenderMethods.cs:132`). **`requestedCodes` entra como `@Uen` y `uen` entra como `@Cantidad`.** El SP recibe los dos invertidos. Replicarlo es replicar el bug; corregirlo **cambia cuantos codigos se generan y para que UEN**. Decision de negocio, no tecnica.
+
+#### La segunda puerta: el recomendador tambien entra por `CreditController`, sin pasar por el SP
+
+Esto no estaba en ningun documento y cambia el alcance de "deprecar el recomendador": **el DMZ expone hoy 5 rutas de recomendador, no 3.**
+
+| Ruta DMZ | Reenvia a | Fuente de datos |
+|---|---|---|
+| `POST recommender/setRecommenderList` (`DMZ/…/RecommenderController.cs:21`) | LAN mismo nombre (`:39`) | SP `@opcion=2` |
+| `POST recommender/getRecommender` (`:51`) | LAN (`:56`) | SP `@opcion=9` |
+| `POST recommender/setCodes` (`:62`) | LAN (`:80`) | SP `@opcion=1` |
+| **`POST credit/codigoRecomendado`** (`DMZ/…/CreditController.cs:185`) | LAN (`:193`) | 🔴 **SQL inline** a `CREDIDCodigoRecomendador` ⋈ `Cte` (`LAN/…/CreditMethods.cs:1118`) |
+| **`POST credit/codigoRecomendadoWithUen`** (`DMZ/…/CreditController.cs:199`) | LAN (`:206`) | 🔴 **SQL inline** (`LAN/…/CreditMethods.cs:1153`) |
+
+Las dos ultimas **no tocan el SP ni `RecommenderMethods`**: son SQL escrito a mano contra la tabla de catalogo `CREDIDCodigoRecomendador`. Consecuencias:
+
+- **Retirar el SP no retira el recomendador.** Quedan dos rutas vivas por otra puerta, y son las que validan el codigo en el flujo de credito.
+- 🔴 **Inyeccion SQL en `codigoRecomendado`**: `CreditMethods.cs:1117-1119` concatena el codigo con `string.Format`, **sin parametrizar**. La variante `WithUen` (`:1153`) si usa `SqlParameter`. Misma funcionalidad, dos niveles de seguridad.
+- El DMZ sigue proxeando las 5. **Que la logica este "deprecada" no esta reflejado en el DMZ**: hay que decidir si se apagan las rutas o se dejan apuntando a LAN.
+
+#### Lo que ya existe en `ServicioSAP`: dos campos vacios y ninguna logica
+
+| Que | Donde | Estado |
+|---|---|---|
+| `ZrecomendPor` (declaracion) | `Models/SAP/BusinessPartner/Cte.cs:24`, `Partner.cs:26`, `BP05MA/BusinessEntitiesMa.cs:278` | Campo de modelo |
+| `ZdirRecom` (declaracion) | `Cte.cs:29`, `Partner.cs:31`, `BusinessEntitiesMa.cs:283` | Campo de modelo |
+| `ZrecomendPor = ""` / `ZdirRecom = ""` | `BusinessPartnerMethods.cs:599, 604` (BP-1) y `OrderMethods.cs:2869, 2874` (BP-2) | Literal quemado, **cero logica** |
+| `CodigoRecomendador` | — | **0 coincidencias en todo `ServicioSAP`** |
+
+Los dos constructores de BP estan vivos (`BusinessPartnerController.cs:46` → `POST partner/client`; y `OrderController.cs:27`/`:85` → `SetOrderAsync`). **No hay logica de recomendador que retirar en `ServicioSAP`**: solo dos campos que ya se mandan vacios. Consistente con D8.1.
+
+> [!warning] Dos falsos positivos mas, que se suman a los dos de abajo
+> **`L_GET_BPCodigoRecomendador`** no tiene bloque `Events` en `businesspartner-dev/apps/lambdas/template.yml:49-61` — **sin trigger de API Gateway** — y sus unicas 3 referencias en el repo son esas mismas lineas del YAML: **0 invocadores**.
+> **`A_GET_CodigoRecomendado` fue eliminada**: `businesspartner-dev/apps/api/routes/__init__.py:49` lo dice literal — `# A_GET_CodigoRecomendado ELIMINADO - Lambda AWS no existe`. No hay ningun archivo con `Recom` en el nombre dentro de `apps/api/routes/`.
+
+#### D8.4: `setRecommenderList` deprecada — y con ella se cae la ultima razon para tocar este SP
+
+**Decision del usuario (2026-09-21): la opcion 2 / `POST recommender/setRecommenderList` queda deprecada.**
+
+Eso tiene una consecuencia que **contradice lo que decia la version anterior de esta seccion**, y hay que dejarla escrita:
+
+**La version anterior decia que del SP "solo entra su pata de SMS". Ya no entra nada.**
+
+El `INSERT` a la cola de SMS **vive dentro de la opcion 2**: `:119-120`, y la opcion 2 abarca `:91` a `:130` (la 3 empieza en `:131`). El otro `INSERT`, `:149`, esta dentro de la **opcion 3** (*"Reenviar SMS"*, `:131`+), que es la otra mitad del mismo mecanismo de recomendador. **Deprecar la opcion 2 se lleva el encolado con ella.**
+
+**Y no se pierde nada, porque `ServicioSAP` ya tiene su propio productor.** Verificado:
+
+| Quien | Donde | Operacion |
+|---|---|---|
+| `ServicioSAP` — `SendSmsNewNumber` | `Methods/Credit/CreditMethods.cs:137` | **`INSERT INTO TcAAEA00030_EnvioMensajes`** |
+| `ServicioSAP` | `Methods/Credit/CreditMethods.cs:270` | `SELECT TOP 1 Telefono` de la cola |
+| `ServicioSAP` | `Methods/Order/OrderMethods.cs:588` | `SELECT TOP 1 LTRIM(RTRIM(T.Telefono))` de la cola |
+| `SP_CREDITO_WEB_DATOS` | `SP_CREDITO:205-208` | `SELECT TOP 1 @TelefonoAValidar` de la cola |
+
+La cola tiene **dos productores independientes** en el legado: el del recomendador (opciones 2 y 3 del SP) y el de validacion de telefono del flujo de credito. **El que le importa al credito es el segundo, y ese ya esta migrado** — `SendSmsNewNumber` distingue incluso el tipo de mensaje (`idMensaje = 60` contado / `23` credito, `identificador = "DM0312"` / `"DM0363"`, `CreditMethods.cs:134-135`).
+
+**Conclusion neta de D8.4:** del SP `SpCREDICodigoRecomendador` **no se porta nada** hacia el flujo de credito. Ni la columna (D8.1: ya se manda vacia), ni la logica de codigos (deprecada), ni el SMS (ya existe productor propio). Lo unico que sigue vivo del SP es la **opcion 17** (D8.2), y vive en Intelisis hasta que se resuelvan **Q**, **R** y **S**.
+
+> [!warning] 🔴 Defecto en el productor propio, que ahora es el unico que importa
+> `CreditMethods.cs:137-141` arma el `INSERT` con **`string.Format`, interpolando `request.Cliente` y `request.NumeroTelefono` directo en el SQL** — sin `SqlParameter`. Es **inyeccion SQL en `ServicioSAP`**, no en el legado, y sobre la tabla de la que el flujo de credito lee el telefono a validar. Se suma a las dos de `LAN/…/CreditMethods.cs:1117-1119` (decision **U**): el patron se esta replicando en el codigo nuevo.
+> De paso, en el mismo bloque: `CommandTimeout = 9999999` (`:144`) y un `catch` que devuelve `result = -1` y solo escribe al log (`:151-154`), asi que **un fallo al encolar el SMS es indistinguible de "no habia nada que encolar"** para el llamador.
+
+#### Que relacion tiene con el SP padre: mas debil de lo que parecia
+
+**`SP_CREDITO_WEB_DATOS` no lo invoca.** Solo declara `@CodigoRecomendador VARCHAR(15) = NULL` (`SP_CREDITO:149`) y escribe la columna en `:272` y `:333`. El valor le llega ya resuelto desde fuera. **Por eso D8.1 no bloquea nada**: el SP de credito funciona igual con la columna vacia, que es exactamente lo que el usuario pidio.
+
+**Defectos del SP, por si algo de el se rescata:** la cadena `ELSE IF` **se rompe en 6 puntos** (`:222, 234, 372, 377, 402, 427` son `IF` independientes — la opcion 17 es uno de ellos); `:67` hace `UPDATE TOP (@Cantidad)` **sin `ORDER BY`** → que codigos se reclaman es no determinista, y `@Cantidad` tiene default `NULL` sin guarda; y la opcion 11 con `@TipoCodigo` fuera de `{0,1,2}` **no devuelve nada, sin error**.
 
 > [!note] Dos falsos positivos de nombre que pueden hacer creer que esto ya esta cubierto
 > **`L_GET_BPCodigoRecomendador`** existe (`businesspartner-dev/apps/lambdas/template.yml:49-53`), pero su handler consulta `DocCancelaSeg` (cancelaciones de seguro) contra SQL Server `SIGMAVI` — **es copy-paste de la lambda de cancelacion de seguro**, nada que ver con `CREDIDCodigoRecomendador`. De paso, interpola `BP = {BP}` sin parametrizar.
@@ -446,6 +1133,109 @@ Vive en `IntelisisTmp` (`:1`), asi que **desaparece completo al apagar Intelisis
 > `getClienteMagento` tiene el **mismo patron de doble `ExecuteScalar()`** que `checkSaldo`: el SP se ejecuta **dos veces** por consulta (`:324` y `:326` del lado del llamador en LAN). Al portar, una sola ejecucion — y anotarlo, porque si algo dependia del efecto de la segunda, cambia.
 
 **Nota de alcance (D9):** el camino largo de `InsertReferencia` (§4.4) tampoco tiene productor identificado — 0 coincidencias del literal en LAN, DMZ y `ServicioSAP`. Por D9 se porta igual, con esa ausencia anotada, no omitida.
+
+---
+
+### 4.11 · `UpdateInfo` — ⚠️ POSIBLE DEPRECADO, pero entra por D9
+
+> [!warning] **Marca de alcance: DUDOSO.**
+> Esta unidad **no tiene quien la ejecute**. Se documenta y se porta por **D9** (*"ninguna rama se descarta por no tener invocador identificado; se porta igual y se anota que no se hallo consumidor"*), pero **quien la implemente debe saber que probablemente es codigo que quedo vivo sin uso**.
+>
+> **Nadie la declaro obsoleta**: no hay comentario, marca ni documento que lo diga. Lo que si es verificable es que **no tiene invocadores**.
+
+#### La evidencia, reproducible
+
+| Busqueda | Resultado |
+|---|---|
+| `ProductosCredito_UpdateInfo` en `Z:\LAN` | **1** — solo su propia declaracion (`Metodos\CreditMethods.cs:264`) |
+| `UpdateInfo` en `Z:\DMZ` | **0** |
+| `UpdateInfo` en `Z:\Magento248\...\app\code\Mavi` | **0** |
+
+```bash
+grep -rn "ProductosCredito_UpdateInfo" "Z:/LAN"
+```
+
+Devuelve una sola linea. **Ningun controlador lo invoca**, asi que no existe ruta HTTP que llegue a el ni desde el DMZ ni desde Magento. La cadena `Magento → DMZ → LAN → SP` esta rota en el primer eslabon.
+
+#### Donde vive hoy
+
+| Pieza | Ubicacion |
+|---|---|
+| La rama del SP | `SpCREDIDatosSolicitudCreditoArt.sql:226-296`, `@Op = 'UpdateInfo'` |
+| El metodo que la invoca | `LAN\WebApiMagento\Metodos\CreditMethods.cs:264` — `ProductosCredito_UpdateInfo(string idMagento, string email, string phone)` |
+| Su ejecucion | `cmd.ExecuteScalar()` con `@Op`, `@Val`, `@Email`, `@Telefono`. Devuelve el literal `"actualizado"`, o `"err"` en el `catch` |
+
+**Los 4 parametros que recibe el SP son `@Op`, `@Val` (= idMagento), `@Email` y `@Telefono`.** `@RFC` y `@Uen` no se mandan y toman su default.
+
+#### El flujo, paso a paso
+
+```
+1. Resolver el cliente:  SELECT @Cliente = Cliente FROM cte WHERE idMagento = @Val
+2. Si @Cliente vacio o NULL  ->  RETURN sin hacer nada (salida silenciosa)
+3. Si @Email no vacio:
+      UPDATE cte SET eMail1 = @Email WHERE cliente = @Cliente
+      UPDATE MAVIDM0138HistInsertCorreo SET Correo = @Email WHERE cliente = @Cliente
+4. Si @Telefono no vacio:
+      4a. Partir la lada:
+          @lada1 = SUBSTRING(@telefono,1,3)   -- 3 digitos
+          @lada2 = SUBSTRING(@telefono,1,2)   -- 2 digitos
+          si @lada1 esta en TcEACD00001_Lada  -> @insert = 1
+          si no, si @lada2 esta               -> @insert = 2
+          si ninguna                          -> @insert = 0
+      4b. INSERT INTO CteTel (Cliente, Telefono, Tipo, Lada, Fecha) VALUES (
+              @Cliente,
+              @insert=1 ? SUBSTRING(@telefono,4,LEN) : @insert=2 ? SUBSTRING(@telefono,3,LEN) : @Telefono,
+              'Movil',
+              @insert=1 ? @lada1 : @insert=2 ? @lada2 : NULL,
+              GETDATE())
+      4c. UPDATE CteTel SET ValidacionTel = 0
+          WHERE Cliente = @Cliente AND Tipo = 'Movil'      <-- TODOS los moviles, no solo el nuevo
+```
+
+**Todo lo que escribe vive en Intelisis.** El SP es `USE [IntelisisTmp]` y las cuatro tablas —`cte`, `MAVIDM0138HistInsertCorreo`, `TcEACD00001_Lada`, `CteTel`— van **sin calificar**. O sea: **la unidad entera desaparece al apagar Intelisis** y cada paso necesita destino SAP.
+
+#### Equivalencias OData, paso por paso
+
+| Paso | Equivalente | Estado |
+|---|---|---|
+| **1 · Resolver cliente por `idMagento`** | Busqueda inversa por `ZidMagento`. El campo existe (`Cte.cs:34`) y **se escribe** por `LinkMagentoAccountAsync` (`BusinessPartnerMethods.cs:829-873`) | 🔴 **SIN RUTA QUE FILTRE POR EL.** Mismo hueco que `getClienteMagento` (§4.10). En la captura de BP05 `ZidMagento` llega como **numero** (`0`), asi que habria que confirmar que es filtrable y con que tipo |
+| **2 · Salida silenciosa si no hay cliente** | Es codigo, no OData | ✅ Se replica con un `return` temprano. **Anotar**: hoy no distingue "no existe" de "no se hizo nada" |
+| **3a · `UPDATE cte SET eMail1`** | En SAP el correo **no esta en `Cte`**: vive en `to_CtePersonalAdr.smtp_addr` (`BusinessAdrSet`, clave `Mandt` + `Partner`) | 🟡 **Nodo distinto.** No lo cubre el PATCH de `ZSDT_CTE_ENTITYSet`. Hay que localizar la ruta de escritura de ese nodo |
+| **3b · `UPDATE MAVIDM0138HistInsertCorreo`** | Bitacora de correos, **Intelisis** | 🔴 **SIN EQUIVALENTE.** Por D4/D6 no aplica el escape de Android: esta tabla es de Intelisis, no de `ServicioAndroid` |
+| **4a · Partir la lada (`TcEACD00001_Lada`)** | El catalogo **`1138ValAutLadaTel`** hace **exactamente** la misma particion 2-vs-3 digitos (`A_GET_BPValidaTelefonoCOFETEL.py:23-38`) | 🟡 **La logica ya existe y no hay que inventarla.** Falta el catalogo como fuente. Ojo: vive en HANA Cloud, no en S/4 |
+| **4b · `INSERT INTO CteTel`** | **`POST CteTelSet`** (`ZQBP_EDITARCLIENTE_SRV`), clave `(Partner, ZidcteTel)` | 🟡 El endpoint existe. **Pendiente: quien genera `ZidcteTel`** — ver §7.3 del plan |
+| **4c · `UPDATE CteTel SET ValidacionTel=0` masivo** | **N llamadas**, una por movil del cliente. No hay operacion de conjunto en OData v2 | 🔴 **Requiere saber si `CteTelSet` acepta `PATCH`.** Es el unico punto del flujo de credito que necesita esa respuesta |
+
+#### 🔴 La regla de negocio que hay que decidir, independientemente de si la unidad entra
+
+El paso **4c** no es un detalle tecnico: es una regla.
+
+> **Dar de alta un movil nuevo invalida la validacion de TODOS los moviles anteriores del cliente.**
+
+Y esa regla **importa aunque `UpdateInfo` no entre**, porque `@TelefonoValidado` (`SP_CREDITO:194-202`) depende de `ValidacionTel = 1`. Si el flujo nuevo permite registrar un telefono en cualquier punto y **no** se replica el reset, un movil viejo validado seguiria ganando sobre el recien capturado.
+
+**Hay que decidirlo por separado de esta unidad.**
+
+#### Defectos a decidir (clase E — replicar o corregir)
+
+1. **Sin `@Telefono` no valida formato.** No comprueba longitud ni que sean digitos antes de partir la lada. Un telefono de 5 caracteres produce `SUBSTRING(1,3)` y `SUBSTRING(1,2)` sin sentido, y si ninguna lada casa, **inserta el numero completo con `Lada = NULL`**.
+2. **Siempre inserta `Tipo = 'Movil'`**, aunque el numero sea un fijo. Conecta con la contradiccion COFETEL / `ZtipoCte` de §3.0d.
+3. **No comprueba si el telefono ya existe.** Dos llamadas con el mismo numero crean dos filas.
+4. **El `UPDATE` masivo corre despues del `INSERT`**, asi que **tambien invalida el recien insertado** — que entra con `ValidacionTel` por default y sale en `0`. Hay que confirmar si eso es deliberado.
+5. **`ExecuteScalar()` sobre un SP que no devuelve nada**, y el llamador devuelve el literal `"actualizado"` pase lo que pase (`CreditMethods.cs:292`). **Un fallo de negocio es indistinguible del exito**: solo un `catch` devuelve `"err"`.
+
+#### Donde va en el contrato
+
+Metodo privado dentro de **`DatosSolicitudCreditoArtMethods`** (§2 del plan de ejecucion), junto a las otras 6 operaciones del satelite. No lleva ruta propia en el controller **porque hoy no la tiene en LAN**.
+
+Encabezado obligatorio al escribirlo:
+
+```csharp
+// POSIBLE DEPRECADO — SpCREDIDatosSolicitudCreditoArt.sql:226-296 (@Op='UpdateInfo')
+// Portado por D9. Su unico llamador, LAN/Metodos/CreditMethods.cs:264
+// (ProductosCredito_UpdateInfo), tiene 0 invocadores: 0 en DMZ y 0 en Magento.
+// Nadie lo declaro obsoleto; lo verificable es que nada lo ejecuta.
+```
 
 ---
 
@@ -520,7 +1310,7 @@ Solo **3**, confirmados con grep propio: **`tarjetaDigitos`, `creditoHipoteca`, 
 
 ## 8. Decisiones pendientes
 
-Ninguna se resuelve leyendo mas codigo.
+Ninguna de las que quedan abiertas se resuelve leyendo mas codigo. La **V** si se resolvio asi (y se deja tachada, con sus dos hallazgos enrutados abajo); la **Q**, **R** y **S** nacieron de la revision del 2026-09-21 y son las que abre D8.2.
 
 | # | Decision | Por que importa |
 |---|---|---|
@@ -539,6 +1329,22 @@ Ninguna se resuelve leyendo mas codigo.
 | **N** | **Datos personales.** El SP mueve CURP, RFC, fecha de nacimiento, sueldo y telefonos | Sin dueño ni criterio de retencion para sacarlos de `ServicioAndroid` hacia SAP. Y hay credenciales en claro en `Web.config` (`:32, 37-40, 42, 56, 86`): hay que decidir como se configura lo nuevo **antes** de añadir claves ahi |
 | **O** | **Autorizar la creacion de estructuras** | `GUIA:275` prohibe crear variables, parametros o constantes sin consultar, y **D4 exige exactamente eso**. Hace falta autorizacion explicita, y fijar nomenclatura |
 | **P** | **Un archivo (D4) contra la regla 18** | `SKILL.md:58` obliga a poner los DTOs OData en `Models\SAP\[Modulo]\` con `[JsonProperty]` de Newtonsoft. Dato para decidir: los modelos que se reusarian **ya no cumplen la regla** — usan `[JsonPropertyName]` de `System.Text.Json` (24 archivos vs 10) |
+| **Q** | **Quien consume la opcion 17 de `SpCREDICodigoRecomendador`** (login de empleados) | El usuario decidio mantenerla (D8.2), pero **no tiene ni un consumidor en el share**: 0 llamadores con `@opcion=17`, y `@Nomina` es el posicional 11 mientras la llamada mas larga pasa 8 → siempre `NULL`. Su cliente es externo (probablemente la app movil). **Sin saber quien la llama no se puede decidir quien debe exponerla** |
+| **R** | **Equivalente de `Sucursal.wUEN`** | Abierta **por** D8.2. `wUEN` tiene **0 resultados en codigo** en las 4 carpetas de aplicacion, y el corpus lo deja en "Por Definir"/"Pendiente SAP" (`_GLOBAL_MASTER_DB.csv:9-11, 105`). `Werks` y `Vkorg` **no** son equivalentes: son el centro y la UEN del cliente. Sin esto la opcion 17 no sale de Intelisis |
+| **S** | **Donde vive la autenticacion de empleado en el stack nuevo** | Hoy **no existe en ningun sitio**: 0 rutas con validacion de password en todo el arbol. Lo unico con esa forma es un stub (`AI_GET_InformacionUsuario.py:18` → `return True`), y `TokenMavi.getNomina()` asume un JWT ya emitido. La opcion 17 compara la contrasena **en claro** (`PASSWORD = @search`): portarla tal cual muda el defecto. Se cruza con la decision **N** |
+| **T** | **`setCodes`: se replica el cruce de parametros o se corrige** | `RecomenderController.cs:45` manda `requestedCodes` al parametro `uen` y `uen` al parametro `cantidad` (firma en `RecommenderMethods.cs:132`). Corregirlo **cambia cuantos codigos se generan y para que UEN**. Es decision de negocio. Mientras no se resuelva, `Post_SetCodes_Mapping.md` documenta el bug como si fuera el contrato |
+| **U** | **Las 2 rutas `credit/codigoRecomendado*` del DMZ** | No pasan por el SP: son SQL inline a `CREDIDCodigoRecomendador` (`CreditMethods.cs:1118`, `:1153`). **Deprecar el SP no las apaga.** Y `codigoRecomendado` **concatena el codigo sin parametrizar** (`CreditMethods.cs:1117-1119`) mientras su gemela `WithUen` si usa `SqlParameter`: misma funcion, dos niveles de seguridad. Hay que decidir si se apagan, se migran o se dejan apuntando a LAN |
+| **V** | ~~Garantias de ecommerce / `SP_ACTES_REGISTRO`~~ | **RESUELTA: fuera del alcance de este SP.** `SP_CREDITO_WEB_DATOS` **no tiene ni un `EXEC`** (0 coincidencias; el unico que tenia se quito en 2017, documentado en su cabecera `:16`) y **cero solapamiento de tablas** con la cadena de garantias. Es un frente separado (RMA/devoluciones), no credito. **Pero deja dos hallazgos que hay que enrutar aparte** — ver la nota debajo de esta tabla |
+
+> [!warning] Los dos hallazgos que deja la decision **V**, y que NO son de este documento
+> Se levantan aqui porque salieron de esta revision, pero pertenecen al frente de **devoluciones/atencion a clientes**, no al de credito. Hay que enrutarlos, no resolverlos aqui.
+>
+> **1. 🔴 Regresion de paridad en `order/setreturn`: se perdio el registro del caso.** El DMZ dejo **comentada** la llamada a Intelisis y rutea a SAP: `DMZ/…/OrdersController.cs:313-314` (`// PENDIENTE INTELISIS:` sobre `curl.Post("order/returnOrder", …)`) y `:317` (`curl.PostSAP("order/setreturn", …)`). En LAN esa ruta encadenaba `returnOrder` → `sendReporte` (`ServiceOrderMethods.cs:70`, que pone `bitacora = true` en `:320`) → `guardarSoporte` (`CustomerServiceMethods.cs:117`) → `SpVTASEcommerceSolicitudGarantias` (`:125`, `ExecuteNonQuery` en `:139`) → `SP_ACTES_REGISTRO`, que **daba de alta el caso de atencion a clientes con su folio**. El handler SAP (`ServicioSAP/…/Controllers/OrderController.cs:74-94`) solo hace `BuilAdapterReturn` + `SetOrderAsync(newRequest, "return")` y **no escribe bitacora ni caso en ninguna parte**. O sea: la devolucion se registra en SAP pero **el caso de atencion a clientes ya no se crea**, sin reemplazo y sin que nadie lo note — `guardarSoporte` es `void` y su `catch` solo escribe al log (`CustomerServiceMethods.cs:143-146`), asi que el flujo reportaba exito incluso antes de la migracion.
+> **Salvedad:** la ruta `returnOrder` **sigue publicada en LAN** (`LAN/…/OrdersController.cs:253-254`). Si algun consumidor apunta a LAN directo en vez de al DMZ, el flujo viejo sigue vivo. Eso no se puede saber desde el codigo del share.
+> **Dato de paso:** ese `SetOrderAsync(newRequest, "return")` es exactamente lo que la **regla 28** prohibe — reutilizar un orquestador para dos rutas distintas mediante un flag de modo.
+>
+> **2. `SP_ACTES_REGISTRO` no es codigo muerto, y "esta en Android" no significa "ya migrado".** Su otro invocador esta vivo en el DMZ: `DMZ/…/CustomerServiceController.cs:99-105` rutea `customerService/bitacoraAtencionClientes` → `LAN/…/CustomerServiceMethods.cs:444` (`bitacoraAtencionClientes`, decl. `:409`), con los 31 parametros nombrados. **Y aunque el SP vive en `ServicioAndroid`, inserta en Intelisis por linked server**: `SP_ACTES_REGISTRO.sql:106` hace `INSERT` en `ERPMAVI.IntelisisTMP.dbo.RM1138PendientesxValidar` (la cola de validacion telefonica) y lee `ERPMAVI.IntelisisTMP.dbo.Personal` en `:104`.
+> **Esto es un aviso metodologico que aplica a todo el corpus:** la regla *"lo que apunta a Android ya esta migrado"* es correcta para las tablas, **pero no se puede aplicar a un SP por su base**. Un SP alojado en `ServicioAndroid` puede cruzar a Intelisis desde dentro. Clasificar `SP_ACTES_REGISTRO` como cerrado por vivir en Android habria sido un **falso negativo**. Hay que revisar si esa inferencia se uso en otras filas del inventario.
 
 ---
 
