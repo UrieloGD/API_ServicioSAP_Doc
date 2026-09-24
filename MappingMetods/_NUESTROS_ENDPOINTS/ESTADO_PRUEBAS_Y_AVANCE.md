@@ -1558,3 +1558,26 @@ inesperado en la posición 0"*.
 **E-19 `attributeSetChildren`** no se reejecutó tras el arreglo: `atributos_de_magento` sigue
 en 14 089 de 24 092. **E-23, E-24, E-27 y E-28** siguen sin ejecutar, esperando autorización:
 escriben en Magento.
+
+### Ola 9 — E-46 `credit/getPlazos`, 23 sep
+
+| Caso | Resultado |
+|---|---|
+| `GET credit/getPlazos` | **200** en 9,0 s |
+| Forma de la respuesta | idéntica al legado: `{Diferidos, Inmediatos}` de `{Days, StoreCode}` |
+| `StoreCode` | mayúsculas y espacio a guion bajo — `MUEBLES_AMERICA` |
+
+Devolvió 122 días para los diferidos de las dos tiendas y 0 para los inmediatos.
+
+**Ese cero se verificó**, porque el código inicializa `days = 0` y solo lo sobrescribe si
+encuentra la condición en SAP: un cero podía ser *"inmediato"* o *"no la encontré"*. Contra
+`credit/condicionespago`, `12DA` y `12DV` traen `Zdiasgracia = 122` y `12IA` y `12IV` traen
+`0`. El dato es real.
+
+⚠️ **Divergencia: el error deja de distinguirse.** El legado responde 200 con
+`{"Error": true, "Message": "…"}`; aquí la excepción se atrapa dentro de `GetPlazosAsync`, se
+registra y se devuelve 200 con las dos listas vacías. No rompe al consumidor —ninguno de los
+dos da 500— pero se pierde información. No se pudo provocar sin tumbar SIGMAVI.
+
+El endpoint lo escribió Dev 2. Falta **subir y desplegar el cutover**, que viaja en el mismo
+commit que el de E-45 y espera a que ese se pruebe. Ficha en [[E-46_getPlazos]].

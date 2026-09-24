@@ -241,7 +241,7 @@ Las bajas quedan fuera. Con `getOrderId` confirmada como baja el 21 sep son **ci
 
 - [ ] **E-44** `credit/SolicitudMercancia` — lee el Business Partner de SAP e inserta en `CRED_SOLICITUD_WEB_DATOS_TEMP` de `ServicioAndroid`. Requiere el helper de conversión de cuenta `C%` → BP.
 - [ ] **E-45** `credit/codigoPromocion` — tabla `VentaCupon` en SIGMAVI. **Ya construido** como `HandlePromoCode`; falta alinear el nombre de la tabla, que hoy es `VentasCupones`.
-- [ ] **E-46** `credit/getPlazos` — tabla `CondicionesCredVtaLinea` en SIGMAVI + condiciones contra TZ01.
+- [ ] **E-46** `credit/getPlazos` — **90 %**. Escrito por Dev 2; lee `CondicionesCredVtaLinea` en SIGMAVI y los dias de gracia de las condiciones de pago de SAP. **Probado el 23 sep**: 200 con el contrato del legado, y los ceros de `Inmediatos` verificados contra SAP. Falta el cutover, que va en el mismo commit que el de E-45. Ver [[E-46_getPlazos]].
 - [ ] **E-47** `customerService/obtenerTipoGarantia` — tabla `DM0415` en SIGMAVI, poblada exportando desde Intelisis, + artículo contra DM01. Estructura pendiente de **Valentin y Humberto**.
 
 > Regla de reparto: Dev 3 construye la tabla en SIGMAVI, el método y la conexión a nuestras bases; **las conexiones a SAP que no existan se anotan y se entregan a Dev 2**.
