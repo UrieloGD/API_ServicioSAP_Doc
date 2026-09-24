@@ -217,7 +217,7 @@ Cierran el trabajo de Dev 3 que **necesita una lectura previa contra SAP** antes
 | E-46 | `credit/getPlazos` | TZ01 | **SIGMAVI** `CondicionesCredVtaLinea` | 1.5 | — |
 | E-47 | `customerService/obtenerTipoGarantia` ⏳ | `Art` — maestro de materiales | **SIGMAVI** tabla nueva | 1.5 | — |
 
-> **E-44** parte en dos el `INSERT ... SELECT` único del legado: leer el Business Partner en C# y luego insertar. Requiere el **helper de conversión de cuenta `C%` → BP**, que no existe y lo van a necesitar E-45, E-46 y varios mixtos.
+> **E-44** parte en dos el `INSERT ... SELECT` unico del legado: leer el Business Partner en C# y luego insertar. **No requiere convertir la cuenta a formato BP** — decision del 24 sep: en produccion el endpoint ya recibe el identificador en ese formato, asi que se pasa tal cual a `GetClientAsync`.
 
 > ⛔ **E-45 depende del wrapper de SuccessFactors** que construye Dev 1. El de TZ01 que usa E-46 ya existe.
 
