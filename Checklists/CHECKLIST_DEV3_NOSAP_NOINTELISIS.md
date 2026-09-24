@@ -307,14 +307,16 @@ Lo que quede pendiente de SAP **se anota en la sección de entregas de abajo** c
 
 | ID   | Endpoint                              | Lo que construye Dev 3                                                  | Lo que espera a Dev 2                         |
 | ---- | ------------------------------------- | ----------------------------------------------------------------------- | --------------------------------------------- |
-| E-44 | `credit/SolicitudMercancia`           | Método, `INSERT` a `ServicioAndroid` y helper de cuenta `C%` → BP       | — `partner/client` ya existe                  |
-| E-45 | `credit/codigoPromocion`              | Tabla `VentaCupon` en SIGMAVI, método y conexión                        | Lectura de personal contra **SuccessFactors** |
+| E-44 | `credit/SolicitudMercancia`           | Método e `INSERT` a `ServicioAndroid` — **escrito el 24 sep, sin probar**. No hace falta helper de cuenta: en producción llega en formato BP | — `partner/client` ya existe                  |
+| E-45 | `credit/codigoPromocion`              | Tabla `VentasCupones` en SIGMAVI, método y conexión — **hecho y probado el 24 sep** | Lectura de personal contra **SuccessFactors** |
 | E-46 | `credit/getPlazos`                    | Tabla `CondicionesCredVtaLinea` en SIGMAVI y método                     | Consulta de condiciones a **TZ01**            |
 | E-47 | `customerService/obtenerTipoGarantia` | Tabla en SIGMAVI, método y **exportación de los datos desde Intelisis** | Consulta del artículo a **DM01**              |
 
-> ✅ **E-45 ya está construido** en `Methods\Order\OrderMethods.cs:829` como `HandlePromoCode`, expuesto en `order/validatecupon/{codigo}` y consumido dentro del flujo de órdenes. Cubre validación, quema y regeneración del cupón. **Falta alinear el nombre de la tabla**: el código escribe contra `VentasCupones` y el nombre acordado es `VentaCupon`.
+> ✅ **E-45 está construido y probado.** Además de `HandlePromoCode` en `Methods\Order\OrderMethods.cs:829` —que lo consume dentro del flujo de órdenes por `order/validatecupon/{codigo}`—, el endpoint propio vive en `Methods\Credit\CreditMethods.cs:113`. Corrida del 24 sep en [[E-45_codigoPromocion]].
 
-> ✅ **Nombres de objetos en SIGMAVI:** se conserva el nombre del original **sin el prefijo de Intelisis**, como ya se hizo en la Ola 2 con `ListaNegra`, `ListaBlanca` y `SpListaNBMagento`. Por eso `VTASCVentaCupon` → **`VentaCupon`** y `VTASCCondicionesCredVtaLinea` → **`CondicionesCredVtaLinea`**.
+> ✅ **Nombres de objetos en SIGMAVI:** se conserva el nombre del original **sin el prefijo de Intelisis**, como ya se hizo en la Ola 2 con `ListaNegra`, `ListaBlanca` y `SpListaNBMagento`. Por eso `VTASCCondicionesCredVtaLinea` → **`CondicionesCredVtaLinea`**.
+>
+> La excepción es el cupón: en SIGMAVI ya existen **`VentasCupones`** y **`SpVentasCupones`**, no `VentaCupon`. Se usan tal cual — el objeto es el que manda, no la convención.
 
 > ✅ **E-47 deja de estar bloqueado por SAP.** La tabla destino es `DM0415 Configuración Garantías Atención a Clientes` y sus dueños son **Valentin y Humberto**, no Miguel Marín como decía el checklist. La consulta del artículo va a **DM01**, cuyo wrapper ya existe en `Methods\MaterialManagement\ProductMethods.cs`. Nosotros creamos la tabla en SIGMAVI y la poblamos exportando desde Intelisis.
 
@@ -460,7 +462,7 @@ Cinco partidas tienen a los dos equipos dentro. Conviene acordar el orden antes 
 
 | Partida de Dev 3              | Qué entrega Dev 3                          | Qué espera Dev 2                                                             |
 | ----------------------------- | ------------------------------------------ | ---------------------------------------------------------------------------- |
-| **E-45** `codigoPromocion`    | `VentaCupon` en SIGMAVI                    | SuccessFactors + BP05                                                        |
+| **E-45** `codigoPromocion`    | `VentasCupones` en SIGMAVI                 | SuccessFactors + BP05                                                        |
 | **E-46** `getPlazos`          | `CondicionesCredVtaLinea` en SIGMAVI       | TZ01                                                                         |
 | **E-15** `GetPickUpCode`      | **Los cuatro métodos auxiliares de `BpRecogePedidos`** — ver abajo. La tabla ya existe | Mover los escritores — `createStorepickupCode`, `generateNewStorepickupCode` y el nuevo `crearPrimerCodigoRecogerSucbanktransfer` |
 | **M-01…M-14**                 | La rama que va a Android, SQLite o SIGMAVI | La rama que va a SAP                                                         |

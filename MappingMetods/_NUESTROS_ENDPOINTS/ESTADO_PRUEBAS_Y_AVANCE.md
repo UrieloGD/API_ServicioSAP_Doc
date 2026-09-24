@@ -1,7 +1,7 @@
 ---
 tags: [pruebas, avance, migracion, estado]
 fuente: "CHECKLIST_MIGRACION_LAN_A_SAP.md"
-actualizado: 2026-09-09
+actualizado: 2026-09-24
 ---
 
 # Estado de pruebas y avance por endpoint
@@ -63,9 +63,9 @@ Para que el número signifique algo y no sea una impresión, cada partida se mid
 | E-13 | `customer/cashCustomerReport` | 6 | **80 %** | 🔶 Validación y escritura local verificadas el 25 ago. **La copia al share no es verificable desde desarrollo** | Se valida en QA |
 | E-14 | `product/obtenerImagen` | 6 | **55 %** ⁽⁵⁾ | 🔶 Solo el 401. **No es verificable desde desarrollo**: la impersonación falla antes de la copia | Se valida en QA |
 | E-15 | `order/GetPickUpCode` | 7 | **90 %** ⁽⁶⁾ | ✅ Probado el 14 sep: 200 con clave, 404 sin fila, 400 con body nulo (paridad) | Falta el cutover, que va con los tres escritores |
-| E-44    | `credit/SolicitudMercancia`           | 7   | 0 %      | —                       | Conexión a definir por equipo SAP |
-| E-45    | `credit/codigoPromocion`              | 8   | 0 %      | —                       | 🟠 Origen IntelisisTmp            |
-| E-46    | `credit/getPlazos`                    | 8   | 0 %      | —                       | 🟠 Origen IntelisisTmp            |
+| E-44    | `credit/SolicitudMercancia`           | 9   | **60 %** | —                       | Probarla: escribe en `CRED_SOLICITUD_WEB_DATOS_TEMP` y falta cuenta de prueba |
+| E-45    | `credit/codigoPromocion`              | 9   | **90 %** | ✅ Los 6 casos verificados el 24 sep, incluida la escritura | Falta el cutover, que va con el de E-46 |
+| E-46    | `credit/getPlazos`                    | 9   | **90 %** | ✅ Probado el 23 sep: 200 con el contrato del legado | Falta el cutover, que va con el de E-45 |
 | E-47    | `customerService/obtenerTipoGarantia` | 8   | 0 %      | —                       | 🔒 Estructura de Miguel Marín     |
 | ➡️ | ~~`credit/GetUnificationWalletStatus`~~ | — | — | — | **Reasignado a Dev 2** el 12 ago |
 | ➡️ | ~~`credit/SetUnificationWalletData`~~ | — | — | — | **Reasignado a Dev 2** el 12 ago |
@@ -123,11 +123,11 @@ Es decir: si en QA falla, será porque el archivo no está en esa ruta o por per
 | | Partidas | Avance medio |
 |---|---|---|
 | Habilitadores (4) | **4 al 100 %** | **100 %** |
-| Endpoints en alcance (19) | 3 al 100 %, **7 al 90 %**, 4 al 80 %, 1 al 55 %, 4 sin iniciar | 68,7 % |
+| Endpoints en alcance (19) | 3 al 100 %, **9 al 90 %**, 4 al 80 %, 1 al 60 %, 1 al 55 %, 1 sin iniciar | 81,3 % |
 | Mixtos (15) | 2 al 25 %, 13 sin iniciar | 3,3 % |
-| **Subtotal partidas medibles (38)** | | **46,2 %** |
+| **Subtotal partidas medibles (38)** | | **52,5 %** |
 | Rutas de la Ola 8 (26) | **23 completas**, 3 pendientes | 88,5 % |
-| **Total (64)** | | **63,4 %** |
+| **Total (64)** | | **67,1 %** |
 
 > ⚙️ **Las rutas de la Ola 8 entran en el total desde el 9 sep.** Antes se reportaban aparte
 > porque se miden con otra vara —completa cuando su llamador queda resuelto, sin hitos de
@@ -1581,3 +1581,37 @@ dos da 500— pero se pierde información. No se pudo provocar sin tumbar SIGMAV
 
 El endpoint lo escribió Dev 2. Falta **subir y desplegar el cutover**, que viaja en el mismo
 commit que el de E-45 y espera a que ese se pruebe. Ficha en [[E-46_getPlazos]].
+
+### Ola 9 — E-45 `credit/codigoPromocion`, 24 sep
+
+| Caso | Resultado |
+|---|---|
+| `ValidarCupon` con `99000001` | **200** `"OK"` |
+| `ValidarCupon` con `00000000` | **200** `"Erroneo"` |
+| Cuerpo nulo | **400** `{"Message":"Datos incompletos."}` |
+| `opcion = "Consulta"` | **500** `NotImplementedException` |
+| `Elimina` con `99000001` | **200** `""` — no `"Eliminado"` |
+| Efecto en base | ✅ `IdVentaCupon = 5` consumido con `IdEcommerce = MAG-E45-TEST`, y el `6` creado libre con el mismo código |
+| `ValidarCupon` después del `Elimina` | **200** `"OK"` — el cupón sigue vivo |
+
+No había con qué probarlo, así que se sembró el cupón `99000001` en `DEVMAVI` / `SIGMavi`
+con `SpVentasCupones @opcion = 'NUEVO'`. Sirve para corridas futuras: `Elimina` lo regenera.
+
+**`Elimina` no quema el cupón.** La rama marca `FechaUtilizacion` en la fila vigente y
+acto seguido encadena un `NUEVO` que inserta otra fila con el mismo código. Ya había
+evidencia de antes en la tabla —las dos filas de `30018095`, del 2 jul— y la corrida lo
+reprodujo. Esto despeja el bloqueo que tenía parada la prueba.
+
+⚠️ **Divergencia: `Elimina` responde `""` y no `"Eliminado"`.** Los dos lados preguntan lo
+mismo —¿el SP devolvió filas?— pero contra SPs distintos. El `NUEVO` encadenado de
+`SpVentasCupones` termina en `SELECT @Agente AS cupon`, así que siempre hay fila. Queda por
+confirmar con quien migró el SP si ese `SELECT` era intencional; la corrección, si toca,
+va del lado del SP.
+
+⚠️ **La fila renovada queda sin `Centro`.** El `NUEVO` encadenado recibe `@Sucursal` nulo
+porque el método manda solo tres parámetros — los mismos tres que manda el legado.
+
+Dos cosas que se dieron por ciertas y no lo eran: `"Utilizado"` es **inalcanzable** —el SP
+solo asigna `Conteo` 1 o 0, y el legado carga el mismo `else if` muerto—, y `ValidarCupon`
+**no filtra por `FechaUtilizacion`**, así que un cupón ya usado responde `OK`. Las dos son
+deuda heredada del SP. Ficha en [[E-45_codigoPromocion]].

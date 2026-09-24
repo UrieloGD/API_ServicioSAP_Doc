@@ -1,7 +1,7 @@
 ---
 tags: [checklist, migracion, plan, sigmavi, mixtos]
 fuente: "_PLAN_MIGRACION_FECHAS.md"
-actualizado: 2026-09-09
+actualizado: 2026-09-24
 agente: Nexo (con asistencia de Claude)
 ---
 
@@ -31,7 +31,7 @@ La nueva API **no va a seguir apuntando a IntelisisTmp**. Criterio acordado:
 
 Las partidas afectadas quedan marcadas 🟠. No se escriben ni se prueban contra el origen viejo mientras el destino no esté definido: probar contra IntelisisTmp da un verde que no significa nada.
 
-En la práctica esto recae sobre los mixtos `M-11`…`M-08` y sobre las partidas que hoy cruzan a Intelisis (`E-44`, `E-45`, `E-46`), que ya estaban fuera de la ruta principal.
+En la práctica esto recae sobre los mixtos `M-11`…`M-08`. Las tres de la Ola 9 que figuraban aquí ya salieron: `E-44` escribe en `ServicioAndroid`, y `E-45` y `E-46` leen SIGMAVI en `DEVMAVI`. Ninguna toca IntelisisTmp.
 
 ---
 
@@ -240,7 +240,7 @@ Las bajas quedan fuera. Con `getOrderId` confirmada como baja el 21 sep son **ci
 ## Ola 9 — Mixtos SAP · #12560
 
 - [ ] **E-44** `credit/SolicitudMercancia` — **escrito el 24 sep**, sin probar. Lee el Business Partner de SAP e inserta en `CRED_SOLICITUD_WEB_DATOS_TEMP` de `ServicioAndroid`, con las reglas que el legado llevaba dentro del SQL. **No hace falta convertir la cuenta**: en produccion llega en formato BP.
-- [ ] **E-45** `credit/codigoPromocion` — tabla `VentaCupon` en SIGMAVI. **Ya construido** como `HandlePromoCode`; falta alinear el nombre de la tabla, que hoy es `VentasCupones`.
+- [ ] **E-45** `credit/codigoPromocion` — **90 %**. Lee y escribe `VentasCupones` en SIGMAVI por `SpVentasCupones`. **Probado el 24 sep** con el cupón sembrado `99000001`: los seis casos, incluida la escritura. Falta el cutover, que va en el mismo commit que el de E-46. Ver [[E-45_codigoPromocion]].
 - [ ] **E-46** `credit/getPlazos` — **90 %**. Escrito por Dev 2; lee `CondicionesCredVtaLinea` en SIGMAVI y los dias de gracia de las condiciones de pago de SAP. **Probado el 23 sep**: 200 con el contrato del legado, y los ceros de `Inmediatos` verificados contra SAP. Falta el cutover, que va en el mismo commit que el de E-45. Ver [[E-46_getPlazos]].
 - [ ] **E-47** `customerService/obtenerTipoGarantia` — tabla `DM0415` en SIGMAVI, poblada exportando desde Intelisis, + artículo contra DM01. Estructura pendiente de **Valentin y Humberto**.
 
@@ -297,6 +297,7 @@ Las bajas quedan fuera. Con `getOrderId` confirmada como baja el 21 sep son **ci
 - [ ] 🔴 **E-08 responde `true` antes de trabajar.** Verificado el 20 ago: contesta en 179 ms y guarda 10 segundos después, en un `Task` suelto. Un reciclado del app pool en esa ventana se lleva el lote sin rastro, y el `true` sale igual. Mitigado con `sap.log`; corregirlo de verdad cambia el contrato.
 - [ ] 🟡 **Confirmar en el servidor que la carpeta de imágenes de E-08 exista y sea escribible.** El código la crea si falta, pero si el app pool no tiene permiso, las imágenes se pierden en silencio. En desarrollo no se pudo crear `C:\inetpub\wwwroot\sap`.
 - [ ] 🟡 **Averiguar quién consume `C:\inetpub\wwwroot\api\images\credit`** antes de desplegar E-08. Nada en los dos repos legados vuelve a leer esa carpeta, así que cualquier consumidor está fuera de ellos y dejaría de encontrar los archivos nuevos.
+- [ ] 🟡 **`Elimina` de E-45 responde cadena vacía y no `"Eliminado"`.** Verificado el 24 sep: el `NUEVO` que `SpVentasCupones` encadena termina en `SELECT @Agente AS cupon`, así que siempre hay fila y la condición del legado no se cumple. Confirmar con quien migró el SP el 29 jul si ese `SELECT` era intencional; la fila renovada además queda sin `Centro`. Detalle en [[E-45_codigoPromocion]].
 - [ ] 🟡 **`CLAVE` de `MAVI_DOC_CTE` es `varchar(10)` y un BP mide 10.** Sin margen: un identificador más largo empezaría a fallar con truncamiento. Comprobado el 3 sep: en el legado una cuenta `C`/`P` de **11 caracteres** entra por la rama `Cliente` y tumba el INSERT con 500, porque su condición acepta `Length <= 11` contra una columna de 10. La condición migrada usa `<= 10` y no puede caer ahí.
 - [ ] 🟡 **E-14 sobrescribe el destino y el legado no.** Detectado el 3 sep por lectura: el legado usa `File.Copy(origen, destino)` de dos argumentos, que lanza `IOException` si el archivo ya está y devuelve ese mensaje; ServicioSAP abre con `FileMode.Create` y responde `"Ok"`. Probablemente sea lo deseable para refrescar imágenes, pero **cambia la respuesta y hay que decidirlo**. No verificable en desarrollo: H-02 revienta antes.
 - [ ] 🟡 **`AVAL` es `bit` pero el parámetro va como `VarChar`** en E-07. Cualquier valor no numérico tumba el INSERT con 500. Deuda heredada, verificada idéntica en APIMagento.
@@ -321,15 +322,15 @@ Las bajas quedan fuera. Con `getOrderId` confirmada como baja el 21 sep son **ci
 
 **10 / 38** partidas marcadas como completadas (H-01, H-02, H-03, H-04, E-01, E-02, E-03, E-04, E-07, E-08). `[x]` aquí significa **desarrollo terminado**; varias tienen validaciones diferidas anotadas en su línea: H-02 y H-04 esperan QA, E-01 espera el canal de SMS, y las cuatro partidas de endpoints esperan el despliegue del cutover.
 
-El contador solo cuenta partidas cerradas, así que esconde el trabajo a medias. El avance ponderado de esas 38 es **46,2 %**; el desglose por endpoint, con el criterio de cálculo y el estado de pruebas de cada uno, está en [[ESTADO_PRUEBAS_Y_AVANCE]].
+El contador solo cuenta partidas cerradas, así que esconde el trabajo a medias. El avance ponderado de esas 38 es **52,5 %**; el desglose por endpoint, con el criterio de cálculo y el estado de pruebas de cada uno, está en [[ESTADO_PRUEBAS_Y_AVANCE]].
 
-**Sumando las rutas de la Ola 8, el avance del plan es 65,5 %.**
+**Sumando las rutas de la Ola 8, el avance del plan es 67,1 %.**
 
 | | Entradas | Avance |
 |---|---:|---:|
-| Partidas medibles | 38 | 46,2 % |
+| Partidas medibles | 38 | 52,5 % |
 | Rutas de la Ola 8, sin las bajas | 26 | 88,5 % |
-| **Total** | **62** | **65,5 %** |
+| **Total** | **64** | **67,1 %** |
 
 > ⚙️ **Cambio de criterio del 9 sep.** Hasta ahora las 30 rutas de la Ola 8 quedaban fuera del promedio porque se miden con otra vara — completas cuando su llamador queda resuelto, sin hitos de cutover ni de ficha. Dejarlas fuera escondía trabajo real: once llamadores escritos y probados que no movían el porcentaje. Ahora se suman como **partidas equivalentes**, `38 × 46,2 % + 24 × 96 % = 40,6` sobre **62**.
 >

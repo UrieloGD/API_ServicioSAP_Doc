@@ -1,6 +1,6 @@
 ---
 tags: [contratos, endpoints, migracion, indice]
-actualizado: 2026-09-08
+actualizado: 2026-09-24
 ---
 
 # Contratos de endpoints — Migración LAN → SAP
@@ -40,6 +40,7 @@ en producción.
 | E-14 | `product/obtenerImagen` | 6 | — sin cutover, no existe en la DMZ | [[E-14_obtenerImagen]] |
 | E-15 | `order/GetPickUpCode` | 7 | 🔴 **no aplicar solo** — falta migrar el tercer escritor | [[E-15_GetPickUpCode]] |
 | E-19 | `magento/attributeSetChildren/{id}` | 8 | — la ruta se queda en la DMZ | [[E-19_attributeSetChildren]] |
+| E-45 | `credit/codigoPromocion` | 9 | 🔴 conmutado a `PostSAP`, sin subir | [[E-45_codigoPromocion]] |
 | E-46 | `credit/getPlazos` | 9 | 🔴 corregido a `GetSAP`, sin subir | [[E-46_getPlazos]] |
 | 🗑️ | `order/getOrderId/{idEcommerce}` | 8 | 🗑️ propuesta de baja — su consumidor migró sin la tabla | [[BAJA_getOrderId]] |
 
