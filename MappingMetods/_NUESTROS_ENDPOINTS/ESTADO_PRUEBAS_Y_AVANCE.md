@@ -1,7 +1,7 @@
 ---
 tags: [pruebas, avance, migracion, estado]
 fuente: "CHECKLIST_MIGRACION_LAN_A_SAP.md"
-actualizado: 2026-09-24
+actualizado: 2026-09-28
 ---
 
 # Estado de pruebas y avance por endpoint
@@ -63,7 +63,7 @@ Para que el número signifique algo y no sea una impresión, cada partida se mid
 | E-13 | `customer/cashCustomerReport` | 6 | **80 %** | 🔶 Validación y escritura local verificadas el 25 ago. **La copia al share no es verificable desde desarrollo** | Se valida en QA |
 | E-14 | `product/obtenerImagen` | 6 | **55 %** ⁽⁵⁾ | 🔶 Solo el 401. **No es verificable desde desarrollo**: la impersonación falla antes de la copia | Se valida en QA |
 | E-15 | `order/GetPickUpCode` | 7 | **90 %** ⁽⁶⁾ | ✅ Probado el 14 sep: 200 con clave, 404 sin fila, 400 con body nulo (paridad) | Falta el cutover, que va con los tres escritores |
-| E-44    | `credit/SolicitudMercancia`           | 9   | **60 %** | —                       | Probarla: escribe en `CRED_SOLICITUD_WEB_DATOS_TEMP` y falta cuenta de prueba |
+| E-44    | `credit/SolicitudMercancia`           | 9   | **65 %** | 🔶 Sin ejecutar. El 28 sep se corrigió la fecha de nacimiento y se acotó el riesgo del `estatus 7` | 🔴 El reloj de `mavicbosandroid` no cuadra; falta cuenta con domicilio completo |
 | E-45    | `credit/codigoPromocion`              | 9   | **90 %** | ✅ Los 6 casos verificados el 24 sep, incluida la escritura | Falta el cutover, que va con el de E-46 |
 | E-46    | `credit/getPlazos`                    | 9   | **90 %** | ✅ Probado el 23 sep: 200 con el contrato del legado | Falta el cutover, que va con el de E-45 |
 | E-47    | `customerService/obtenerTipoGarantia` | 8   | 0 %      | —                       | 🔒 Estructura de Miguel Marín     |
@@ -123,11 +123,11 @@ Es decir: si en QA falla, será porque el archivo no está en esa ruta o por per
 | | Partidas | Avance medio |
 |---|---|---|
 | Habilitadores (4) | **4 al 100 %** | **100 %** |
-| Endpoints en alcance (19) | 3 al 100 %, **9 al 90 %**, 4 al 80 %, 1 al 60 %, 1 al 55 %, 1 sin iniciar | 81,3 % |
+| Endpoints en alcance (19) | 3 al 100 %, **9 al 90 %**, 4 al 80 %, 1 al 65 %, 1 al 55 %, 1 sin iniciar | 81,6 % |
 | Mixtos (15) | 2 al 25 %, 13 sin iniciar | 3,3 % |
-| **Subtotal partidas medibles (38)** | | **52,5 %** |
+| **Subtotal partidas medibles (38)** | | **52,6 %** |
 | Rutas de la Ola 8 (26) | **23 completas**, 3 pendientes | 88,5 % |
-| **Total (64)** | | **67,1 %** |
+| **Total (64)** | | **67,2 %** |
 
 > ⚙️ **Las rutas de la Ola 8 entran en el total desde el 9 sep.** Antes se reportaban aparte
 > porque se miden con otra vara —completa cuando su llamador queda resuelto, sin hitos de
@@ -1615,3 +1615,52 @@ Dos cosas que se dieron por ciertas y no lo eran: `"Utilizado"` es **inalcanzabl
 solo asigna `Conteo` 1 o 0, y el legado carga el mismo `else if` muerto—, y `ValidarCupon`
 **no filtra por `FechaUtilizacion`**, así que un cupón ya usado responde `OK`. Las dos son
 deuda heredada del SP. Ficha en [[E-45_codigoPromocion]].
+
+### Ola 9 — E-44 `credit/SolicitudMercancia`, 28 sep (preparación, sin ejecutar)
+
+No se llegó a llamar al endpoint. Lo que se hizo fue alistar la prueba, y de ahí salieron
+tres cosas.
+
+**Un defecto corregido: la fecha de nacimiento se iba en blanco.** SAP entrega las fechas
+como `/Date(888364800000)/` y `Partner.FechaNacimiento` es un `string`, así que el
+`DateTime.TryParse` del helper `FechaCorta` fallaba y devolvía `""`. Cada inserción habría
+dejado `fechaNacimiento` vacío. El legado no lo sufría porque leía un `datetime` de
+Intelisis y lo convertía con `CONVERT(VARCHAR(10), …, 120)`. Corregido para reconocer el
+formato OData, convirtiendo desde epoch **en UTC** — en hora local la fecha se corre un día
+hacia atrás.
+
+**Quién consume el `estatus 7`.** Un solo objeto en `ServicioAndroid`:
+`SpVTASMovimientosNIPCteSEV`, opción `ObtenerClienteCredi`, agregada el 5-oct-2023 "para
+obtener los datos del cliente para la consulta de buró":
+
+```sql
+WHERE confirmado = 1 AND estatus IN (0, 4, 7, 8)
+  AND resultado_buro IS NULL AND c.cliente = @Cliente
+```
+
+Filtra por cliente, así que **no es un proceso que recorra la tabla**: una fila de prueba
+solo aparecería si alguien consultara ese BP. La tabla no tiene triggers, los otros cuatro
+SPs que la mencionan la usan por `cliente` o por `id`, y `SP_CREDITO_WEB_DATOS` escribe la
+columna en vez de filtrarla. Ningún repo nuestro llama a `ObtenerClienteCredi`: el llamador
+está fuera. El `estatus 7` tiene 37,561 filas, o sea que es un estado corriente.
+
+Quedó un hueco: **los jobs del Agente no se pudieron revisar**, porque `msdb.dbo.sysjobs`
+negó el permiso de lectura.
+
+**El reloj del host no cuadra.** Aplicando la precaución que ya estaba escrita para ese
+servidor, `GETDATE()` en `mavicbosandroid.grupomavi.com` devolvió **3-sep-2026** con 25 días
+de atraso, y la tabla tiene filas fechadas hasta **marzo de 2027**. Con `maxId` 691,288 y
+493,304 filas. **Por esto se detuvo la prueba**: el `INSERT` escribe `fecha = GETDATE()`, y
+si además la conexión resuelve a una copia, ejecutar no probaría nada — es lo que pasó el
+5 ago con E-01.
+
+De paso: ya existe **una** fila con `origen = 'APP MERCANCIAS'`, la `691285`, del 24 sep,
+con cliente `C00000013` en formato `C%` — puesta por el legado. Trae
+`fechaNacimiento = 1955-09-20`, que es lo que confirmó el defecto de arriba, y tiene
+`Confirmado = 1` con `resultado_buro` nulo, la forma exacta que la consulta de buró busca.
+
+**Cuenta de prueba.** `1500008089` existe en SAP DEV y responde 200, pero de los 16 campos
+que el método consume solo trae 6: nombre, los dos apellidos, fecha de nacimiento, correo y
+`Region`. El domicilio viene vacío, así que **no ejerce el recorte de `Colonia1` a 30**, la
+única transformación de texto del método. Hace falta una cuenta con domicilio completo para
+esa parte.
