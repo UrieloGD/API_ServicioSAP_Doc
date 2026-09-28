@@ -1,7 +1,7 @@
 ---
 tags: [contrato, endpoint, migracion, ola-9]
 partida: E-45
-actualizado: 2026-09-24
+actualizado: 2026-09-28
 ---
 
 # E-45 — `credit/codigoPromocion`
@@ -84,7 +84,7 @@ Cliente → APIMagentoDMZ credit/codigoPromocion (CreditController.cs:127)
 ```
 
 Patrón de string recortado: el cliente recibe `OK`, no `"OK"`. El cutover a `PostSAP` está
-escrito en `42d208b`, **sin subir**.
+subido el 28 sep en `97d6aea`, **sin desplegar**.
 
 ## Efectos
 

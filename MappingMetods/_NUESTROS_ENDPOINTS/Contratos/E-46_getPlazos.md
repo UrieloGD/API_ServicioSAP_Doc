@@ -1,7 +1,7 @@
 ---
 tags: [contrato, endpoint, migracion, ola-9]
 partida: E-46
-actualizado: 2026-09-23
+actualizado: 2026-09-28
 ---
 
 # E-46 — `credit/getPlazos`
@@ -62,7 +62,7 @@ se queda en SIGMAVI y los días los pone SAP.
 El cliente recibe el **objeto deserializado**, no una cadena.
 
 > 🔴 **El cutover llegó a estar roto.** La DMZ usaba `PostSAP` contra una ruta `[HttpGet]`, lo
-> que devuelve 405. Corregido a `GetSAP` el 21 sep (`42d208b`, sin subir). La ruta de la LAN
+> que devuelve 405. Corregido a `GetSAP` el 21 sep; ya venia aplicado en la rama al rebasar el 28 sep, sin desplegar. La ruta de la LAN
 > también es `[HttpGet]`, así que la paridad manda `GetSAP`.
 
 ## Efectos
