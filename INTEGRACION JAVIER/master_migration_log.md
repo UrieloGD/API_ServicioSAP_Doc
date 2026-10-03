@@ -1,12 +1,12 @@
 # Master Migration Log - [Atlas]
+> 2026-10-01: cómo funciona ServicioSAP hoy está en [[Business Rules Ecommerce]] (fuente única). Este documento queda como historia; si contradice a esa fuente, gana la fuente.
+
 **Proyecto:** MigraciÃ³n LAN a SAP
 **Responsable/DocumentaciÃ³n Maestra:** Javier
 **Ãšltima ActualizaciÃ³n:** 2026-08-25
 
 ---
-
 ## 1. Resumen de AnÃ¡lisis: Endpoint S2-03 `company/wholesale-customer/{wholesaleAccount}`
-
 ### 1.1 Contexto Legacy (LAN / APIMagento)
 Anteriormente, el endpoint funcionaba de la siguiente manera:
 - **DMZ (`APIMagentoDMZ`):** Recibe un `GET /company/wholesale-customer/{wholesaleAccount}`. Valida mediante la expresiÃ³n regular `^C[0-9]{8,9}$` que la cuenta sea vÃ¡lida. Internamente, reenvÃ­a la peticiÃ³n `GET` a `APIMagento`.

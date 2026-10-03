@@ -3,8 +3,8 @@ tags: [contrato, endpoint, migracion, ola-2]
 partida: E-03
 actualizado: 2026-08-07
 ---
-
 # E-03 — customer/getCustomerList
+> 2026-10-01: cómo funciona ServicioSAP hoy está en [[Business Rules Ecommerce]] (fuente única). Este documento queda como historia; si contradice a esa fuente, gana la fuente.
 
 Consulta en qué lista está un correo. Es el único de la Ola 2 que **no escribe**.
 

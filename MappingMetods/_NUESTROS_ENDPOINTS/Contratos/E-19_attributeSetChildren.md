@@ -3,8 +3,8 @@ tags: [contrato, endpoint, migracion, ola-8, catalogo, sqlite]
 partida: E-19
 actualizado: 2026-09-08
 ---
-
 # E-19 — `magento/attributeSetChildren/{id}`
+> 2026-10-01: cómo funciona ServicioSAP hoy está en [[Business Rules Ecommerce]] (fuente única). Este documento queda como historia; si contradice a esa fuente, gana la fuente.
 
 Cruza los sets de atributos con las opciones de atributo y deja en SQLite una fila por
 `(set, atributo)` marcando si ese atributo tiene valores de lista.

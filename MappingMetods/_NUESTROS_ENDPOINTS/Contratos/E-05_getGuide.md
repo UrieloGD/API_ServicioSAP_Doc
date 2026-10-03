@@ -3,8 +3,8 @@ tags: [contrato, endpoint, migracion, ola-3]
 partida: E-05
 actualizado: 2026-08-19
 ---
-
 # E-05 — `order/getGuide`
+> 2026-10-01: cómo funciona ServicioSAP hoy está en [[Business Rules Ecommerce]] (fuente única). Este documento queda como historia; si contradice a esa fuente, gana la fuente.
 
 Devuelve el **nombre del cliente** asociado a un `increment_id` de Magento.
 

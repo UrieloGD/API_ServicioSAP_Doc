@@ -10,7 +10,7 @@ metadata:
 
 Decisiones vigentes del proyecto de migración Intelisis → SAP (confirmadas por el usuario el 2026-09-08):
 
-**Acceso.** Los repos canónicos viven en el share `\\CATECINF214058D\Migracion SAP`, mapeado como `Z:` (permanente). El harness NO acepta unidades de red como directorio de trabajo — hay que operar con rutas absolutas `Z:\...`, que sí funcionan con Read/Write/Edit/Grep/Bash. Búsquedas amplias desde `Z:\` son lentas (hay un `.venv`): acotar a `Z:\LAN`, `Z:\DMZ`, `Z:\ServicioSAP`.
+**Acceso.** Los repos canónicos viven en el share `\\172.16.214.58\sap`, mapeado como `Z:` (permanente). El harness NO acepta unidades de red como directorio de trabajo — hay que operar con rutas absolutas `Z:\...`, que sí funcionan con Read/Write/Edit/Grep/Bash. Búsquedas amplias desde `Z:\` son lentas (hay un `.venv`): acotar a `Z:\LAN`, `Z:\DMZ`, `Z:\ServicioSAP`.
 
 **Única fuente de verdad de endpoints:** `Z:\.agents\skills\lan-sap-migration\MappingMetods\MAVIDMZSAPConexiones.csv` (136 endpoints, columna `Programador` con el responsable: Diego, Javier, Marcos). Al parsearlo, respetar campos entrecomillados — el campo `Notas` contiene comas y un split ingenuo corrompe las columnas.
 

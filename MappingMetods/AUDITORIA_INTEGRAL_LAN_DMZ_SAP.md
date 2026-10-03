@@ -4,8 +4,8 @@ proyecto: Migracion SAP
 fuente_de_verdad: MAVIDMZSAPConexiones.csv
 actualizado: 2026-09-08
 ---
-
 # Auditoría integral LAN → DMZ → ServicioSAP
+> 2026-10-01: cómo funciona ServicioSAP hoy está en [[Business Rules Ecommerce]] (fuente única). Este documento queda como análisis; si contradice a esa fuente, gana la fuente.
 
 Comparativa de paridad de los tres proyectos y plantilla de verificación. Todo lo que aquí se afirma se sostiene en `archivo:línea` del código, no en documentación.
 

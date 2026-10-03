@@ -6,8 +6,8 @@ actualizado: 2026-08-03
 agente: Nexo
 verificado_contra: C:\Users\dsvalle\source\repos\ServicioSAP
 ---
-
 # Estado real en ServicioSAP — verificación directa contra el código
+> 2026-10-01: cómo funciona ServicioSAP hoy está en [[Business Rules Ecommerce]] (fuente única). Este documento queda como historia; si contradice a esa fuente, gana la fuente.
 
 Reanálisis de **qué está realmente implementado en `ServicioSAP`** de los 33 endpoints de nuestro alcance.
 

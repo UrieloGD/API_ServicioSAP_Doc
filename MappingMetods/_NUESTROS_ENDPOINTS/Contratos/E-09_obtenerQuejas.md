@@ -3,8 +3,8 @@ tags: [contrato, endpoint, migracion, ola-5]
 partida: E-09
 actualizado: 2026-08-23
 ---
-
 # E-09 — `customerService/obtenerQuejas`
+> 2026-10-01: cómo funciona ServicioSAP hoy está en [[Business Rules Ecommerce]] (fuente única). Este documento queda como historia; si contradice a esa fuente, gana la fuente.
 
 Devuelve el catálogo de quejas que puede levantar un cliente, para poblar el selector de
 atención a clientes.

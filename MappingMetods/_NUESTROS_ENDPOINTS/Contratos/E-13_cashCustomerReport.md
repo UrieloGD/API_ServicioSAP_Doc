@@ -3,8 +3,8 @@ tags: [contrato, endpoint, migracion, ola-6]
 partida: E-13
 actualizado: 2026-08-31
 ---
-
 # E-13 — `customer/cashCustomerReport`
+> 2026-10-01: cómo funciona ServicioSAP hoy está en [[Business Rules Ecommerce]] (fuente única). Este documento queda como historia; si contradice a esa fuente, gana la fuente.
 
 Recibe un reporte de clientes de contado en Base64, lo escribe en disco y lo deposita en el
 share desde el que lo recoge el proceso de WhatsApp.

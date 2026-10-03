@@ -1,18 +1,18 @@
 ---
 tags: [migracion, sap, credito, sp, serviciosap, implementacion, runbook]
 fecha: 2026-09-18
-estado: IMPLEMENTADO — 2 archivos registrados en el .csproj; el SP ya no se llama; paridad de datos con LAN en §12
+estado: IMPLEMENTADO — 2 archivos registrados en el .csproj; el SP ya no se llama; paridad de datos con LAN en §12 · plan vigente en CREDITO_WEB_ANALISIS_COMPLETO_Y_PLAN_FINAL (2026-09-30)
 requiere: FLUJO_SP_CREDITO_WEB_DATOS_A_CODIGO.md (diseno y decisiones D1-D10)
 ---
-
 # Plan de ejecucion — `SP_CREDITO_WEB_DATOS` a codigo en `ServicioSAP`
+> 2026-10-01: cómo funciona ServicioSAP hoy está en [[Business Rules Ecommerce]] (fuente única). Este documento queda como plan e historia; si contradice a esa fuente, gana la fuente.
 
 > [!abstract] Que es esto
 > El runbook para implementar la migracion. Se detuvo **antes de escribir una linea** en el repo: `ServicioSAP` esta limpio en la rama `SpExportaEcommerce` (commit `b3a2965`). Todo lo de aqui esta verificado contra codigo; lo que no, dice **PENDIENTE**.
 >
 > Orden: §1 preparacion → §2 contrato entre archivos → §3 las 7 unidades → §4 lo que hace el orquestador despues → §5 compilar → §6 dudas para el usuario.
 >
-> 🔴 **Desactualizado a partir de la §3.** El plan vigente es la **§9** (el flujo sin SP) y el estado real de lo escrito, la **§10**.
+> 🔴 **Desactualizado a partir de la §3.** El plan vigente es la **§9** (el flujo sin SP) y el estado real de lo escrito, la **§10**. 🟢 **2026-09-30: el plan vigente es [[CREDITO_WEB_ANALISIS_COMPLETO_Y_PLAN_FINAL]]** (análisis completo y plan final; ver §26). La §9 y el resto quedan como historia.
 
 ---
 
@@ -1433,3 +1433,1294 @@ Sigue pendiente de §17.4: el default `Gender = ... ? "1"` (`OrderMethods.cs:268
 ### 18.9 Fuera del fin de semana
 
 Liberador y callback · `creditStatus`, `updateCreditOrderId` y el pedido SAP de credito (ya calendarizados en `PLAN_MAESTRO_GANTT_POR_DEV.md`) · SKU por region · costo de linea (`spVerCosto`) · estado civil · equivalencia del codigo promotor · deduplicacion · despliegue a stage o produccion · **borrar filas de prueba** (lo decide el dueño de la base).
+
+---
+
+## 19. Cronograma de guardias 26 y 27 de septiembre — notas de ejecucion — 2026-09-24
+
+> Pedido del usuario: *"generame un cronograma para esos dos dias para entregar"*; *"no necesariamente debe estar terminado todo, solamente tener una actividad real de trabajo"*. Cronograma entregable: https://claude.ai/artifact/NMtWPEtbRf3dGtMSfdYa5k. Se armo con un workflow de 9 agentes (`w5gm6gzrb`): 4 verificaron en el codigo, 3 disenaron agendas con enfoques distintos (meta primero, cobertura, a prueba de guardia), 1 eligio y sintetizo, y 1 hizo la revision adversarial. Gano la agenda "a prueba de guardia" (42 de 50 puntos).
+
+### 19.1 Objetivo
+
+Para el domingo, dejar el flujo de credito web de ServicioSAP compilado en una rama local, con los arreglos de paridad con LAN que no dependen de otros equipos (§18.5 #8, #10, #11, #12, #15, #16), probado en local en los casos que no escriben datos (P10, P12, P13, P19 y P22), y con el paquete de pruebas y preguntas listo para el lunes. No todo tiene que quedar terminado; lo que no entre pasa a "espera lunes".
+
+### 19.2 Correcciones de la revision adversarial, verificadas
+
+| # | Correccion | Evidencia |
+|---|---|---|
+| 1 | La meta no puede decir "responde igual que LAN". LAN descarta lo que devuelve `ProductosCreditoWeb_SaveData` y responde con la cuenta y un 200. ServicioSAP responde `"Error, ..."` para invitado, cuenta `C...` o BP inexistente. Se compara contra el esperado de §18.7 y a Magento se le pregunta si lo tolera | LAN `OrderMethods.cs:624-649` |
+| 2 | `numeroValidado` ya es respaldo del SMS en LAN. Lo que se decide es la **fuente y el filtro** de `IsValidatedAsync`, no su lugar en la cadena | LAN `OrderMethods.cs:642` |
+| 3 | La URL invalida de `URL_BP_API` solo corta **cuando hay cuenta**. Con el cliente vacio, `GetTelefonoValidadoAsync` regresa `null` sin llamar y el INSERT se ejecuta: **P11 no es segura** | `SolicitudCreditoWebMethods.cs:476-481` |
+| 4 | La ruta publica `getCondicion` usa el default de contado `ACEF`; credito usa `""`. `CONDICION PRUEBA` regresa `ACEF` por esa ruta, y eso es lo esperado, no un fallo. Se usa el `storeId` exacto (`muebles_america` o `viu`) | `OrderController.cs:321`; `OrderMethods.cs:891` |
+| 5 | Lo que deba llegar al INSERT (P2, P14 y la hoja del lunes) lleva la cuenta cambiada por un BP de QA 110. `CRED515773` tal cual es P10 y nunca llega al INSERT | `OrderMethods.cs:784-797` |
+| 6 | El truncamiento puede salir como 8152 o, en SQL Server 2019 o posterior, como 2628 | — |
+| 7 | Candado de P22: si no se carga `SQLITE_DB_PATH`, SQLite usa `C:\inetpub\wwwroot\sap\`. El candado pasa solo si la fila aparece en el `data.db` local **y** esa ruta de respaldo no existe en el equipo donde corre IIS Express | `SQLiteDb.cs:16-20` |
+| 8 | `Web.local.config` ya esta en `.gitignore` y solo sobreescribe `appSettings`, no la cadena de conexion | `.gitignore:298` |
+| 9 | Colchon: antes de las 12:30 del domingo hay 2.5 h. Si la guardia consume mas, la meta se cierra a mas tardar a las 16:00, cuando se congela el codigo | Agenda |
+
+### 19.3 Nota de paridad encontrada al verificar
+
+LAN manda `origen` desde `infoCliente` si viene, y si no, `"PRODUCTOS MX"` (`LAN OrderMethods.cs:646`). ServicioSAP lo fija en `"PRODUCTOS MX"`. Hay paridad mientras Magento no mande `origen`, como confirmo el usuario.
+
+### 19.4 Reglas durante la guardia
+
+- No se atiende un incidente con un cambio sin compilar: se compila si toma 10 minutos o menos; si no, se guarda con `git stash`.
+- Al salir a un incidente se anotan el bloque, el paso y la siguiente accion. Al volver se revisan `git status`, `git log -1` y esa nota.
+- Las pruebas que escriben en la base Android se corren solo si la base se confirma como QA. Los Id insertados se listan y no se borra nada.
+
+---
+
+## 20. Arreglos de paridad aplicados en la ruta de credito — 2026-09-24
+
+> Pedido del usuario: *"que sigue que hagamos, hay que continuar por mientras"*; *"me refiero al analisis de la comparativa del SP legacy con el flujo actual de SAP"*. Se aplicaron los arreglos de §18.5 que tenian regla y no pedian decision. Share desde hoy: `\\172.16.214.58\sap` (misma informacion que el antiguo `Z:`). Sin commit y sin compilar: eso lo hace el usuario.
+
+### 20.1 Cambios en `ServicioSAP\...\Methods\Order\OrderMethods.cs`
+
+| §18.5 | Cambio | Legado |
+|---|---|---|
+| #8 | `ObtenerNumeroTablaSmsAsync`: `SELECT TOP 1 Telefono ... WHERE IdRegistro IN (SELECT IdCodigoVerificacioneCommerce ... WHERE CV.Cliente = @Cliente) ORDER BY Id DESC`, sin `LTRIM/RTRIM` | LAN `OrderMethods.cs:827-830`, base Android |
+| #10 | Telefono de respaldo de `ProcessCreditPaymentAsync` por `ValidateOnlyNumbers` | LAN `CreditMethods.cs:113` |
+| #11 | La quema del codigo promotor va dentro del `try`, despues de `InsertCreditArticlesAsync`: si falla una linea, no se quema | LAN `CreditMethods.cs:199-206`; `CreditoWeb_InsertArticulo` no tiene `try` (`:869-919`) |
+| #12 | Fuera el `throw` de `insertados == 0` | El SP de lineas hace `INSERT...SELECT` y con `JOIN` vacio inserta 0 filas sin error (`SpVTASInsertArtSolCreditoLinea.sql:243-262`) |
+| #15 | `costoEnvio.ToString(CultureInfo.InvariantCulture)` al armar `SEGU00001` | LAN concatenaba el texto de Magento (`OrderMethods.cs:616-617`) |
+| #16 | `SaveGuideAsync` al inicio de la rama de credito; contado no cambia | LAN `OrderMethods.cs:606`, antes de `:609` |
+
+Se quitaron tres comentarios de la ruta de credito. Su contenido queda aqui:
+- **Codigo promotor**: se lee de `infoCliente.codigo_promotor` y no por indice. La version anterior usaba `datosArray[72]`, una rama inalcanzable porque `ToArray` produce 39 elementos. El 72 venia de cruzar dos convenciones de LAN: `CreditMethods.cs`, con un arreglo de 7 y el promotor en `data[6]`, y `Credit\Methods.cs`, con un arreglo de ~76. Es opcional: solo llega cuando un promotor asistio la compra.
+- **Catch de las lineas**: un fallo al insertar lineas no cambia lo que recibe Magento, que sigue siendo la cuenta, como LAN. El comentario decia que propagar produciria un 400, pero es **falso**: `OrderController.cs:37-46` responde `Ok("Error, ...")`, un 200.
+- **`throw` dentro del bucle de lineas**: el comentario decia que propagar evitaba un "Concluido" con la solicitud vacia. Ya no aplica: el llamador (`:707-717`) se traga la excepcion y responde "Concluido", igual que LAN.
+
+### 20.2 Revision adversarial (`wzp66ps33`, 3 lentes)
+
+- **Compilacion: 0 hallazgos.** El diff contiene exactamente los 6 cambios, las llaves quedan balanceadas, `costoEnvio` es `decimal` e `incrementId` es local de `SetOrderAsync` (`:1751`). No hay sintaxis posterior a C# 7.3.
+- **Paridad**: los 6 arreglos igualan a LAN en los casos reales: SMS con `NULL` o sin filas, telefono con formato, 0 lineas, costo 0, 150 o 150.50.
+- **Efectos**: contado, cupones (`OrderController.cs:113`) y devoluciones no cambian. La guia no se duplica, porque credito regresa antes de la llamada de contado.
+
+### 20.3 Lo que encontro la revision y no se aplico
+
+| Hallazgo | Por que no se aplico |
+|---|---|
+| **Condicion inexistente**: `InsertCreditArticlesAsync` lanza en `:883-886`, **antes** del bucle. No se inserta ninguna linea, ni `SEGU00001`, y desde el arreglo #11 tampoco se quema el promotor. LAN no valida: inserta `SEGU00001` y quema el cupon. Los revisores proponen quitar ese `throw` | **Reabre la decision 9 del usuario**: *"si no existe ... no hay un default, ahi se debe detener el resultado y notificar que no existe la condicion de pago en el flujo"*. No quemar el promotor es coherente con "se detiene". Sigue pendiente (§18.5 #7) definir si "se detiene" es antes de escribir la cabecera |
+| `ConstruirNombreClienteMavi` aplica `Trim()` al total y LAN no (LAN `OrderMethods.cs:603-605`). Con un apellido vacio, LAN guarda `' LOPEZ JUAN'` y ServicioSAP `'LOPEZ JUAN'` | El helper tambien lo usa contado (`:1824`, `:1928`, `:1934`): va a la auditoria de SetOrder |
+| Si falla el guardado de la guia, LAN aborta el pedido y responde `""`; ServicioSAP se traga el error (`SaveGuideAsync` y `SQLiteDb.SetAsync`) | Cambia el contrato con Magento: lo decide el usuario |
+| En contado, la guia se guarda despues de validar stock y partner (`:1848`). LAN la guarda antes, para todo metodo de pago | Fuera del flujo de credito: va a la auditoria de SetOrder |
+| `:688` usa `IsNullOrWhiteSpace` y LAN usa `Length > 0`. Un SMS con puros espacios se usaria en LAN | Va junto con la decision pendiente de los `"0"` de `:688-691` |
+| `costoEnvio` es texto en LAN (`!= "0" && != ""`) y `decimal` en ServicioSAP (`> 0`). Con `"0.00"`, LAN agrega `SEGU00001` con precio 0 | Los payloads reales traen `"0"` o `"150"`. Igualarlo exige cambiar el tipo del modelo |
+| Con un promotor de puros espacios, LAN llama al SP de cupones y ServicioSAP no | Teorico; los payloads traen `""` |
+
+---
+
+## 21. SP de líneas: costo y SKU por región — 2026-09-24
+
+> **Base de esta sección.** Todo se revisó en `\\172.16.214.58\sap` el 24-sep. El acceso funciona y el contenido es el mismo que antes estaba en `Z:\`.
+>
+> `OrderMethods.cs` cambió dos veces mientras se hacía la revisión, a las 18:01 y a las 18:19:02. Las citas son de la versión de las 18:19:02, que tiene 3359 líneas. Las líneas que cita el PLAN 18.5 #13 (`:942`, `:947` y `:1022`) hoy son `:931`, `:1006` y `:901`.
+>
+> **Abreviaturas usadas en las citas:**
+> - `SS\` = `ServicioSAP\ServicioSap\ServicioSap\`
+> - `LS\` = `.agents\skills\lan-sap-migration\`
+> - **OM** = `SS\Methods\Order\OrderMethods.cs`
+> - **SPL** = `LS\SPsOrden\SpVTASInsertArtSolCreditoLinea.sql`
+> - **SVC** = `LS\SPsOrden\spVerCosto.sql`
+
+### 21.1 Veredicto
+
+**Ya está igual, o es equivalente con otra fuente** (OM:922-1006):
+- El precio y el Abono salen de SD29 por SKU, filtrados a las organizaciones 04 y 05.
+- Se aplica el CEILING con `Descuentocategoria`.
+- La línea SEGU00001 lleva el envío como precio, cantidad 1 y Abono 12.
+- Se descartan los artículos repetidos consecutivos.
+- Las líneas sin precio se omiten.
+
+**Lo que falta:**
+- **El costo.** Siempre se escribe 0 (OM:931).
+- **La sustitución de SKU por región para TELEFONIA.** El código postal llega al método (OM:699, :703), pero no se usa en ninguna parte del cuerpo (OM:857-1023). El SKU de Magento se escribe tal cual (OM:926).
+
+**¿Afecta a quien lee esos datos?** No hay ningún lector demostrado de `VTASdArtCreditoWeb`. En LAN, DMZ, ServicioSAP y `.agents` solo aparecen escrituras (OM:901, SPL:208 y :243). Los dos lectores candidatos están **por validar**: el Liberador y `SP_CREDITO_WEB_VALORES_FORM` de MAVICUBOS. De las dos piezas que faltan, el SKU por región importa más que el costo, porque cambia al mismo tiempo el artículo, el precio y el Abono.
+
+### 21.2 Ramas del SP
+
+**Qué recibe el SP:** 7 parámetros, sin UEN, origen ni sucursal (SPL:28-34). `@Cp` es el código postal real del cliente: `LAN\WebApiMagento\Metodos\OrderMethods.cs:639` lo envía y `LAN\WebApiMagento\Metodos\CreditMethods.cs:912` lo pasa al SP. Los payloads reales están en `LS\Resources\magento_payloads.md:26` y `:55`.
+
+| Rama | ¿Alcanzable en crédito web? | ServicioSAP | Evidencia |
+|---|---|---|---|
+| R0: se lee `Art.Familia` | Sí | No se consulta | SPL:43-48 |
+| R1: la familia no es TELEFONIA, se queda el SKU original | Sí. La familia de OSTE00443 y DIB+00104 está por validar | Igual en la práctica (OM:926) | SPL:164-165 |
+| R2: TELEFONIA sin par de región, se queda el original | Por validar | Igual en la práctica | SPL:161-162 |
+| R3: CP activo, artículo de región 5 y existencia de la región 6 > 0: cambia a región 6 | Por validar. Ningún payload real es de telefonía | **NO PORTADA** | SPL:85-116 |
+| R4, R5, R8, R9: se queda el SKU original | Por validar | Igual en la práctica | SPL:118, :122-125, :155, :157-158 |
+| R6: CP activo y el artículo no coincide con ninguno de los dos TOP 1: `@artRegion` queda NULL y se insertan 0 filas | Solo si el artículo está en más de un par y los dos TOP 1 sin ORDER BY devuelven filas distintas. Es un defecto, no una regla | No se debe portar | SPL:62-68, :77-83, :121-126, :262 |
+| R7: CP inactivo o vacío, artículo de región 6 y existencia de la región 5 > 0: cambia a región 5 | Por validar. Un CP `""` también entra aquí (OM:699) | **NO PORTADA** | SPL:127-153 |
+| R10: SEGU00001 | Sí (el pedido VIU trae envío 150) | Precio y Abono portados (OM:933-937). Costo no (OM:931) | SPL:179-217 |
+| R11: resto de artículos (precio, Abono, costo) | Sí | Precio y Abono portados desde SD29 (OM:946-993). Costo no. La llave de condición es otra: `CondicionMagento` en SAP (OM:3325) contra `Condicion`→`CondicionPropre` en legacy; la equivalencia está por validar. Legacy puede insertar varias filas por el JOIN; SAP inserta como máximo una (OM:969-972) | SPL:219-263 |
+| La condición no existe | Sí | Hay divergencia. SAP lanza una excepción antes de insertar (OM:877-880). El catch solo registra el error (OM:711-717) y Magento recibe "Concluido" (OM:1802-1807) con la solicitud sin líneas, SEGU incluida | OM:877-880, :711-717 |
+| SD29 falla a mitad del ciclo | Sí | Se relanza la excepción y quedan líneas parciales | `SS\Methods\SalesDistribution\FinalListProperMethods.cs:97-98`; OM:1015-1019 |
+
+### 21.3 Costo
+
+**Cómo lo calcula legacy.** El SP de líneas llama a `spVerCosto 96,'MAVI','',@artRegion,'',Art.Unidad,Art.TipoCosteo,'PESOS',1` (SPL:221-237). Dentro de `spVerCosto`:
+
+1. **Hook `xpVerCosto`** (SVC:69-72). Si asigna un costo, se salta todo el cálculo de SVC:71-190. Que la condición se cumpla depende de `ANSI_NULLS OFF` (SVC:4). El código de `xpVerCosto` no está en SPsOrden.
+2. **Ramas que no se alcanzan.** Proveedor y SubCuenta llegan vacíos y se convierten en NULL (SVC:64-66). Por eso nunca se ejecutan las ramas de proveedor (:89-117), ArtSub (:122-133) ni ArtSubCosto (:136-148).
+3. **Artículos SERVICIO o JUEGO.** Pueden cambiar de método de costeo (SVC:83-88). Esto podría aplicar a SEGU00001 (por validar).
+4. **Rama que sí se ejecuta:** `Art ⟕ ArtCosto` con sucursal 96 y empresa MAVI (SVC:150-163). El método depende de `@Cual` (SVC:172-179):
+   - PROMEDIO: CostoPromedio
+   - ESTANDAR: `Art.CostoEstandar`
+   - REPOSICION: `Art.CostoReposicion`
+   - PRECIO LISTA y MARGEN: se ajustan por impuesto incluido (:165-171, no revisado)
+   - ULTIMO (AUTOTRANS) y ULTIMO COSTO SGASTO: sus propias columnas
+   - Cualquier otro valor: UltimoCosto
+5. **Fórmula final:** `ROUND(ISNULL(C·F_moneda,0)·F_unidad, RedondeoMonetarios)` (SVC:180-191).
+   - Si TipoCosteo es NULL, vacío o 'NO', o si `Art` no tiene fila, el costo sale **NULL, no 0** (SVC:120, :191).
+6. **La copia está dañada.** Faltan operadores en SVC:3, :83, :104, :112, :114, :129, :169-170, :176-177, :180, :182 y :187. No se sabe si los factores de moneda y de unidad multiplican o dividen, así que la fórmula completa está **por validar**.
+
+**Candidatos en SAP:**
+
+| Candidato | Nivel de respaldo |
+|---|---|
+| DM01 `ZAPI_ARTICULOS_SRV/Articulos.COSTOPROMEDIOPCP` | Tiene ficha RSG: `LS\RSG\dm01_articulos.md:23` lo describe como "Costo del sistema PCP" y `:127` trae un ejemplo en string. Ya está mapeado en `SS\Models\SAP\MaterialManagement\Product.cs:137-138` y llega por `GetProductsBySkuAsync` (`SS\Methods\MaterialManagement\ProductMethods.cs:66`), pero nadie lo lee. Que equivalga a CostoPromedio de la sucursal 96 está **por validar**: se deduce solo del nombre, no hay response real (`LS\MappingMetods\PLAN_EJECUCION_SP_CREDITO_A_CODIGO.md:1036`) y solo coincidiría si TipoCosteo = PROMEDIO |
+| Valoración estándar de S/4 | Sin ficha, sin fila en el CSV y sin código: **no usable** |
+| ZPCP de SD01 | **Refutado**: es el precio neto (`LS\RSG\sd01_enviar_pedido.md:34`) |
+| SD29 | **Refutado**: ninguno de sus campos es costo (`LS\MappingMetods\CAPTURAS_REALES_APIS.md:203`) |
+| DM07 CentroCostos | **Refutado**: es un centro de costos, no el costo del artículo (`LS\RSG\dm07_sucursales.md:37`) |
+
+**Recomendación: no portar mientras nadie lo lea.** Se deja `costo = 0` como decisión documentada (PLAN:1431). Si aparece un lector, hay que esperar la fuente: el TipoCosteo real y un response de DM01. No se debe usar `COSTOPROMEDIOPCP` solo por su nombre. Además, si ese lector distingue NULL de 0, la diferencia con legacy importa.
+
+**Falta confirmar:**
+- Quién lee el costo.
+- TipoCosteo y MonedaCosto reales de los artículos.
+- El código de `xpVerCosto` y una copia limpia de `spVerCosto`.
+- Si `ArtCosto` tiene filas de la sucursal 96.
+- Moneda, unidad y nivel (artículo o centro) de `COSTOPROMEDIOPCP`.
+
+### 21.4 SKU por región y existencia
+
+**La regla legacy** (SPL:43-158):
+- Solo aplica a artículos TELEFONIA que tienen par en `VTASCRegionSku`.
+- Si el CP está activo en `VTASCCodigoPostalRegionCelular`, se quiere la región 6. En cualquier otro caso, incluido un CP vacío, se quiere la región 5.
+- El SKU solo cambia si la variante de destino tiene existencia de ecommerce mayor que 0. Esa existencia es global, no por centro, y no bloquea el pedido (SPL:98-109). Sale de `TotalArticulos`, con respaldo en `eCommerceExist`. Si la columna es numérica, un 0 también cae al respaldo.
+- El SKU resultante se usa en SPL:221-225, :229-237, :247 y :262.
+
+**Contado no sirve como modelo:**
+- `ValidarRegionCelulares` (OM:2086) usa una heurística: busca `-R5`/`-R6` dentro del SKU y toma la región del primer carácter del código postal (OM:2100, :2113-2115). Ninguna fuente respalda esa regla.
+- Recibe el estado en lugar del CP (OM:1816 frente a :269 y :272). Es el hallazgo D-02 (`LS\MappingMetods\COMPARATIVA_SETORDER_LAN_VS_SAP.md:72`).
+- La existencia se valida sobre el SKU original y un solo almacén (OM:1823, :2039-2040). El SKU reescrito (OM:2134) viaja a SD01 (OM:2419, :2435) sin volver a validarse.
+- Crédito sale del flujo antes de llegar ahí (OM:1785-1808).
+- La regla sí existe en el contado de LAN, pero en el SP: `LS\SPsOrden\SpVTASeCommerceDetPedidos.sql:16-136`.
+
+**Piezas disponibles:**
+
+| Pieza | Candidato | Nivel de respaldo |
+|---|---|---|
+| Familia | DM01 `FAMILIA` (Product.cs:29-30; dm01:38) | Tiene ficha y código, pero **el código de familia de TELEFONIA no tiene fuente**. `BAJA_getOrderId.md:403-406` descarta SF034L000. `dm02_jerarquia_articulos.md:60` muestra 'CELU' (por validar) |
+| Pares | SIGMAVI `RegionesArticulos` o `RegionSku` | **Por validar**. Los documentos se contradicen: `LS\MappingMetods\_NUESTROS_ENDPOINTS\Contratos\BAJA_getOrderId.md:392` frente a PLAN:1011-1012 y :1429 |
+| CP | SIGMAVI `CodigosPostalesRegionesCelulares` o `CodigoPostalRegionCelular` | **Por validar** (BAJA:393) |
+| Existencia | DIM11 `GetStockAsync` (ProductMethods.cs:206), o la suma de ecommerce (`SS\Methods\Ecommerce\EcommerceMethods.cs:328-337`) | Tiene código y ficha. La equivalencia con `TotalArticulos` está por validar; la suma de ecommerce es la candidata más cercana |
+| SKUs TELC… | — | Los 4 que se probaron no existen en DM01 DEV (BAJA:408-410) |
+| Tabla Z con API CRUD en SAP | `LS\MappingExportArt\Equivalencia SPexportaArt.csv:53-55` | Descartada por la regla de solo S/4 |
+
+**Recomendación: esperar fuente.** Antes de portar hacen falta tres cosas: el código de familia de TELEFONIA, un `SELECT TOP 1` de las tablas de SIGMAVI y un par cuyos dos SKU existan en S/4. Es más prioritario que el costo.
+
+El código de la regla anterior se perdió. BAJA:475 cita el commit 13675c1, que no está en el repositorio del share.
+
+Hay un segundo llamador en LAN: `CreditoWeb_SaveData_Articulos` (LAN CreditMethods.cs:466-478 → :922-970). En la fila 21 del CSV está como "To Do", con la nota "ANDROID - No requiere SAP", y no tiene port.
+
+### 21.5 Si se porta
+
+No se crea ninguna ruta nueva: todo cuelga de `order/new` (fila 77 del CSV), que llega a `InsertCreditArticlesAsync`.
+
+| Paso | Método | Clase | Consume | Modelo |
+|---|---|---|---|---|
+| Familia y unidad | `GetProductsBySkuAsync` (ya existe) | `Methods\MaterialManagement\ProductMethods.cs:66` | DM01 `Articulos` con obtenerUrl y CreateClientS4 | `Product` tal como está (FAMILIA, UNIDAD, TIPO). Por validar: el formato de ARTICULO con ceros a la izquierda (dm01:95) frente al SKU de Magento |
+| Existencia del SKU destino | `GetStockAsync` (ya existe, :206) | ProductMethods | DIM11 `ZCDS_DIM11_EXISTENCIA_CDS` | `Stock` tal como está |
+| Pares | `Get` + el nombre real de la tabla, una vez confirmado | ProductMethods (ya lee SIGMAVI en :641 y :708), con `obtenerConexionSigMaviAsync` (`SS\Helpers\ConexionDB\ConexionSQL.cs:72`) | Tabla de SIGMAVI por validar | **Ninguno** hasta tener el `SELECT TOP 1`. Las columnas legacy (SkuRegion5 y SkuRegion6, SPL:62-68) solo sirven de referencia |
+| CP de región | Igual que la fila anterior | ProductMethods | SIGMAVI, por validar | Ninguno. Referencia legacy: CodigoPostal y Estatus (SPL:85-89) |
+| Sustitución | Paso privado que no llama a SAP directamente. Reemplaza a `ValidarRegionCelulares` para contado y crédito. Nombre por decidir | OrderMethods | Los cuatro métodos anteriores | — |
+| Costo (solo si aparece un lector) | `GetProductsBySkuAsync`, leyendo `AverageCost`. No crear `VerCostoAsync` (PLAN:984): toma el nombre del SP legacy y `CostoArticuloResult` no tiene definición | — | DM01 | `Product` tal como está |
+
+### 21.6 Preguntas para el lunes
+
+1. **Dueño del Liberador y DBA de ServicioAndroid y MAVICUBOS.**
+   - ¿Qué columnas de `VTASdArtCreditoWeb` leen el Liberador y `SP_CREDITO_WEB_VALORES_FORM`?
+   - ¿Distinguen un costo NULL de un costo 0?
+   - Evidencia: `LS\MappingMetods\_ANALISIS_PREVIO\BRIEFING-migracion-18-endpoints.md:422-434`; LAN `LiberadorCreditoMethods.cs:47-52` y `:78-80`.
+   - Punto a revisar: el disparo del Liberador está comentado en ServicioSAP (OM:724-756). Además la condición está invertida: LAN lo dispara cuando la cuenta empieza con 'C' (LAN CreditMethods.cs:208), mientras que ServicioSAP lo pone bajo `esClienteNuevo` (OM:720).
+2. **DBA de Intelisis.**
+   - `SELECT DISTINCT TipoCosteo, MonedaCosto` de los SKU de ecommerce y de SEGU00001.
+   - El código de `xpVerCosto` y el original de `spVerCosto`.
+   - El resultado de `spVerCosto 96,...` para 2 o 3 SKU, como línea base.
+   - ¿Hay filas de `ArtCosto` para la sucursal 96?
+   - Evidencia: SVC:69, :150-191.
+3. **Funcional SAP, dueño de DM01.**
+   - ¿`COSTOPROMEDIOPCP` equivale a CostoPromedio de Intelisis? ¿En qué moneda y unidad viene, y es por artículo o por centro?
+   - ¿Qué código de FAMILIA tienen los celulares? ¿Es 'CELU'?
+   - Evidencia: dm01:23, :100, :127; dm02:60; BAJA:403-406.
+4. **Basis o quien pueda capturar.**
+   - Un response real de `Articulos?$filter=ARTICULO eq '<sku>'`, para un SKU de crédito y para uno TELC….
+   - Evidencia: PLAN:1036; BAJA:408-410.
+5. **DBA de SIGMAVI.**
+   - Un `SELECT TOP 1` de las tablas de pares y de CP con los dos nombres candidatos.
+   - ¿`EcommerceExistencias` tiene datos?
+   - Evidencia: BAJA:392-399; `Equivalencia SPexportaArt.csv:17`.
+6. **Negocio de ecommerce.**
+   - ¿La existencia para decidir la región debe ser global (como en legacy) o del centro 0504/0505 (OM:372, :377)?
+   - ¿Un CP vacío debe caer en la región 5 (SPL:129-153)?
+7. **Líder técnico.**
+   - D-02: corregir el índice 20 por el 17 y retirar la heurística `-R5`/`-R6` (OM:1816, :2100, :2113-2115, :2134).
+   - Resolver la contradicción entre `LS\MappingMetods\GUIA_MIGRACION_FABLE.md:570`, que dice que `VTASdArtCreditoWeb` sigue en LAN, y `order/new`, que ya escribe en ella.
+
+
+---
+
+## 22. Session 2026-09-25 — access, B1, B2, and the LAN vs ServicioSAP comparison (partial, not verified)
+
+> Written in English at the user's request. Base: `\\172.16.214.58\sap` (same content as before). Nothing was committed (user decision: work directly in the working tree, no branches, no commits — block **B0 dropped**).
+
+### 22.1 Access
+
+The working path is **`\\172.16.214.58\sap`** (by IP, share `sap`). Read and write verified. The hostname path `\\CATECINF214058D\Migracion SAP` fails from the Claude machines because the AD account `GRUPOMAVI\magalindo` has **`Estaciones de trabajo autorizadas: CATECINF214058D`** (verified with `net user magalindo /domain`) → error 2240.
+
+### 22.2 B1 — build: **DONE**
+
+MSBuild VS 18 (`...\18\Community\MSBuild\Current\Bin\MSBuild.exe`): **0 errors**, 11 warnings, all pre-existing, **none in the files changed for credit**. Built from a local copy (robocopy from PowerShell; from Bash, MSYS mangles UNC paths) mapped with `subst X:` — the scratchpad path plus the NuGet package paths exceed MAX_PATH (270 > 260) and MSBuild cannot import `Microsoft.CodeDom.Providers.DotNetCompilerPlatform.Extensions.props`.
+
+### 22.3 B2 — DDL: **DONE** (run manually by the user, read-only)
+
+- `CRED_SOLICITUD_WEB_DATOS_TEMP`: **90 columns**, the SP writes 59. `id` is the identity column. **No triggers** on either table.
+- The §18.3 suspects against the real columns:
+
+| Column | Real width | Real value | Result |
+|---|---|---|---|
+| `MetodoEnvio` | varchar(**12**) | `tablerate_bestway` (17) | **FAILS** with 8152 on every order with that shipping method |
+| `sexo` | varchar(**9**) | `NO ESPECIFICADO` (15) | **FAILS** whenever the BP gender is not `"1"`/`"2"` (`SexoLegado`) |
+| `cliente` | varchar(**10**) | 10-digit BP | OK |
+| `direccion` | varchar(**100**) | 51 chars | OK |
+
+- **The SP was a silent truncation layer**: each value was cut to the width of the SP *parameter*. Where the column is wider than the old parameter (`cliente` 9→10, `direccion` 30→100, `exterior`/`interior` 8→20, `codigoPostal` 6→20, `delegacion`/`poblacion`/`colonia` →100, `idMagento` 12→20), LAN truncated and ServicioSAP now stores the full value — no failure, more complete data. Where the column is exactly as wide as the parameter, LAN truncated and **ServicioSAP throws**. Only `MetodoEnvio` and `sexo` have known real values that exceed.
+- `fechaNacimiento` is **varchar(10)**. ServicioSAP sends `SqlDbType.Date`; SQL Server converts it to `yyyy-mm-dd`, same as the SP (its parameter was `DATE`). The "blocking verification" of `FLUJO_SP_CREDITO_WEB_DATOS_A_CODIGO.md` §6 is **moot** — the SP is no longer called.
+- `NOT NULL` columns covered: `estatus` (model default 0, never nulled), `confirmado` (bit, receives 1), `tipoTelefonoRef` (not in the insert list, takes default 1).
+- **Pending decision (follow-up of decision 13):** truncate `MetodoEnvio` to 12 and `sexo` to 9 in C# (exact LAN parity: `tablerate_be`, `NO ESPECI`), **or** widen the two columns with `ALTER TABLE` (manual / DBA).
+- Optional read-only confirmation of what LAN actually stored (user to run):
+
+```sql
+SELECT MetodoEnvio, COUNT(*) AS filas FROM CRED_SOLICITUD_WEB_DATOS_TEMP GROUP BY MetodoEnvio;
+SELECT sexo, COUNT(*) AS filas FROM CRED_SOLICITUD_WEB_DATOS_TEMP GROUP BY sexo;
+SELECT TOP 20 id, fecha, fechaNacimiento, LEN(cliente) AS len_cliente, LEN(direccion) AS len_direccion FROM CRED_SOLICITUD_WEB_DATOS_TEMP ORDER BY id DESC;
+```
+
+### 22.4 🔔 REMINDER (asked by the user) — is `ValidacionTel = 1` applied in the FastAPI?
+
+**Answer from the code: no.**
+
+The SP's rule for `@TelefonoValidado` (`SP_CREDITO_WEB_DATOS.sql:194-202`) has three conditions:
+
+```sql
+WHERE ct.Cliente = @cliente
+  AND ct.Tipo = 'Movil'        -- 1. mobile only
+  AND ct.ValidacionTel = 1     -- 2. validated only
+ORDER BY Fecha DESC            -- 3. the most recent of those
+```
+
+ServicioSAP (`SolicitudCreditoWebMethods.GetTelefonoValidadoAsync`) delegates this to the API `A_GET_TelefonoValidado`, and keeps the number only if `ZvalTel` is true. The API (`businesspartner-dev/apps/api/routes/A_GET_TelefonoValidado.py`) does:
+
+1. `get_cte_tel(Partner=sCliente)` → `_get_ctetelset(Partner, ZtelCte)` — **all** phones of the BP. No `ZtipoCte` filter, no `Zvaltel` filter.
+2. `max(tels, key=(Zfecha, ZfechaCap, ZidcteTel))` — **the most recent phone of any type, validated or not**.
+3. Returns that one phone's `ZtelCte` and `Zvaltel`.
+
+`_get_ctetelset` **does** accept a `ZtipoCte` filter (`AS_GET_ZQBP_EditarCliente_CteTel.py:38-39`), but `A_GET_TelefonoValidado` doesn't pass it. There is **no `Zvaltel` filter anywhere** in that GET path.
+
+**Concrete divergence:** customer with a *validated mobile* (Mar-2024) and a newer *landline, not validated* (Jun-2025). SP → `@TelefonoValidado` = the mobile → with a matching SMS, `ValidacionTelefono = 0`. ServicioSAP → the API picks the 2025 landline → not validated → `null` → `ValidacionTelefono = 1`, although the customer has a validated mobile. A smoke test would **not** catch this: the API answers 200 with valid JSON; it just applies a different rule.
+
+**How to fix it — two options:**
+
+- **A. In ServicioSAP (recommended — "the API brings the data, our code applies the rules"):** derive `@TelefonoValidado` from the `CteTelSet` data the method **already reads** for `@ValidacionOrigen` (`GetCteTelAsync`): filter `ZtipoCte = 'MOVIL'` (case-insensitive, the SQL collation was CI) and `Zvaltel = true`, order by `Zfecha` descending with nulls last (SQL `ORDER BY ... DESC` puts NULLs last), tiebreak `ZfechaCap`, `ZidcteTel`, take the first `ZtelCte`. Mirrors the SP, which reads `CteTel` once for both values, and removes one API call (reduces §18.5 #4).
+- **B. In the FastAPI:** change `A_GET_TelefonoValidado` to filter mobile + validated before `max()`. Needs the businesspartner-api owner and a deploy.
+
+⚠️ Option A overrides **§15.1** ("`@TelefonoValidado` is resolved by the API, not the C#"). That decision assumed the API applied the SP's rules; the reference code shows it doesn't. **Needs the user's go-ahead.** Also open: whether the *deployed* API matches the repo version (§18.8, question to the businesspartner-api owner).
+
+### 22.5 LAN vs ServicioSAP credit flow comparison — partial, **NOT adversarially verified**
+
+- Workflow `wf_6af6b66d-bd2`: 2 flow maps + 2 deep comparisons (SP insert, article lines) + 55 aligned steps + **44/44 step comparisons done**. Adversarial verification was at **6/88** when it was stopped to save quota.
+- **All results saved:** `_IMPLEMENTACION_SP_CREDITO/credit_flow_results_2026-09-25.json` (maps, deep comparisons, aligned pairs, 44 comparisons, 6 verifications). Script: `_IMPLEMENTACION_SP_CREDITO/workflow_credit_flow_comparison.js`.
+- Verdicts: **EQUAL 0 · EQUIVALENT 11 · DIFFERENT 22 · MISSING_IN_SAP 10 · ONLY_IN_SAP 1.** 305 non-intentional difference entries (16 critical, 44 high, 91 medium, 154 low) and 46 intentional — heavily duplicated across steps.
+- **Root causes, critical and high, deduplicated (candidates until verified):**
+
+| # | Root cause | Status |
+|---|---|---|
+| 1 | Magento sends the Intelisis account `C...`, ServicioSAP expects a BP. The captured payload CRED515773 (`C01575835`) now answers "no tiene crédito activo en SAP" and inserts nothing; in LAN it succeeded. **No real credit order succeeds today.** | **INTENTIONAL — transitional (user, 2026-09-25).** ServicioSAP already targets the final state: when Magento sends BP accounts (numeric, e.g. `1500008218`), the Intelisis `C...` format is deprecated. **Not a ServicioSAP bug.** Consequences: (a) end-to-end tests must use a BP in `cuenta`, never the captured `C...` payloads as-is; (b) ServicioSAP credit cannot go live before Magento sends BPs, or every credit order fails. **Open question:** during the transition a `C...` account gets *"no tiene crédito activo en SAP"*, which is misleading — the real problem is that it isn't a BP. Check the format first and answer *"not a BP"*? Only if it's a real rule: do all BPs start with `15`, or only the customer range? |
+| 2 | New client (empty account, customer id present): LAN wrote nothing, ServicioSAP inserts an application and answers "Concluido" | **INTENTIONAL — new-client flow (user, 2026-09-25).** Empty `cuenta` = new client = a new BP is created in SAP; changing an existing BP uses another API. LAN's setOrder only handled existing `C...` accounts, so "LAN wrote nothing" is not the parity target. **Linked to #3:** the BP is not created in the credit path — `ProcessCreditPaymentAsync` (`OrderMethods.cs:665`) inserts the application with `cliente = '` (its own comment: *"Usamos ID de Magento al no tener BP aún"*) and hands off to the liberador + callback, which are commented out. Until #3 is back, a new-client order leaves an application nothing processes. **Open question:** the new client goes through phone validation as non-prospect (`EsProspecto(null) = false` → `ValidacionTelefono = 1`); the SP gave prospects `0` (`SUBSTRING(cliente,1,1)='P'`). Should a new client count as prospect? |
+| 3 | Liberador + Magento callback commented out → order stays `PENDIENTE`. **New:** if uncommented it does not compile (await inside a non-async Thread lambda), its trigger condition is inverted, it sends the Magento customer id instead of the account, and its payload keys don't match the DMZ contract. `creditStatus` and `updateCreditOrderId` don't exist in ServicioSAP | **BLOCKED — waiting on another team's project (user, 2026-09-25).** The liberador service is theirs; the calling block in ServicioSAP is ours and will **not** work by just uncommenting it. **Ours, fixable anytime:** (a) does not compile — `await` inside a non-async `Thread` lambda; (b) callback payload keys do not match the DMZ contract. **Needs their contract:** (c) trigger fires only for new clients, where LAN fired for existing `C...` accounts — may be correct for the new-client flow (#2); (d) sends the Magento customer id instead of an account — for a new client no account exists yet. Proposal: leave (a) and (b) ready, still commented, so enabling it is one change |
+| 4 | HTTP status contract: errors that were **500** in LAN are now **200** with an error text (backend failure, transport failure, empty account) | **INTENTIONAL (user, 2026-09-25):** answer 200 so Magento's page never breaks, and make every error visible with a log + exception. **Verified followed** at the top level: `OrderController` `order/new` catch logs the full exception (`Logger.SAP("[ORDER NEW ERROR] ", ...)`) and answers `Ok("Error, " + e.Message)`; its own comment documents it as LAN parity (LAN `OrdersController.cs:156` did `return Ok(e.ToString())`) |
+| 5 | Validated phone: the API doesn't filter mobile + `ValidacionTel = 1` | **New** — see 22.4 |
+| 6 | Promo code: different database (SigMavi vs Intelisis), a validation gate LAN never had, burn scope differs | 🔴 **Open (verified 2026-09-25).** Process: the promoter code attributes the order to the referring salesperson; the code is reusable. **LAN** (`SpVTASVentaCupon`, `USE [IntelisisTmp]`, SP:115-165): `Elimina` stamps **one** free row (`UPDATE TOP (1)`, `FechaUtilizacion`, `IdEcommerce`), then **always** `NUEVO` inserts a fresh free row for the same code; no validation at this step (it happens at checkout, op `ValidarCupon`). **ServicioSAP** has it: `HandlePromoCodeAsync` (`OrderMethods.cs:1028`). Differences: (a) DB SigMavi `VentasCupones` (`:1039`) vs Intelisis `VTASCVentaCupon`; (b) re-validates at order time — SigMavi free row, else SuccessFactors + AWS catalog `Código de promotor` (`:1054-1075`) — and if invalid records nothing; (c) marks **all** free rows, no `TOP` (`:1095`); (d) a SuccessFactors/catalog failure is swallowed with `Console.WriteLine` (`:1081`) → counts as invalid, nothing recorded, **nothing logged** — breaks the user's "200 + log it" rule, same as #7. Correction: "first use leaves no `IdEcommerce` row" is **not** a difference — LAN's `UPDATE TOP (1)` also matches nothing on first use. **Deciding question (§18.8 SIGMAVI):** are `VentasCupones` and `VTASCVentaCupon` the same coupons (migrated) or two live tables? |
+| 7 | Guide save: LAN aborts the order on failure, ServicioSAP swallows it silently; nothing guarantees `servicio_guias` exists | ✅ **OK — works (user, 2026-09-25), parity confirmed.** `servicio_guias` is a **SQLite** table on its own connection, separate from the SQL Server operations. LAN `SaveGuide` (`OrderMethods.cs:735`) does the same `INSERT OR IGNORE INTO servicio_guias (idecommerce, fullname)` on `C:\inetpub\wwwroot\api\data.db` and **never creates the table either** — it is pre-created in the `.db` file (`LAN\data.db`). ServicioSAP declares the path in `SQLITE_DB_PATH` (`Web.config:60`). "Nothing guarantees the table exists" was a false alarm. Optional, not blocking: on a write failure LAN aborted the order (no `try`), while ServicioSAP swallows it (`SQLiteDb.cs` empty catches, `SaveGuideAsync` `Console.WriteLine`) — only matters if the write ever fails |
+| 8 | Duplicate order check skipped with a special price | ✅ **FIXED 2026-09-25 (authorized by the user).** ServicioSAP now saves Magento's `forzarOrder` before `ToArray` (`OrderMethods.cs:1744`) and the duplicate check uses it (`:1756`), exactly as LAN `SetPedido` `:536-541`. MSBuild 0 errors. Full `SetOrderAsync` vs `SetPedido` comparison in §22.7 |
+
+### 22.6 How to continue when the quota resets
+
+- **Same Claude session:** `Workflow({scriptPath: "<session>/workflows/scripts/credit-flow-lan-vs-serviciosap-wf_6af6b66d-bd2.js", resumeFromRunId: "wf_6af6b66d-bd2"})` — the maps, the deep comparisons, the alignment and the 44 comparisons replay from cache; only the 82 remaining verifiers, the critic and the synthesis run.
+- **New session** (`resumeFromRunId` is same-session only): run a verify-only workflow that reads `credit_flow_results_2026-09-25.json` and applies the two lenses (skeptic of equality, skeptic of difference) to each comparison. To save quota, verify the **critical and high** differences first (60 entries, ~8 root causes) and skip the low ones.
+
+
+### 22.7 `SetOrderAsync` vs LAN `SetPedido`, block by block — 2026-09-25
+
+> User rule: *"the logic of the business needs to be the same as LAN legacy; the flow of `SetOrderAsync` needs to be like LAN `SetPedido`."* Both methods read end to end: LAN `Metodos\OrderMethods.cs:533-733`, ServicioSAP `Methods\Order\OrderMethods.cs:1728-1959`. Line numbers are after today's `forzarOrder` change.
+
+**✅ Change applied (authorized by the user): `forzarOrder`.** ServicioSAP now saves Magento's value before `ToArray` (`:1744`) and the duplicate check uses it (`:1756`), exactly as LAN `:536-541`. MSBuild: 0 errors, same 11 pre-existing warnings. Root cause #8 of §22.5 is **FIXED**.
+
+| # | Block | LAN `SetPedido` | ServicioSAP `SetOrderAsync` | Verdict |
+|---|---|---|---|---|
+| 1 | Group quantities by SKU | `:535` | `:1740` | ✅ Same |
+| 2 | Save Magento's `forzarOrder` | `:538` | `:1744` | ✅ Fixed 2026-09-25 |
+| 3 | `ToArray` (flips `forzarOrder` on special price) | `:539` | `:1745` | ✅ Same |
+| 4 | Duplicate check | Intelisis `Venta` by `IdEcommerce` | SAP SD36 by `PurchNoC` (`:1756`) | ✅ Same rule; source SAP (intentional) |
+| 5 | Openpay → save for validation, exit | only if `!liberado` (`:545`) | always (`:1771`) | 🔴 No `liberado` — see A |
+| 6 | Openpay Stores → save, continue | `:551` | `:1782` | ✅ Same |
+| 7 | Pick the SP by `forzarOrder` | `:557-565` | — | ✅ Intentional — no SP in SAP |
+| 8 | Stage order lines (`detallePedido`, blank agent, pickup flag) | `:568-601` | — | ✅ Intentional — staging for the Intelisis SP; SAP receives lines in the OData payload |
+| 9 | Save the guide | every payment method, before creating the order (`:606`) | credit at branch start (`:1791`); cash after stock/partner checks (`:1843`) | ⚠️ Timing differs for cash — see C |
+| 10 | Credit branch | `:609-650` | `:1789-1811` | See §22.5 |
+| 11 | Restore agent | `:652` | `:1849` | ✅ Same |
+| 12 | Pickup `setNameToReference` | before the order — patch for the SP (`:657`) | after the SAP order (`:1923`) | ✅ Intentional — SP reason gone |
+| 13 | Create the order | `crearPedido` → Intelisis `Venta` (`:662`) | `BuildSapOrderAsync` → SAP OData (`:1852`) | ✅ Equivalent |
+| 14 | CRED id → `UpdateIdEcommerceEnVenta` | `:666-671` | — | 🔴 Missing — liberador flow, blocked with #3 |
+| 15 | Delivery data | `:686` | `:1929` | ✅ Equivalent (SAP OData) |
+| 16 | Pickup code + email for bank transfer | `:689-702` | — | 🔴 Missing — see B |
+| 17 | Wallet + `afectar` (Openpay/PayPal) | `:715-716` | wallet only (`:1942`) | ✅ `afectar` posts the Intelisis `Venta`; not needed for a SAP order. The ported `afectar` (`:1542`) has no caller — dead code |
+| 18 | — | — | `setCAccount` webhook to DMZ (`:1948`) | New in SAP |
+| 19 | Price, stock, region, partner checks | inside `SP_eCommerceNuevoPed` | explicit in code (`:1824-1837`) | ✅ SP logic moved to code |
+| 20 | Error handling | log and swallow (`:728`) | rethrow → controller logs + 200 | ✅ Intentional — decision #4 |
+
+**Possible changes — all in the cash path, awaiting the user's decision:**
+
+- **A. Openpay orders never reach SAP (most important).** LAN job `OpenpayMethods.CheckStatus` (`:70`) checks pending Openpay payments and, when paid, calls `SetPedido(order, liberado: true)` with `forzarOrder = "1"` (`:271-276`); `liberado` skips the validation exit so the order is created. ServicioSAP has no `liberado` parameter and no job: an Openpay order is saved for validation and nothing ever creates the SAP order. Same as §7d ("biggest gap in the cash flow"). Two parts: `liberado` in `SetOrderAsync` (small), port of the job (large).
+- **B. Bank-transfer pickup orders get no pickup code.** LAN generates the code and emails the customer inside `SetPedido` for `instore_pickup` + `banktransfer` + agent (`:689-702`) — bank transfer has no payment callback to trigger it later. ServicioSAP has the `createStorepickupCode` route but `SetOrderAsync` never calls it.
+- **C. Guide saved later for cash.** LAN saves it for every order before creating it; ServicioSAP after the stock and partner checks. If a stock check fails, LAN has a guide row and ServicioSAP doesn't. Low impact.
+- **D.** `UpdateIdEcommerceEnVenta` for CRED ids — blocked with #3, no change now.
+
+
+### 22.8 Open decisions and pending items — single list (as of 2026-09-26)
+
+**Decisions for the user:**
+
+| # | Decision | Where | Options |
+|---|---|---|---|
+| 1 | Column widths `MetodoEnvio` varchar(12) and `sexo` varchar(9) | §22.3 | Truncate in C# like LAN (`tablerate_be`, `NO ESPECI`) · or `ALTER TABLE` (manual / DBA) |
+| 2 | Validated phone: move the SP rule (mobile + validated + most recent) into C# | §22.4, root cause #5 | Yes — overrides §15.1 · or fix the FastAPI (businesspartner-api owner) |
+| 3 | Account format during the Magento transition | root cause #1 | Check that `cuenta` is a BP and answer *"not a BP"* instead of *"no tiene crédito activo en SAP"* · or leave it (harmless once Magento switches). If yes, which rule: all BPs start with `15`, or only the customer range? |
+| 4 | Brand-new client in phone validation | root cause #2 | Treat as prospect (`ValidacionTelefono = 0`, as the SP did for prospects) · or keep non-prospect (`1`) |
+| 5 | A — Openpay orders never reach SAP (cash) | §22.7 | Add `liberado` to `SetOrderAsync` (small) · port the `CheckStatus` job (large) · leave out of scope |
+| 6 | B — bank-transfer pickup code (cash) | §22.7 | Add it · leave out of scope |
+| 7 | C — cash guide saved after the stock/partner checks | §22.7 | Move it before, like LAN · leave it |
+| 8 | Guide save failure swallowed (optional) | root cause #7 | Log + throw (in `SQLiteDb` shared, or only the guide) · leave it — it works |
+
+**Waiting on others:**
+
+| Item | Who | Where |
+|---|---|---|
+| Are SigMavi `VentasCupones` and Intelisis `VTASCVentaCupon` the same coupons? | SIGMAVI (§18.8) | root cause #6 |
+| Liberador + Magento callback | other team's project | root cause #3 |
+| Magento sending BP accounts instead of `C...` | Magento | root cause #1 |
+
+**Pending work on our side:**
+
+- Finish the adversarial verification of the comparison (§22.6) — only root causes #5 and #6 still need it; the rest were resolved with the user.
+- B3 smoke test of the 4 APIs (only `GET`, no database).
+- B6–B9 of §18.6 once the decisions above are made.
+
+
+## 23. Session 2026-09-26 (weekend shift, day 1) — `SAP_BASE_URL`, credit parity re-verification, testability
+
+### 23.1 `Web.config`: `SAP_BASE_URL` removed (asked by the user)
+
+- `SAP_BASE_URL` (`https://10.30.2.135:44300/sap/opu/odata/sap/`) and `obtenerUrl(ENVIROMENT_DEV, SERVICE_URL)` (`https://vhmvods4ci.sap.svrwes4h.com:44300/sap/opu/odata/sap`) are the same server: the hostname resolves to `10.30.2.135`, same port and path.
+- The line was deleted from `Web.config` (uncommitted, 1 line; BOM/CRLF kept; XML valid). Every SAP URL is now built only from `obtenerUrl`; the `ZAPI_*` keys hold only relative service paths.
+- History: the last real use was the DM07 branch lookup in `OrderMethods.cs` (`AppSettings["SAP_BASE_URL"] + "/sap/opu/odata/sap/ZAPI_SUCURSALES_SRV/..." sap-client=050`), replaced by commit `70b254c` (2026-08-27) — today `AccountMethods.cs:190`, `obtenerUrl` + `sap-client=110`. Unused field declarations in `FinalListProperMethods`, `SalesMethods`, `WalletCustomerMethods` were removed by `ac9449b` (2026-09-10).
+- Current branch: 0 references in `.cs`, 0 in the 45 compiled DLLs (incl. `Conexion.dll`), 0 in DMZ and LAN. Only leftover: `bin/ServicioSap.dll.config` (stale build copy, not read by the web app).
+- Other branches: `origin/stage` (07-15), `migracionSAP-SD46` (07-17) and local `stage-sap` (08-20) still read it for the old branch lookup (would throw `NullReferenceException` without the key). `origin/stage-sap`, `origin/SAP_INTEGRATION_JAVI`, `origin/dbAndroid` (09-08) only have unused fields. The current branch contains all of `origin/stage-sap` + 31 commits.
+
+### 23.2 Environment facts checked from Claude's machine (CATECINF214119D)
+
+- IIS Express installed (x64/x86). TCP reachable: SAP `10.30.2.135:44300`, SQL `mavicbosandroid.grupomavi.com:1433`, `businesspartner-api`/`android-api`/`salesanddistribution-api`/`configuraciones-api` `.mavi.fun:443`, AWS `54wblyc2h6...:443`, `kdll3fhcyo-lan.grupomavi.com:443`, liberador `172.16.215.51:3026`. (Connection test only, no data sent.)
+- `bin\ServicioSap.dll` and `obj\Debug\ServicioSap.dll` on the share were rebuilt at 2026-09-26 08:21:56. **Not** by Claude: the workflow transcripts contain no build command (only a read of the `.sln`/`.csproj`). Probably the user's VS or the other Claude session — confirm before testing that the binary matches the working tree.
+
+### 23.3 Credit parity re-verification — verdict
+
+Workflow `wf_1057942c-a8b` (6 area verifiers + testability analyst + synthesizer, read-only). Full result: `_IMPLEMENTACION_SP_CREDITO\credit_parity_2026-09-26.json`.
+
+- **Structure matches LAN:** group by SKU, `cantidad,sku` list + `SEGU00001`, SMS lookup, validated-phone lookup, existence-only credit gate (no balance check in either — §16 confirmed, LAN `checkSaldo` always 0), 59-column header INSERT + `SCOPE_IDENTITY`, faithful three-valued port of the `ValidacionTelefono` IF (SP `:210-221` ↔ `SolicitudCreditoWebMethods.cs:312-328`), line pricing with `DescuentoCategoria` CEILING, `Orden` numbering, duplicate-SKU skip, promo burn after lines, same partial-failure outcome.
+- **Business behavior not yet equivalent:** one hard blocker (Q1) + data divergences (Q4-Q19) + 8 bugs (§23.5).
+- **Testability: YES after prerequisites.** Only entry point `POST order/new`. `order/testnew` is NOT a credit harness (posts a raw SAP sales order, skips `SetOrderAsync` — do not use). No test project; Fakes not wired. The credit path makes no SAP writes and calls no webhooks; it writes 1 header + N lines to `ServicioAndroid` and 1 SQLite guide row. `sap.log` has 12 lines (July cash orders + one BP creation on 09-17), no credit entries.
+
+### 23.4 What must be defined — consolidated list (supersedes the decision part of §22.8)
+
+| Q | Rel. | Blocks test | Decision | Recommendation |
+|---|---|---|---|---|
+| Q1 | D1 | **yes** | Widths: `MetodoEnvio` varchar(12) (`tablerate_bestway` 17, `instore_pickup` 14) and `sexo` varchar(9) (`NO ESPECIFICADO` 15) raise 8152. Size every VarChar parameter to the real column width (LAN cut at the SP parameter) or `ALTER`? Sub-choice: `sexo` for empty Gender | Size every parameter to the DDL width; `sexo` = `''` for empty Gender, `NO ESPECI` for other codes (LAN values). Needs the full DDL widths of `CRED_SOLICITUD_WEB_DATOS_TEMP` and `VTASdArtCreditoWeb` |
+| Q2 | NEW | **yes** | Is `mavicbosandroid/ServicioAndroid` production? Non-prod copy (local switch of `Web.config:13`) or written acceptance of test rows + who deletes them | DBA answer before any positive run |
+| Q3 | NEW | yes (phone cases) | AWS catalog `ORIGEN VALIDACION NUMERO CTE` registered? Which `ZappOrig` does e-commerce write? `GetConfiguracionCatalogoAsync` throws on non-2xx/empty body | First runs with a BP without validated phone (skips the catalog) |
+| Q4 | D2 | no (blocks expected value P4/P5) | One C# helper with LAN's rule (MOVIL + Zvaltel + newest Zfecha, nulls last) for BOTH `@TelefonoValidado` and `IsValidatedAsync`; cut `ZtelCte` to 10 digits? | Yes, both lookups; `ZappOrig` check only in `@ValidacionOrigen` |
+| Q5 | NEW | no (P14) | Payment condition not resolved: today header written, no lines, `Concluido`. Resolve before the header and answer `Error, ...`? | Resolve first |
+| Q6 | NEW | no | Does SIGMAVI `CondicionesCredVtaLinea` have `CondicionMagento`, and does `Condicion` hold SD29 codes (12IA/12IV)? | User runs `SELECT TOP 20 *` on SIGMAVI |
+| Q7 | W1 | no (promo tests) | Coupon source of truth: `VentaCupon` / `VentasCupones` / `IntelisisTmp.VTASCVentaCupon`; DDL, migration, Centro numbering, promoter code format | Ask SIGMAVI + Magento/HR; `codigo_promotor` empty in tests |
+| Q8 | W1 | no | Burn rules: LAN (no gate at order time, stamp only newest free row, always regenerate) vs ServicioSAP (gate, stamp all free rows) | LAN parity after W1 |
+| Q9 | NEW | no | NIP SMS (`credit/getSms`, `validateSms`): move to ServicioSAP or stay in LAN with BP→Intelisis mapping? | Port with the Q4 helper before Magento sends BPs |
+| Q10 | NEW | no | Short/invalid phone: LAN wrote no row; ServicioSAP inserts placeholders (lada 0, `''`, `'0'`) | Throw with a clear message |
+| Q11 | NEW | no | No `Birthdt`: NULL today; LAN web customers carried `1900-01-02` | `1900-01-02` unless Credit accepts NULL |
+| Q12 | D4 | no (P11) | Brand-new client / `ZtipoCliente ''` → `ValidacionTelefono` 1 or 0? | Keep 1 unless Credit says prospect |
+| Q13 | R2 | no | New-client row: set `ClienteMagento` = Magento customer id? | Set it |
+| Q14 | NEW | no | `estadoCivil` `''` (only store-registered customers lose it) or map `Marst` | Accept `''`; ask Credit |
+| Q15 | NEW | no | `origen`: Magento248 does send `infoCliente.origen` (corrects §19.3). Keep `PRODUCTOS MX` fixed or pass through? | Ask Magento/app owners |
+| Q16 | NEW | no | SD29: several rows for SKU+OrgVtas+condition — which one prices the line? | Decide after a real SD29 capture |
+| Q17 | NEW | no | TELEFONIA region SKU substitution (Region5/6): port or drop formally? | Record as explicitly deferred |
+| Q18 | NEW | no | `VTASdArtCreditoWeb.costo` always 0; port `spVerCosto`? (`spVerCosto.sql` damaged) | Open; ask the liberador owner |
+| Q19 | NEW | no | `nombre` = `NameFirst + ' ' + Namemiddle` (like `CTE.PersonalNombres`)? | Concatenate |
+| Q20 | D3 | no | Account-format check + stop reporting SAP/transport failures as "no tiene crédito activo" | Yes (see bug B2) |
+| Q21 | NEW | no | Confirm §16.5 option A (no balance validation) as final | Record as decided |
+| Q22 | NEW | no | `costoEnvio` 0 or negative → no `SEGU00001` line | Accept as intentional |
+
+### 23.5 Bugs on the credit path (independent of decisions)
+
+| # | Sev. | Where | Bug | Conf. |
+|---|---|---|---|---|
+| B1 | high | `FinalListProperMethods.cs:85` | SKU interpolated raw into the SD29 `$filter` (no escaping); `DIB+00104` may be read as a space → line silently missing. `WalletMethods.cs:173` escapes | plausible |
+| B2 | medium | `OrderMethods.cs:776` | `CheckClientCreditAsync` swallows every exception (Console only) → SAP/transport failures reported as "no tiene crédito activo" | confirmed |
+| B3 | medium | `OrderMethods.cs:1109` | `HandlePromoCodeAsync` commits the burn UPDATE, then an unguarded agent lookup; on failure the regeneration INSERT never runs and the error goes to Console | confirmed |
+| B4 | medium | `OrderMethods.cs:1801` | New-client flow runs the SMS lookup with `@Cliente=''` and the value reaches `LadaValidar/TelefonoValidar` | plausible |
+| B5 | medium | `OrderMethods.cs:672` | Guest detection tests blank `cliente`; Magento248 sends `(int)customerId` = `0` for guests → guest treated as new client | plausible |
+| B6 | low | `OrderMethods.cs:708` | Promo result (`OK`/`NO_VALIDO`/`err`) discarded; failures only to Console (LAN logged to file) | confirmed |
+| B7 | low | `OrderMethods.cs:655`, `:608` | `IsValidatedAsync` / `ObtenerNumeroTablaSmsAsync` swallow errors (Console only); LAN logged them | confirmed |
+| B8 | low | `Helpers/Logger.cs:28` | `Directory.CreateDirectory` outside try; called from catch blocks | plausible |
+
+Out of scope, flagged: cash path reads `sDatosPedido[20]` as postal code at `OrderMethods.cs:1820` while `ToArray` puts `estado` there — not verified.
+
+### 23.6 Corrections to earlier notes
+
+- §22.5 #6 ("first use leaves no IdEcommerce row in LAN either") is **wrong**: LAN `SpVTASVentaCupon` `ValidarCupon` (`:60-106`) inserts the first free row via `NUEVO`, and `Elimina` stamps it.
+- §19.3 ("Magento does not send `origen`") is **wrong**: `OrderManagement.php:705-708` sets it when the payment additional data carries it.
+- §16 confirmed: no balance check in LAN either.
+- `A_GET_TelefonoValidado` null dates: replaced by `'00000000'` (`AS_GET_ZQBP_EditarCliente_CteTel.py:60-62`), not `str(None)`; undated phones still win the ordering.
+- Magento ignores the `setOrder` body for any HTTP 200 (`CreditoOrderManagement.php:53`); credit errors are visible only in `sap.log`.
+
+### 23.7 Test plan (ordered; the user runs every SQL and approves every write)
+
+Read-only, can start now: (1) confirm the binary matches the working tree (08:21 rebuild); (2) paste full DDL widths; (3) §22.3 `MetodoEnvio`/`sexo` GROUP BY; (4) SIGMAVI `CondicionesCredVtaLinea`; (5) GET `A_GET_TelefonoValidado` + AWS catalog; (6) SAP smoke GETs through ServicioSAP (`partner/client/{BP}`, `partner/client/ma/{BP}`, `order/checkDocument/...`, `product/catalogo/{nombre}`) with IIS Express + JWT; (7) SD29 with raw `+` vs `%2B` for `DIB+00104`; (8) SMS SELECTs for the QA BP.
+After decisions: (9) apply Q1, rebuild; (10) non-prod DB (Q2).
+Writes, with go-ahead: (11) negative tests (`C...` account, unknown BP, empty cuenta+cliente); (12) optional 8152 proof; (13) positive P2 MA (costoEnvio 0, no promo, BP Gender 1/2 without validated phone, SKU with 12IA); (14) P3 VIU (costoEnvio 150, `+` SKU, 12IV); (15) phone cases P4/P5 (needs Q3, Q4); (16) P14 condition not found (Q5); (17) P11 new client (Q12, Q13); (18) promo (Q7, Q8); (19) cleanup by `idMagento`; (20) E2E with Magento — not possible until R1/R3.
+
+### 23.8 Q1 applied — "do it the same way as LAN" (user, 2026-09-26)
+
+Uncommitted, MSBuild VS18: 0 errors, same 11 pre-existing warnings. Verified by 3 adversarial agents (`wf_e45d1280-76d`): all 57 parameters match the SP in name, type and width; the 3 low findings they raised are fixed below.
+
+- **`SolicitudCreditoWebMethods.InsertarSolicitudAsync`**: every VarChar parameter has `Size` = the `VARCHAR(n)` of the `SP_CREDITO_WEB_DATOS` parameter (`:94-159`). `SqlParameter.Size` cuts silently on the client, as the SP cut on assignment. Examples: `MetodoEnvio` `tablerate_bestway` → `tablerate_be` (12), `sexo` `NO ESPECIFICADO` → `NO ESPECI` (9), `nombre` 25, `direccion` 30 (column holds 100, LAN cut to 30), `email` 50, `idMagento` 12.
+- **Exception `@cliente` = 10** (SP `VARCHAR(9)` fitted the Intelisis account `C...`; a BP has 10 digits and the column is varchar(10); cutting to 9 would store `150000821`).
+- **`SexoLegado`**: empty/null `Gender` → `''` (LAN: `CTE.Sexo` NULL arrived as `''`, `CreditMethods.cs:837`). `1` Masculino, `2` Femenino, other codes → `NO ESPECI`.
+- **Phone comparison**: `TelefonoValidado` and `TelefonoAValidar` are cut to 10 before `DistintoSql`, like the SP's `VARCHAR(10)` locals (`:165-166`). New helper `Recortar`.
+- **Credit lines (`OrderMethods.InsertCreditArticlesAsync`)**: `@Articulo` `Size` 20 and the SD29 price lookup uses the SKU cut to 20 (`SpVTASInsertArtSolCreditoLinea @Articulo VARCHAR(20)`); the duplicate-SKU skip and the `SEGU00001` check stay on the full SKU, as LAN did them in C#.
+- Still unknown: widths of the columns not in §22.3 and all `VTASdArtCreditoWeb` widths. A column narrower than its SP parameter would fail in LAN too (same behavior).
+
+**Raised, not changed (user to decide):**
+- SAP `Gender` domain: ServicioSAP assumes `1` = male, `2` = female (`MapGender`, `SexoLegado`). Standard S/4HANA is `1` = female, `2` = male (`0` unknown, `9` non-binary). Confirm with one BP of known sex.
+- BPs auto-created from an order without `sexo` get `Gender "1"` (`OrderMethods.cs:2670`), so their credit applications store `Masculino` where LAN stored `''` (pending item §17.4).
+- `SexoLegado` writes mixed case (`Masculino`); LAN web customers had `UPPER` (`SP_eCommerceCtenuevo.sql:132`). Matters only to a case-sensitive reader (none found).
+
+### 23.9 Decisions log — 2026-09-26 (updated as the user answers)
+
+| Q | User's answer | Status |
+|---|---|---|
+| Q1 | "Do it the same way as LAN; we can change it later" | ✅ Applied (§23.8) |
+| Q4 | "The phone validation is NOT in the BP; it is the other API (A_GET_TelefonoValidado). IsValidatedAsync via BP05 is wrong" + "COFETEL validates that the number is REAL; ZvalTel is the internal system validation — two different validations" | ✅ Applied: single source `SolicitudCreditoWebMethods.GetTelefonoValidadoAsync` (A_GET_TelefonoValidado, `URL_BP_API`; returns `ZtelCte` only if `ZvalTel` true) for all three lookups: (1) `@TelefonoValidado` → ValidacionTelefono (already), (2) `OrderMethods.IsValidatedAsync` → LadaValidar/TelefonoValidar (was BP05MA `to_CteTel` + MOVIL + ZappOrig, first in list; errors now to sap.log instead of Console), (3) credit/getSms (was CteTelSet + LAN rule; keeps LAN's 10-character check). Helper `TelefonoValidadoLan` removed; `GetCteTelAsync`/`FechaSap` back to private. Compiles. MOVIL filter lives in the API (user: the deployed API filters MOVIL; the share copy `A_GET_TelefonoValidado.py:19-30` does not) |
+| Q5 | "No payment condition → stop at the start of the order, before consuming APIs; the value must always be in the body" | Proposal sent (validate + translate at the start of the credit branch); awaiting go-ahead |
+| Q8 | "Promo coupons are deprecated — side effects if removed?" | ℹ️ Answered (`_IMPLEMENTACION_SP_CREDITO\promo_removal_2026-09-26.json`). **A — remove only the burn** (`OrderMethods.cs:705-709`): no change to flow, response or logging (result was discarded; errors swallowed); fewer external calls; closes Q8, B6, B3 on credit. Only data effect: SigMavi `VentasCupones` no longer stamped/regenerated = promoter attribution of credit web orders lost (no reader found in any repo; commissions/reports outside repos unknown). **B — also delete `HandlePromoCodeAsync` + `GET order/validatecupon`**: breaks no live caller (DMZ/Magento never call it). `CouponModels.cs` is already dead. **Must keep**: SigMavi connection (payment condition), `URL_BP_API`, `GetConfiguracionCatalogoAsync`, `OrderRequest.Agente` (cash). **Outside ServicioSAP**: Magento checkout still requires an exact "OK" from DMZ `credit/codigoPromocion` when the promoter box is ticked; the working-copy DMZ points `URL_INTELISIS` to ServicioSAP `localhost:44399`, which has no such route → those customers would be blocked. Recommendation: A now, B after Magento removes the promoter box. Awaiting go-ahead |
+| Q9 | "NIP SMS must be the same as LAN" / "if it is Android DB, make the same flow" | ✅ Coded 2026-09-26, compiles (0 errors, 11 old warnings); verified by 3 agents (`wf_47a27d50-9a7`): every branch of the decision tree matches LAN in return value and rows written; contract (routes, auth, binding, JSON-string answer, 400/500) OK. Fixed after the check: `GetIdRefAsync` parameterized (was `string.Format`; also used by SendSmsNewNumber), `ExistingCustomerAsync` returns false for a non-alphanumeric account before calling SAP (the `$filter` of `GetClientAsync` is not escaped), phone tie-break by numeric `ZidcteTel`. Open: PATCH ZidMagento failure on an existing BP gives -1 (no SMS) where LAN's UPDATE could not fail — user decision. 7 of 10 LAN steps are Android DB (`sCadenaConexionAndriod`) → same SQL; the 3 Intelisis steps → SAP: `Cte` exists → `GetClientAsync`, `Cte.IDMagento` → `LinkMagentoAccountAsync` (PATCH ZidMagento, after the existence check), `CteTel` → A_GET_TelefonoValidado (`GetTelefonoValidadoAsync`, same source as the order; + LAN's 10-char check) — changed from CteTelSet by the user's Q4 answer. Routes `credit/getSms`, `credit/validateSms` in `CreditController`; `SmsNipModels.cs` (+csproj). DMZ NOT switched (still LAN) — switch with the Magento BP release. Tests that send a real SMS need go-ahead. Spec: `SPEC_NIP_SMS_SERVICIOSAP.md` |
+| Q11 | "Do it like LAN if they have a fallback" | ✅ Applied: LAN always saved `1900-01-02` for e-commerce customers (`SP_eCommerceCtenuevo.sql:140`, 12/12/2018). `ArmarFila`: `FechaSap(Birthdt) ?? req.FechaNacimiento ?? 1900-01-02` (`FechaNacimientoPorDefecto`). Compiles (0 errors, 11 old warnings). LAN's crash for store customers with NULL birth date is not copied |
+| Q13 | "No — the BP already gets ZidMagento at creation; we don't need ClienteMagento" | ✅ Closed, no change: `ClienteMagento` is only a column of `CRED_SOLICITUD_WEB_DATOS_TEMP`; LAN never passed `@ClienteMagento` (NULL) and ServicioSAP sends NULL too. `ZidMagento` is set on the BP at `BusinessPartnerMethods.cs:609` |
+| Q14 | "Where do you see estadoCivil? The BP already has a value" | ℹ️ `estadoCivil` = credit-row column (`VARCHAR(11)`); LAN filled it from Intelisis `CTE.EstadoCivil` text (`CreditMethods.cs:847`); ServicioSAP writes `""` (`OrderMethods.cs:821`). SAP has it as BP05MA `Marst` (code) and ZB_DATOS_CLIENTE `EstadoCivil` (`Partner.cs:259`, format unknown — no capture with a value). BP creation hardcodes `Marst` = "2" from orders (`OrderMethods.cs:2677`) and "1" from setCustomer (`BusinessPartnerMethods.cs:486`). Proposal pending: fill from the BP like LAN once one real response shows the format |
+| Q17 | "It is something to do, but not defined yet" | ⏸️ Deferred: TELEFONIA region SKU swap (Region5/Region6) not ported until the business defines it |
+| Q20 | "If LAN does it as a business rule, replicate it" | ℹ️ LAN has **no** account-format check in the credit order: the regex `^[C]{1}[0-9]{8}$` (LAN `CreditController.cs:22`) is only used by `getClienteFactura`/`getClienteSaldo` (`:75`, `:104`). → No format check added. Customer check: LAN `checkCliente` (`CreditMethods.cs:725`, SP `SpCREDIDatosSolicitudCreditoArt` 'CheckCliente') swallows every error (empty catch `:758`) and returns false → `ProductosCreditoWeb_SaveData` returns "sin cuenta" (`:257`) with no log, and `SetPedido` ignores it and answers the account (`:648`). ServicioSAP `CheckClientCreditAsync` (`OrderMethods.cs:768-781`) also turns SAP errors into false, then throws "no tiene crédito activo" (`:681-682`), which the controller logs. Business behavior already equivalent (stop, write nothing). Offered: log-only fix (R4) so sap.log tells a SAP error from a missing BP — awaiting yes/no |
+| Gender | "1 male, 2 female; it always comes with the order — if empty, 1 by default (can change later); use MapGender's final value" | ✅ Applied: `BusinessPartnerMethods.MapGender` empty → "1" (was ""; affects BP creation from setCustomer `:482`; the order path `OrderMethods.cs:2673` already defaulted to "1"). `SolicitudCreditoWebMethods.SexoLegado` uses the same codes: "" or "1" → Masculino, "2" → Femenino, other (MapGender "3", store codes like "9") → NO ESPECIFICADO → cut to NO ESPECI. Supersedes the §23.8 sub-choice (sexo '' for empty) and closes §17.4. Compiles (0 errors, 11 old warnings) |
+
+## 24. Session 2026-09-27 — re-analysis with the user's decisions of 2026-09-26, testability, information needed
+
+_Workflow `wf_9e64e941-f15` (8 read-only agents + synthesizer; ground truth = R1–R8 + §23.9). Full result: `_IMPLEMENTACION_SP_CREDITO\credit_recheck_2026-09-27.json`. Code state: uncommitted, last edit 2026-09-26 17:43; the share `bin\ServicioSap.dll` (09-26 08:21) is OLDER than the code — the current build is `X:\ServicioSAP\...in\ServicioSap.dll` (17:43:38)._
+
+### 24.1 Parity by area
+
+| Area | Status | Detail |
+|---|---|---|
+| Entry point, HTTP answer, error contract (OrderController.SetOrder :16-48 vs LAN OrdersController.Set :137-161) | EQUAL_EXCEPT_DECIDED | Both answer HTTP 200. ServicioSAP logs [ORDER NEW ERROR] and answers "Error, ..." (R4). Magento reads only === false and the HTTP status, so it reacts the same way to both. What is missing is LAN's INFO log of the request and response: a successful credit order writes nothing to sap.log (see the logging question). |
+| Group by SKU, forzarOrder saved before ToArray, duplicate check | EQUAL_EXCEPT_DECIDED | R6 is fixed (OrderMethods.cs:1716-1722). The duplicate check is SD36 by PurchNoC (:1732, R7). For credit it can never match, because credit never creates a SAP document; in LAN, the SP Insert branch also had no idMagento guard. The only real protection against a resend is Magento's quote is_active check (409). |
+| Shipping guide save (SQLite) | EQUAL_EXCEPT_DECIDED | R5. It is the first statement of the credit branch (:1767), before any credit work, as in LAN (:603-606). Errors are swallowed in both. |
+| Article list 'cantidad,sku' plus SEGU00001 | EQUAL_TO_LAN | LAN uses a text rule (!= "0" && != ""), ServicioSAP uses decimal > 0 (:1774-1775). Magento sends (float)number_format (OrderManagement.php:700, :1002-1005). The captured payloads carry "costoEnvio":"0" and "150" (magento_payloads.md:26, :55). The two rules would only differ for "0.00" or a negative value, and neither has been observed. Q22 can be closed. |
+| SMS phone lookup numeroDelSms (ObtenerNumeroTablaSmsAsync :589-613) | GAPS_BUGS | Same SQL on the same Android DB, now parameterized. Two bugs: errors go only to Console (:610) and never reach sap.log, and the new-client path runs the lookup with Cliente = '' (:1777). Unlike LAN, ServicioSAP writes that result into the row. |
+| Validated phone source (Q4): numeroValidado, @TelefonoValidado, getSms phone | GAPS_PENDING_DECISION | Applied as decided: all three read GetTelefonoValidadoAsync (A_GET_TelefonoValidado), at SolicitudCreditoWebMethods.cs:389, OrderMethods.cs:625 and CreditMethods.cs:357. One issue remains, and it lives in the API. The share copy picks max() over ALL phones and returns that phone's Zvaltel. Undated phones become '00000000' (AS_GET_ZQBP_EditarCliente_CteTel.py:60-62), which sorts above '/Date(..)/', so an undated phone wins. LAN picks the newest VALIDATED Movil, with NULL dates last. Whether the deployed API behaves like the share copy is NO EVIDENCE, and it decides the expected test values. Since Q4 the same GET also runs twice per order. |
+| Customer classification and existence (guest / new client / existing BP) | GAPS_BUGS | R1, R2 and R4 are applied (:642-657, CheckClientCreditAsync :741-754). Bug: Magento sends cliente = (int)customerId, so a guest arrives as "0", not blank, and is classified as a new client (:645). Q20, the log text that would separate 'BP not found' from 'SAP failed', is still pending. |
+| Credit balance check | EQUAL_TO_LAN | LAN's checkSaldo always returns 0 and SetPedido discards the result; ServicioSAP has no check. FLUJO §5.1 records the opposite decision, which is stale (see doc corrections). |
+| Request row CRED_SOLICITUD_WEB_DATOS_TEMP (59 columns) | GAPS_PENDING_DECISION | Same 59 columns, same order, SCOPE_IDENTITY. Q1 widths are applied: all 38 VarChar sizes equal the SP widths, with @cliente at 10. Q11 (1900-01-02), the Gender rule on the BP path, R1, Q13 and R7 (BP05MA master) are applied. Open: nombre = NameFirst only (Q19); estadoCivil is always '' (Q14); origen is fixed to 'PRODUCTOS MX' while Magento can send it (Q15); a short phone inserts placeholders where LAN wrote no row (Q10); new-client rows store sexo '' (low bug, from yesterday); mixed-case sexo. |
+| ValidacionTelefono logic (SP prologue ported to C#) | GAPS_PENDING_DECISION | The three-valued IF, @ValidacionOrigen (CteTelSet x AWS catalog, R7), @TelefonoAValidar and the 10-character cut are equivalent. Open: Q4 residual (the API's selection rule), Q3 (an unregistered AWS catalog makes the order fail, where LAN inserted with 1), Q12 (a new client gets 1). |
+| Payment condition (Q5/Q6) | GAPS_PENDING_DECISION | Q5 is decided but NOT applied. The condition is translated only inside InsertCreditArticlesAsync (:848), after SD36, the guide, both phone lookups, the BP reads and the header INSERT. The throw at :850-853 is swallowed at :684-690, so the result is an orphan header, 0 lines and 'Concluido'. Q6: GetCondicionAsync (:3313-3315) selects Condicion WHERE CondicionMagento, while GetPlazosAsync reads the same SIGMAVI table through the legacy columns CondicionPropre/TiendaVirtual/Mensualidades (CreditMethods.cs:28-31, :70-73). LAN's legacy Condicion held the Magento text. |
+| Article lines VTASdArtCreditoWeb (pricing, Orden, SKU cut, CEILING) | GAPS_BUGS | Same structure: consecutive-duplicate skip, Orden gaps, CEILING discount, SEGU00001 at shipping price with Abono 12, SKU cut to 20 (Q1, verified at :883 and :919). Bug B1 (high, verified): the raw SKU goes into the SD29 $filter (FinalListProperMethods.cs:85). Open: Q16 (first SD29 row vs LAN's fan-out), Q18 (costo always 0), '05 M P DIF' missing from the fallback catalog. A skipped SKU is logged only to Console. |
+| Promoter coupon burn (Q8) | GAPS_PENDING_DECISION | Still active at ProcessCreditPaymentAsync :678-682 (HandlePromoCodeAsync). The rules differ from LAN: it stamps every free row, and if the agent lookup fails it can burn without regenerating (low bug). Option A (delete :678-682) is recommended and not applied. |
+| Liberador thread, Magento callback, validateCredit/creditStatus/updateCreditOrderId routes | BLOCKED_OTHER_TEAM | R3. The block is commented out at :692-730. As written it targets the opposite population to LAN: it runs for new clients only, sends the Magento id, sits after the catch that swallows line failures, and its await inside a non-async Thread lambda would not compile. |
+| Success response | EQUAL_EXCEPT_DECIDED | LAN returns the cuenta string. ServicioSAP returns {BP, SalesDocument:null, Message:"", Resultado:"Concluido"} (:1782-1787). Magento ignores the body of any 200. |
+| Error visibility on the credit path (R4) | GAPS_BUGS | Console-only in ObtenerNumeroTablaSmsAsync (:610), CheckClientCreditAsync (:751), the line-loop skips and counts (:939, :976, :998) and HandlePromoCodeAsync (:1057, :1143). LAN logged all of these to file, except checkCliente. |
+| NIP SMS credit/getSms (Q9) | GAPS_BUGS | The decision tree, SQL, tables and return codes 3/0/-1/'err' match LAN (CreditMethods.cs:236-327). Open: when the ZidMagento PATCH fails, getSms returns -1 and sends no SMS (pending user decision). Bug: LinkMagentoAccountAsync sends no sap-client=110 (BusinessPartnerMethods.cs:842-843), unlike every other SAP call in the project. The API selection rule (Q4 residual) decides which phone is texted. |
+| NIP SMS credit/validateSms | EQUAL_TO_LAN | Inline copy of the SP's CODIGO branch with the same types and sizes (15/Int/35), returning 5/6 or e.Message (CreditMethods.cs:435-463). No expiry check in either system. |
+| credit/SendSmsNewNumber (NIP-adjacent) | GAPS_BUGS | The INSERT is still built with string.Format on request.Cliente and NumeroTelefono (CreditMethods.cs:140-144). This SQL injection is inherited from LAN and was present at HEAD. |
+| DMZ routing and Magento BP release | BLOCKED_OTHER_TEAM | R1 and Q9: the code switch happens at the Magento BP release. In the share's DMZ working copy, URL_INTELISIS points to https://localhost:44399/ (a local ServicioSAP) and URL_SAP to the deployed kdll3fhcyo-lan/SAP. order/new already goes to ServicioSAP (PostSAP). The production DMZ config is NO EVIDENCE. |
+
+### 24.2 Testability: **PARTIAL**
+
+The credit method can be tested in part, and only after a few prerequisites. Nothing can run on the share build: bin\ServicioSap.dll is dated 2026-09-26 08:21, older than yesterday's Q1, Q4, Q9, Q11 and Gender edits (13:38-17:43). The current build is X:\...\bin\ServicioSap.dll (17:43:38). Once that build is running and you paste a JWT, the following run with no SQL Server writes: contract checks (401/400/500), SAP read smoke GETs, getSms negatives (one SAP GET, zero SQL) and validateSms (read-only). Credit-order negatives also run a SELECT on ServicioAndroid, plus the local SQLite guide write, before the guest/BP gates, so they need your go-ahead. A negative 'unknown BP' result proves nothing until a SAP smoke GET passes, because a SAP failure produces the same message. Positive orders and positive getSms write to the shared ServicioAndroid database, and getSms sends a real SMS. They need the Q2 answer, a test BP, a priced SKU and your go-ahead. Their expected values depend on Q4-residual (the API selection rule), Q3 (the AWS catalog) and Q6 (the SIGMAVI schema). getSms with cliente > 0 PATCHes SAP and waits on the Q9 decision and Basis. Magento end-to-end is not possible (R1: Magento still sends C... accounts; R3: liberador and callback belong to another team). Claude will not start the service, run SQL or call endpoints; each stage below says who runs it.
+
+| # | Step | Proves | Writes | Now | Needs |
+|---|---|---|---|---|---|
+| 0 | 0. You start the CURRENT build: iisexpress /path:X:\ServicioSAP\ServicioSap\ServicioSap /port:62337 (or rebuild in VS and press F5 on https://localhost:44399). Then POST login/auth and paste only the token. | That tests exercise the Q1/Q4/Q9/Q11/Gender code, not the stale 08:21 share binary. | no | no | Your go-ahead and your credentials (only the token is shared). |
+| 1 | 1. Read-only external GETs, no service needed: GET https://businesspartner-api.mavi.fun/A_GET_TelefonoValidado?sCliente=<BP> for the captured BP (CAPTURAS §to_CteTel), 1500007539 and 1500008218. GET {AwsBaseUrl}AI_GET_CatalogoConfiguracion?NOMBRECATALOGO=ORIGEN%20VALIDACION%20NUMERO%20CTE. | Q4-residual (which phone the API picks, its format and ZvalTel type) and Q3 (whether the catalog exists). Together they fix the expected ValidacionTelefono, LadaValidar and getSms phone. | no | yes | You run them (curl/Postman) and paste the JSON. |
+| 2 | 2. Read-only SQL that you run: the DDL of the 4 ServicioAndroid tables; the empty-Cliente count in the SMS tables; the baseline MAX(id) and TST% count; reader A/B for the test BP; SIGMAVI CondicionesCredVtaLinea schema and TOP 20; LAN history (origen/sexo GROUP BY, costo, SEGU00001 <= 0, duplicate Orden). | Column widths for a 10-digit BP, the severity of bug 2, the expected condition translation (Q6), and the baselines that the positive runs are compared against. | no | yes | You run the queries in the information list and paste the output. |
+| 3 | 3. Contract checks against the local service: no token gives 401; a null body gives 400; idCarritoCliente 'abc' on getSms/validateSms gives 500 plus [CREDIT GetSms ERROR]; getSms with cuenta '1500-008218' gives '0' with no SAP call. | Auth, binding and error contract are equivalent to LAN (R4 logging). | no | no | Step 0. |
+| 4 | 4. SAP read smoke through ServicioSAP: GET partner/client/{BP}, partner/client/ma/{BP}, product/catalogo/ORIGEN VALIDACION NUMERO CTE. | That Conexion.dll resolves SAP on the test machine and the technical user can read. It also captures Gender, Birthdt, Marst, Namemiddle and ZtipoCliente for the expected row values. | no | no | Step 0 and the test BP numbers. |
+| 5 | 5. getSms negatives: {cuenta:'C01575835', idCarritoCliente:'990927001', cliente:'0'} and an unknown BP '0000000000'. | The existence check against ZB_DATOS_CLIENTE answers '0' (R1). If SAP is unreachable the answer is '-1', so this also proves connectivity. One SAP GET, zero SQL. | no | no | Steps 0 and 4. |
+| 6 | 6. Credit-order negatives with forzarOrder '1': unknown BP '0000000000', 'C01575835', and a guest (cuenta '' and cliente ''). | 200 'Error, Error en SetOrder: El cliente BP ... no tiene crédito activo en SAP.' / 'Los invitados no pueden pagar con crédito.', each with an [ORDER NEW ERROR] line. No SQL Server INSERT. | yes | no | Steps 0 and 4, plus your go-ahead for the reader-A SELECT on ServicioAndroid and the local SQLite guide write (a no-op on Claude's machine). |
+| 7 | 7. validateSms, read-only: an existing BP-keyed row (Cliente, IdCarrito, Codigo) gives '5'; a wrong claveSms gives '6'. | The inlined CODIGO branch is equivalent to the SP. | no | no | Step 0, one row you read from VTASDCodigoVerificacioneCommerce, and a go-ahead for the service SELECT. |
+| 8 | 8. Positive credit order, MA: BP WITHOUT a validated phone, SKU OSTE00443, '12 M MA P INM', costoEnvio 0, codigo_promotor '', forzarOrder '1', incrementId TSTP0927001 (12 characters or fewer). Afterwards you SELECT the header by idMagento and the lines by IdArtCreditoWeb. | The 59-column row matches the expected values: uen 1, sucursal 504, origen PRODUCTOS MX, MetodoEnvio 'tablerate_be', sexo from Gender, 1900-01-02 when there is no Birthdt, ValidacionTelefono 1. It also shows 1 line priced from SD29 04/12IA, and the 'Concluido' answer. | yes | no | The Q2 answer, your go-ahead, the test BP, an SD29 capture for OSTE00443, and the Q6 SELECT. |
+| 9 | 9. Positive credit order, VIU: storeId 'viu', costoEnvio 150, '12 M VIU P INM', a SKU without '+'. | uen 2, sucursal 505, SalesOrg 05/12IV, and the SEGU00001 line (precio 150, cantidad 1, Abono 12). | yes | no | Step 8 passed, and a VIU SKU priced in SD29. |
+| 10 | 10. Positive order for a BP WITH a validated phone (and an SMS row). | The CteTelSet x AWS catalog x SMS path of ValidacionTelefono (P4/P5), and LadaValidar/TelefonoValidar from the SMS phone. | yes | no | Q3 (catalog registered), the Q4-residual answer, Basis read access to CteTelSet, and step 8 passed. |
+| 11 | 11. getSms positive with cliente '0' and a fresh idCarritoCliente (990927002); then an immediate repeat; then validateSms with the code you read from the table. | Branch idRef=='0' gives '3' with 1 VTASD row, 1 EnvioMensajes row (EstatusEnvio 1) and a REAL SMS. The repeat gives '3' with no new rows. validateSms gives '5'. | yes | no | Your go-ahead; a BP whose A_GET phone belongs to the team; Q2; confirmation that the dispatcher SpAAea00030_ArmadoSMS sends BP-keyed rows. |
+| 12 | 12. getSms with cliente > 0 (SAP PATCH of ZidMagento) on the test BP, reading [SAP ZidMagento PATCH RESPONSE] in sap.log. | The PATCH works in client 110 with the technical user's rights. | yes | no | The Q9-PATCH decision, the sap-client fix, Basis confirmation, and a separate go-ahead. |
+| 13 | 13. After Q5 is applied: an order with an unknown condition, and one with no condicion. | Nothing is written (no guide, no header), [ORDER NEW ERROR] is logged, and the answer is 200 'Error, ...' before any API call. | no | no | Your Q5 go-ahead and the code change. |
+| 14 | 14. Optional: a local DMZ pointed at the local ServicioSAP (URL_SAP = https://localhost:44399/ in the local copy only), then setOrder/getSms through the DMZ. | The DMZ mapping of the codes (3 gives 200 'Correcto', 0/-1 give 400) and the re-serialization of the order/new response. | yes | no | Confirmation of the deployed DMZ config, and steps 8 and 11 passed. |
+| 15 | 15. Magento end-to-end. | The full flow including the liberador and the callback. | yes | no | R1 (Magento sends BPs) and R3 (liberador and callback), both from other teams. Not possible yet. |
+
+### 24.3 Open questions (explicit format)
+
+**Q2** 🔴 blocks testing
+- What: connectionStrings MAVICBOSANDROID (Web.config:13), i.e. ServicioAndroid tables CRED_SOLICITUD_WEB_DATOS_TEMP, VTASdArtCreditoWeb, VTASDCodigoVerificacioneCommerce, TcAAEA00030_EnvioMensajes
+- LAN: LAN writes to the same database: SP_CREDITO_WEB_DATOS and SpVTASInsertArtSolCreditoLinea from ProductosCreditoWeb_SaveData (LAN CreditMethods.cs:94-260), and the NIP helpers on sCadenaConexionAndriod (:2035-2297).
+- ServicioSAP: ConexionSQL.obtenerConexionAndroidAsync reads Web.config:13 (mavicbosandroid.grupomavi.com / ServicioAndroid). Writes happen at SolicitudCreditoWebMethods.cs:226 (header), OrderMethods.cs:984 (lines) and CreditMethods.cs:217, :374, :426 (NIP). Web.local.config can override only appSettings, not connectionStrings.
+- Example: Positive order TSTP0927001 for BP 1500008218 writes 1 header and 1 line into the same database the Credit area and the liberador read. LAN would have written the same rows there.
+- Options: A: the DBA provides a non-production copy, and the connection string is changed only in the local X: copy, never on the share · B: accept test rows in the shared database, with a named person who deletes them by idMagento / IdArtCreditoWeb / Cliente+IdCarrito · C: until this is answered, run only the stages that write nothing to SQL Server
+- Recommendation: C now. Then A if a copy exists, otherwise B with written acceptance from the ServicioAndroid owner. Claude deletes nothing.
+
+**NEW (build to test)** 🔴 blocks testing
+- What: The binary IIS Express serves: share bin\ServicioSap.dll vs X:\ServicioSAP\ServicioSap\ServicioSap\bin\ServicioSap.dll
+- LAN: No LAN equivalent (LAN is deployed on IIS).
+- ServicioSAP: The share's bin\ServicioSap.dll is dated 2026-09-26 08:21:56, older than every source edit that day: CreditController.cs 13:38, SolicitudCreditoWebMethods.cs 17:43:05, OrderMethods.cs 17:43:19, CreditMethods.cs 17:43:35, BusinessPartnerMethods.cs 17:39. The X: build is dated 2026-09-26 17:43:38 (verified).
+- Example: Served from the share bin: credit/getSms most likely answers 404, and sexo 'NO ESPECIFICADO' / metodoEnvio 'tablerate_bestway' raise error 8152 (pre-Q1). Served from X:, the Q1/Q4/Q9/Q11/Gender code runs.
+- Options: A: you run "C:\Program Files\IIS Express\iisexpress.exe" /path:X:\ServicioSAP\ServicioSap\ServicioSap /port:62337 (or approve that Claude runs it) · B: you rebuild in VS on your machine and press F5 (https://localhost:44399) · C: copy the X: bin over the share bin (touches the share; needs an explicit OK)
+- Recommendation: A for the read-only and negative stages. B for the positive run if the SQLite guide row (R5) must also be seen, because C:\inetpub\wwwroot\sap does not exist on Claude's machine.
+
+**NEW (JWT)** 🔴 blocks testing
+- What: Request body Login.Username / Login.Password of POST login/auth, checked against the hashes USER_HASH/USER_SALT/PASS_HASH/PASS_SALT (Web.config:36-39)
+- LAN: LAN POST login/authenticate (LAN LoginController.cs:13-17). The DMZ used USER_INTELISIS.
+- ServicioSAP: LoginController.Authenticate (:19-42) verifies with PBKDF2 and issues an HS256 token valid for 180 min. Every credit route is [Authorize] (CreditController.cs:9, OrderController.cs:12). ServicioSAP stores only hashes.
+- Example: POST {base}/login/auth returns 200 "eyJ...". Every later call sends 'Authorization: Bearer eyJ...'. Without it the answer is 401.
+- Options: A: you call login/auth and paste only the token · B: you type test credentials in chat for the local instance · C: a local-only Web.local.config on X: with the hash/salt of throwaway credentials
+- Recommendation: A, so that Claude never handles the password. Repeat every 3 hours.
+
+**NEW (test data)** 🔴 blocks testing
+- What: Request fields infoCliente.cuenta / cliente / telefono and articulos[].sku / condicion, which feed CRED_SOLICITUD_WEB_DATOS_TEMP.cliente, VTASdArtCreditoWeb.articulo/precio and TcAAEA00030_EnvioMensajes.Telefono
+- LAN: LAN SetPedido uses infoCliente['cuenta'] (a C... account) for the lookups and SaveData (LAN OrderMethods.cs:619-649). getSms checks Intelisis Cte and CteTel (CreditMethods.cs:2208-2243).
+- ServicioSAP: CheckClientCreditAsync (ZB_DATOS_CLIENTE) at OrderMethods.cs:741-754. BP05MA at SolicitudCreditoWebMethods.cs:372-382. A_GET_TelefonoValidado at :480-523. SD29 by SKU filtered on SalesOrg 04/05 (OrderMethods.cs:922-948). getSms at CreditMethods.cs:331-359.
+- Example: SPEC §7 agreed on BP 1500007539; the task uses 1500008218; LAN tests used C01575835, which ServicioSAP rejects by design (R1). The captured MA SKU OSTE00443 with '12 M MA P INM' is the safe choice. The VIU SKU DIB+00104 contains a '+' (bug B1).
+- Options: A: for order stages, a BP whose A_GET_TelefonoValidado returns no validated phone (this skips CteTelSet, the AWS catalog and reader B); for SMS stages, a BP whose validated MOVIL belongs to the team; SKU OSTE00443 / 12 M MA P INM; incrementId of 12 characters or fewer · B: BP 1500008218 for everything · C: other BPs you choose
+- Recommendation: A. Do not use '+' SKUs until B1 is checked. Keep codigo_promotor '' and send cliente '0' on getSms until Q9-PATCH is decided.
+
+**Q4 (residual: A_GET_TelefonoValidado selection rule)** 🔴 blocks testing
+- What: @TelefonoValidado, which sets CRED_SOLICITUD_WEB_DATOS_TEMP.ValidacionTelefono; the LadaValidar/TelefonoValidar fallback; and the getSms target TcAAEA00030_EnvioMensajes.Telefono
+- LAN: SP_CREDITO_WEB_DATOS.sql:194-202, LAN OrderMethods.IsValidated :794-795 and CreditMethods.GetValidatedPhoneNumber :2229-2233 all read Intelisis CteTel. They filter Tipo='Movil' AND ValidacionTel=1 (getSms also LEN=10) BEFORE TOP 1, ORDER BY Fecha DESC with NULL dates last. Result: the newest VALIDATED mobile.
+- ServicioSAP: SolicitudCreditoWebMethods.GetTelefonoValidadoAsync :480-523 keeps ZtelCte only if ZvalTel is true (:519). Callers: :389, OrderMethods.cs:625, CreditMethods.cs:357. The share copy of the API (businesspartner-dev A_GET_TelefonoValidado.py:17-36) takes max() over ALL phones by (Zfecha, ZfechaCap, ZidcteTel) and returns that phone's Zvaltel. A null Zfecha becomes '00000000' (AS_GET_ZQBP_EditarCliente_CteTel.py:60-62), which sorts above '/Date(ms)/' strings, so undated phones win.
+- Example: Real capture of the BP05MA to_CteTel (CAPTURAS_REALES_APIS.md:49-56): the only validated MOVIL is 5522122584 (dated); the undated phones include MOVIL 0000001212 = 3338007830 (not validated) and TRABAJO +523333333333 (validated). LAN: TelefonoValidado 5522122584, and getSms texts 5522122584 and answers '3'. ServicioSAP with the share-copy API: the undated phone with the highest ZidcteTel wins (3338007830, if ZfechaCap is also null, NO EVIDENCE), ZvalTel is false, so the value is null. ValidacionTelefono becomes 1, and getSms answers '0' ('Número de cuenta inválida') with no SMS.
+- Options: A: the deployed API already filters MOVIL and Zvaltel=true before max() and puts null dates last; nothing to change · B: ask the businesspartner-api owner to add ZtipoCte eq 'MOVIL' and Zvaltel eq true before max(), and to put null dates last (keeps your single-source decision) · C: build the value in ServicioSAP from CteTelSet with LAN's rule (overrides Q4) · D: accept the difference
+- Recommendation: First get the deployed source, or one GET for the captured BP and one QA BP. If it behaves like the share copy, choose B: it keeps Q4 and restores LAN's rule for all three consumers with no C# change. This blocks the expected values of the positive order and getSms tests.
+
+**Q3** 🔴 blocks testing
+- What: AWS AI_GET_CatalogoConfiguracion?NOMBRECATALOGO=ORIGEN VALIDACION NUMERO CTE (Valor1), matched against CteTelSet.ZappOrig; it sets @ValidacionOrigen and therefore CRED_SOLICITUD_WEB_DATOS_TEMP.ValidacionTelefono
+- LAN: SP_CREDITO_WEB_DATOS.sql:186-191: TablaStD.Nombre WHERE TablaSt='ORIGEN VALIDACION NUMERO CTE', joined to CteTel.AppOrigen with ValidacionTel=1. With no rows the value is NULL, ValidacionTelefono is 1, and the row IS inserted.
+- ServicioSAP: ConstruirContextoAsync (SolicitudCreditoWebMethods.cs:396-400), GetCatalogoConfiguracionAsync :525-534, ProductMethods.GetConfiguracionCatalogoAsync :708-735. A non-2xx or empty body throws, so no row is written and the answer is 200 'Error, ...'. A 200 '[]' gives 1 with no log. The catalog is read only when a validated phone exists.
+- Example: A BP with a validated mobile while the catalog is not registered. LAN: a row with ValidacionTelefono 1. ServicioSAP: 'Error, Error en SetOrder: Error catálogo ORIGEN VALIDACION NUMERO CTE...' and no row (or, if AWS answers [], a row with 1 and no trace).
+- Options: A: register the catalog before go-live with the ZappOrig values e-commerce writes, keep the throw, and add a Logger.SAP warning when it returns 0 rows · B: treat 'catalog not found' as an empty list (SP parity) and log a warning · C: keep it as it is
+- Recommendation: A. Decide B only after seeing what AWS answers for an unknown catalog name. Until then, test with BPs that have no validated phone.
+
+**Q6** 🔴 blocks testing
+- What: SIGMAVI CondicionesCredVtaLinea columns (CondicionMagento? Condicion = SD29 code or Magento text? TiendaVirtual values and collation), which decide the SD29 row that prices VTASdArtCreditoWeb.precio/Abono
+- LAN: SpVTASInsertArtSolCreditoLinea.sql:258-261: WHERE c.Condicion = @Condicion (the Magento text), JOIN c.CondicionPropre = PropreListaDFinal.Condicion. LAN ProductMethods.cs:756-791 confirms legacy Condicion = '12 M {MA|VIU} P INM|DIF'.
+- ServicioSAP: GetCondicionAsync (OrderMethods.cs:3305-3337): SELECT TOP 1 Condicion WHERE CondicionMagento=@c AND REPLACE(TiendaVirtual,' ','_')=@storeId. A SQL error falls back to PaymentConditionCatalog. The same repo reads the same table through the legacy columns CondicionPropre/TiendaVirtual/Mensualidades (CreditMethods.cs:28-31, :70-73). The result must equal the 04/05 SD29 Condition code (OrderMethods.cs:945-948).
+- Example: CRED515773 (muebles_america, '12 M MA P INM', OSTE00443). (i) If there is no CondicionMagento column: a SqlException is logged on every order, the catalog gives '12IA', and the line is priced. (ii) If the column exists but Condicion keeps the legacy meaning: the query returns '12 M MA P INM', no 04 row matches, the SKU is silently skipped, and the answer is 'Concluido' with 0 product lines. (iii) If Condicion holds '12IA': OK.
+- Options: A: keep the query, if the SELECT shows CondicionMagento and SD29 codes · B: LAN semantics: SELECT CondicionPropre WHERE Condicion=@magento (+TiendaVirtual), then map CondicionPropre to the SD29 code · C: use only PaymentConditionCatalog for credit lines
+- Recommendation: Decide after you run the SIGMAVI SELECT (information item). If SIGMAVI has the legacy schema, choose C (deterministic, no per-order SqlException). This blocks judging the expected lines of the positive test.
+
+**Q9 (pending part: ZidMagento PATCH failure)** 🔴 blocks testing
+- What: SAP ZSDT_CTE_ODATA_SRV/ZSDT_CTE_ENTITYSet(ZclienteBp).ZidMagento (the equivalent of Intelisis Cte.IDMagento), filled from the getSms request field cliente when it is > 0
+- LAN: VTASCodigoSMSEcommerce, LAN CreditMethods.cs:2111-2114 calls UpdateMagentoId (:2191-2206): UPDATE IntelisisTmp.Cte SET IDMagento WHERE Cliente, BEFORE the existence check. It updates 0 rows on a missing customer; only a SQL exception returns -1.
+- ServicioSAP: VTASCodigoSMSEcommerceAsync, CreditMethods.cs:271-276 calls BusinessPartnerMethods.LinkMagentoAccountAsync (:835-875): a CSRF GET, then PATCH, with no sap-client (:842-843). A non-2xx answer throws, and the catch (:322-326) returns -1 before any VTASD or EnvioMensajes row is written.
+- Example: BP 1500007539, cliente '12345', and the PATCH answers 403 (no authorization) or 404 (no ZSDT_CTE row, or the wrong default client). LAN: SMS queued, '3', DMZ 200 'Correcto'. ServicioSAP: '-1', the DMZ answers 400 with an empty body, Magento shows 'error de conexión', and every retry fails the same way.
+- Options: A: keep -1 (as coded) · B: wrap only the PATCH in its own try/catch, log '[CREDIT GetSms ZidMagento PATCH ERROR]' to sap.log and continue with the SMS · C: B, plus skip the PATCH when ZB_DATOS_CLIENTE already shows the same ZidMagento (whether that field is filled is NO EVIDENCE)
+- Recommendation: B. In any case add sap-client=110 to both URLs (bug). Prove the PATCH once on the test BP with cliente > 0 after Basis confirms the authorization. Until then, tests send cliente '0'. This blocks only the cliente > 0 step.
+
+**Q5** 
+- What: Request field articulos[0].condicion: where to put the decided early stop, and how the translated code reaches the lines
+- LAN: LAN OrderMethods.cs:632 passes it raw to SaveData data[5] (CreditMethods.cs:111), then header @condicion (:172) and each line @Condicion (:910). No validation. An unknown condition gives 0 product rows, while SEGU00001, the promo burn and the liberador still happen.
+- ServicioSAP: Raw value in the header at CrearSolicitudCreditoAsync :797. Translated only in InsertCreditArticlesAsync :848, which throws at :850-853; ProcessCreditPaymentAsync swallows it at :684-690. By then SD36 (:1732), SaveGuideAsync (:1767), the SMS lookup (:1777), A_GET_TelefonoValidado (:1778), ZB_DATOS_CLIENTE (:654) and the header INSERT with BP05MA/A_GET/CteTelSet/AWS have all run.
+- Example: Condition 'XX M VIU P INM' that is in neither SIGMAVI nor the catalog. LAN: header plus the SEGU00001 line, promo burned, cuenta returned. ServicioSAP today: header only, 0 lines, [CREDITO ARTICULOS ERROR], 'Concluido'. After Q5: nothing written, [ORDER NEW ERROR], 200 "Error, ... La condicion de pago 'XX M VIU P INM' no existe ...".
+- Options: A: new block in SetOrderAsync right after ToArray (:1722) and before SD36 (:1732), guarded by metodoPago == CREDIT_METHOD. Throw on a blank condition; otherwise GetCondicionAsync(cond, storeId, "") and throw if the result is blank · B: the same block as the first statement of the credit branch (:1766), after SD36 has already run · C: after SaveGuideAsync (:1767), before the SMS lookup · In every option: add a condicionSap parameter to ProcessCreditPaymentAsync (:638) and InsertCreditArticlesAsync (:830), drop the lookup at :848, and keep the raw Magento text in the header (:797) as LAN did
+- Recommendation: A: it is the only placement before every external call, and SD36 can never match a credit order anyway. Side effect: if SIGMAVI is down and a condition exists only in SIGMAVI, the order stops, logged as [ORDER GetCondicion ERROR]. Waiting for your go-ahead. It does not block the current tests, which use a valid condition.
+
+**Q8** 
+- What: Request field infoCliente.codigo_promotor, which affects SIGMAVI VentasCupones.FechaUtilizacion/IdEcommerce (UPDATE) and inserts a new free VentasCupones row
+- LAN: LAN OrderMethods.cs:633, then SaveData data[6], then CreditMethods.cs:203-206 CodigoPromocion(data[6],'Elimina') (:392-463), then SpVTASVentaCupon on Intelisis. It stamps only the newest free row, regenerates in the same SP, and logs failures.
+- ServicioSAP: ProcessCreditPaymentAsync :678-682 calls HandlePromoCodeAsync(codigoPromotor, incrementId, 'Elimina') (:1004-1146). It UPDATEs all free rows (:1070-1077), calls AS_GET_ZQBP_AGENTE without a guard (:1087), then INSERTs. The result is discarded and errors go to Console (:1143).
+- Example: A code with 2 free rows. LAN: stamps 1 row and inserts 1. ServicioSAP: stamps both rows; if URL_BP_API fails after the UPDATE, no new row is inserted and nothing reaches sap.log. With option A: VentasCupones is untouched.
+- Options: A: delete only :678-682 and keep the try/catch :674-690 for the lines · B: A, plus delete HandlePromoCodeAsync and GET order/validatecupon (once Magento removes the promoter box) · C: port 'Elimina' literally
+- Recommendation: A now; it also closes the burn-without-regeneration bug. Confirm first that no commission or report process reads VentasCupones.IdEcommerce.
+
+**Q20** 
+- What: sap.log text when the BP check fails: 'El cliente BP {cuenta} no tiene crédito activo en SAP.'
+- LAN: checkCliente, LAN CreditMethods.cs:725-763. The empty catch at :757-760 returns false, and SaveData answers 'sin cuenta' (:257) with no log.
+- ServicioSAP: CheckClientCreditAsync, OrderMethods.cs:741-754. The catch at :749-753 writes only to Console and returns false; :654-655 throws; the controller logs [ORDER NEW ERROR].
+- Example: BP 1500008218 during an SAP 401/timeout, a truly missing BP, and C01575835 all produce the same line.
+- Options: Log-only fix: Logger.SAP the exception at :749-753 and word the message as 'BP no encontrado' vs 'error consultando SAP'; business behavior unchanged · Leave it
+- Recommendation: Apply the log-only fix (R4). Until then, a negative 'unknown BP' test proves nothing unless a SAP smoke GET passed first.
+
+**NEW (R4 logging package, log-only)** 
+- What: sap.log entries for: the credit success (incrementId, cuenta, CRED_SOLICITUD_WEB_DATOS_TEMP.id, lines inserted), the line-loop result (skipped SKUs, zero-price lines, inserted count), and the getSms reason for '0'
+- LAN: LAN OrdersController.cs:144, :152 logs request and response at INFO. ProductosCredito_Nip logs 'INFO [cliente]' with the result (CreditMethods.cs:34). The line loop was silent in LAN too.
+- ServicioSAP: Success paths use only Console: OrderMethods.cs:1781, and :939, :976, :998 in the line loop. The id returned at SolicitudCreditoWebMethods.cs:226-228 stays in a local variable (OrderMethods.cs:667). The getSms log (CreditMethods.cs:242) does not tell 'BP not found' (:266-269) from 'no validated phone' (:320).
+- Example: A positive run answers {"BP":"1500008218",...,"Resultado":"Concluido"} and writes nothing to sap.log. VTASdArtCreditoWeb holding only SEGU00001 (SD29 found no row) looks the same as a full success. Both getSms '0' cases log '[CREDIT GetSms INFO] <bp> 0'.
+- Options: A: add Logger.SAP INFO/WARN lines only; the response stays the same · B: leave it and verify only with SQL
+- Recommendation: A. It is the only way to see a positive result without querying the database, and it fits the 'visible' part of R4. It needs your go-ahead because it is a code change.
+
+**NEW-B** 
+- What: Outcome when a line insert fails after the header (SD29 HTTP error or SQL error inside InsertCreditArticlesAsync)
+- LAN: CreditMethods.cs:869-919 has no try. The catch at :246-252 logs and returns 'err', SetPedido ignores it and returns the cuenta.
+- ServicioSAP: OrderMethods.cs:991-995 rethrows; :684-690 logs [CREDITO ARTICULOS ERROR] and swallows; the answer is 'Concluido'.
+- Example: SKUs A and B; SD29 answers 500 for B. Both systems keep line A and lose B, SEGU00001 and the promo. ServicioSAP answers 'Concluido' and writes a sap.log line.
+- Options: A: keep the swallow (same outcome as LAN), plus the logging package · B: rethrow so the answer is 'Error, ...' (header and partial lines stay written)
+- Recommendation: A. After Q5 is applied, the main cause (an unresolved condition) never reaches this catch.
+
+**Q10** 
+- What: CRED_SOLICITUD_WEB_DATOS_TEMP.lada_particular/telefono_particular/lada_celular/telefono_celular/LadaValidar/TelefonoValidar when the phone (infoCliente.telefono, or the SMS/validated number) is shorter than the lada
+- LAN: ProductosCreditoWeb_SaveData, LAN CreditMethods.cs:139-148, has no guard. Substring throws, the catch at :246-252 returns 'err', and no row is written. Magento still gets the cuenta.
+- ServicioSAP: ProcessCreditPaymentAsync :660-664 gives LadaValidar '0' / TelefonoValidar '0'; CrearSolicitudCreditoAsync :768-774 gives lada 0 and number ''. The row is inserted and the answer is 'Concluido'.
+- Example: telefono '5', no SMS row, no validated phone. LAN: no row. ServicioSAP: a row with ladaParticular 0, telefonoParticular '', LadaValidar 0, TelefonoValidar '0'.
+- Options: A: throw 'teléfono inválido' before the header: logged, 200 'Error, ...', no row · B: keep the placeholders
+- Recommendation: A (LAN outcome, made visible per R4). Whether Magento enforces 10 digits is NO EVIDENCE; it only strips non-digits (OrderManagement.php:731-733).
+
+**Q15** 
+- What: CRED_SOLICITUD_WEB_DATOS_TEMP.origen VARCHAR(20), from request field infoCliente.origen
+- LAN: LAN SetPedido OrderMethods.cs:646 uses infoCliente['origen'] when present, else 'PRODUCTOS MX', then CreditMethods.cs:176. The SP's 'DIMAS MX' branch (SP:174-183) was removed as deprecated (§17).
+- ServicioSAP: CrearSolicitudCreditoAsync OrderMethods.cs:801 fixes Origen = 'PRODUCTOS MX'. InfoClienteRequest has no origen property (verified), so the value is dropped when the body is bound.
+- Example: Magento copies payment additional_information 'origen' into infoCliente.origen (OrderManagement.php:452-454 and :705-708). If the app sends 'X', LAN stores 'X' and ServicioSAP stores 'PRODUCTOS MX'. The captured payloads carry no origen. The actual values are NO EVIDENCE.
+- Options: A: keep it fixed (your 09-23 decision, which assumed Magento never sends it; §23.6 corrected that premise) · B: add origen to InfoClienteRequest and pass it through with the 'PRODUCTOS MX' default, cut to 20; throw on 'DIMAS MX' · C: pass it through only for an agreed list
+- Recommendation: Decide from data: run SELECT origen, COUNT(*) FROM CRED_SOLICITUD_WEB_DATOS_TEMP GROUP BY origen and ask the app owners. If LAN rows only show PRODUCTOS MX, choose A; otherwise B.
+
+**Q19** 
+- What: CRED_SOLICITUD_WEB_DATOS_TEMP.nombre VARCHAR(25)
+- LAN: CreditMethods.cs:154 @nombre = getClientInfo :834 dr['PersonalNombres'], i.e. Intelisis CTE.PersonalNombres (all given names).
+- ServicioSAP: ArmarFila, SolicitudCreditoWebMethods.cs:238: maestro.NameFirst only; Namemiddle (BusinessPartnerMa.cs:51) is never read. With no BP: info.nombreClienteMavi (OrderMethods.cs:780).
+- Example: CTE.PersonalNombres 'MARIA GUADALUPE' gives 'MARIA GUADALUPE' in LAN. A migrated BP with NameFirst 'MARIA' and Namemiddle 'GUADALUPE' gives 'MARIA' in ServicioSAP. BPs created by ServicioSAP put the whole first name in NameFirst, so they show no difference.
+- Options: A: NameFirst + ' ' + Namemiddle, trimmed, cut to 25 · B: NameFirst only · C: ZB_DATOS_CLIENTE PrimerNombre + SegundoNombre (one more call)
+- Recommendation: A, after one BP05MA capture of a migrated customer with two given names.
+
+**Q14** 
+- What: CRED_SOLICITUD_WEB_DATOS_TEMP.estadoCivil VARCHAR(11)
+- LAN: CreditMethods.cs:169, from getClientInfo :847 CTE.EstadoCivil. Web customers created by SP_eCommerceCtenuevo never set it, so they got ''.
+- ServicioSAP: CrearSolicitudCreditoAsync OrderMethods.cs:794 sets ""; ArmarFila copies it (SolicitudCreditoWebMethods.cs:257) and ignores BP05MA Marst. Separately, BP creation hard-codes Marst '2' from an order (OrderMethods.cs:2650) and '1' from setCustomer (BusinessPartnerMethods.cs:486).
+- Example: Web customer: '' in both. Store customer with an EstadoCivil text: that text in LAN, '' in ServicioSAP.
+- Options: A: keep '' as a known gap · B: map the Marst code to the Intelisis text through the SAP code table; '' when unknown · C: map from ZB_DATOS_CLIENTE.EstadoCivil if it is already text
+- Recommendation: A for now; B once one real BP05MA shows Marst and the code table is known. Decide separately whether the hard-coded Marst at BP creation should stay.
+
+**Q12** 
+- What: CRED_SOLICITUD_WEB_DATOS_TEMP.ValidacionTelefono for a brand-new client (empty cuenta) or a BP with a blank To_Cte.ZtipoCliente
+- LAN: SP:216 IIF(SUBSTRING(@cliente,1,1) != 'P', 1, 0). LAN never inserted new clients (checkCliente('') is false).
+- ServicioSAP: EsProspecto (SolicitudCreditoWebMethods.cs:536-546) is false with no BP or a blank type, so the result is 1 (:327). BPs created by ServicioSAP get ZtipoCliente "" (BusinessPartnerMethods.cs:654, OrderMethods.cs:2821).
+- Example: cuenta '', cliente '9400'. LAN: no row. ServicioSAP: a row with cliente '' and ValidacionTelefono 1. Evaluating the SP literally for '' also gives 1.
+- Options: A: keep 1 · B: treat a new client, or a blank ZtipoCliente, as a prospect (0)
+- Recommendation: A, unless the Credit area says new web clients are exempt.
+
+**NEW (sexo, new client)** 
+- What: CRED_SOLICITUD_WEB_DATOS_TEMP.sexo on rows without a BP (R2 new-client flow)
+- LAN: No row for an empty cuenta ('sin cuenta', CreditMethods.cs:255-258). For existing customers sexo = CTE.Sexo (:837).
+- ServicioSAP: CrearSolicitudCreditoAsync OrderMethods.cs:783 sets Sexo = "" and ignores info.sexo. ArmarFila (SolicitudCreditoWebMethods.cs:242) uses it raw when maestro == null and skips SexoLegado.
+- Example: New-client order: sexo ''. The same customer with a BP whose Gender is '' gets 'Masculino', and the BP created from the order gets Gender '1' (OrderMethods.cs:2646).
+- Options: A: when there is no BP, use SexoLegado(BusinessPartnerMethods.MapGender(info.sexo)), which gives Masculino when empty · B: keep ''
+- Recommendation: A: one rule for every row, following your Gender decision. Low priority.
+
+**NEW (sexo letter case)** 
+- What: CRED_SOLICITUD_WEB_DATOS_TEMP.sexo letter case
+- LAN: CTE.Sexo. Web customers were created with UPPER(@SexoCte) (SP_eCommerceCtenuevo.sql:132): MASCULINO/FEMENINO.
+- ServicioSAP: SexoLegado returns 'Masculino'/'Femenino' (SolicitudCreditoWebMethods.cs:571-579). 'NO ESPECI' is already upper case.
+- Example: BP Gender '2': LAN stored 'FEMENINO', ServicioSAP stores 'Femenino'.
+- Options: A: return MASCULINO/FEMENINO in upper case · B: accept mixed case (§23.8 :1925 notes it; no case-sensitive reader found)
+- Recommendation: A: the exact LAN value at no cost. Confirm with SELECT sexo, COUNT(*) ... GROUP BY sexo.
+
+**NEW (letter codes for Gender)** 
+- What: Request field infoCliente.sexo, which becomes SAP BP01 Gender when a BP is created from an order
+- LAN: No equivalent: LAN created the Cte with @SexoCte NULL (SP_eCommerceNuevoPed.sql:315).
+- ServicioSAP: BuildBpClientFromOrder, OrderMethods.cs:2646, now calls BusinessPartnerMethods.MapGender (:777-798): H/HOMBRE/MASCULINO/1 give 1, M/MUJER/FEMENINO/2 give 2, anything else gives '3'. The deleted OrderMethods.MapGender (HEAD) mapped M/MASCULINO to 1, F/FEMENINO to 2, and anything else to ''.
+- Example: sexo 'M': HEAD Gender '1', now '2'. sexo 'F': HEAD '2', now '3'. Empty: '1' in both. Magento248 PlaceOrder does not send sexo today (NO EVIDENCE of any sender); MaviCredito CreditoManagement.php:531 sends 'MASCULINO'/'FEMENINO' in another payload, and those map correctly.
+- Options: A: keep the single BP mapping (M = Mujer) · B: accept only unambiguous words (HOMBRE/MASCULINO = 1, MUJER/FEMENINO/F = 2) and treat a bare 'M' as unknown · C: map unknown to '1' (same as empty) instead of '3'
+- Recommendation: Low priority. Confirm with SAP that '3' is a valid Gender value; if it is not, use C. Record in §23.9 that the letter convention changed.
+
+**NEW (liberador trigger)** 
+- What: Which orders call LiberadorCreditoMethods.LiberarCliente + CallMagentoAuthorizationCallbackAsync once R3 is unblocked, and which cliente value is sent
+- LAN: CreditMethods.cs:208-241: inside IdSolicitud != '', after the lines (:201) and the promo burn (:203-206), only when data[0] (infoCliente.cuenta) starts with 'C'. It sends the Intelisis account and does not run when the lines throw.
+- ServicioSAP: ProcessCreditPaymentAsync :692-730, commented out. It runs only for esClienteNuevo (:693), after the catch that swallows line failures, sends idClienteMagento (:699), and its await inside a non-async Thread lambda (:709, :719) does not compile.
+- Example: Existing BP 1500008218 with its lines OK: LAN-style, the liberador fires; uncommented as written, ServicioSAP never fires it and the quote stays PENDIENTE. New client (cuenta '', cliente '9400'): LAN did nothing; ServicioSAP would call LiberarCliente('9400', id, 1).
+- Options: A: existing accounts only, success path only (LAN parity) · B: existing and new clients · C: new clients only (as written) · D: wait for the liberador owner's contract
+- Recommendation: D. Default to A unless the owner says the new-client flow needs it. Meanwhile, move the block inside the success path with the lambda fixed, still commented out.
+
+**Q16** 
+- What: SD29 PropreListSet rows (OrgVtas, Condicion, CDistr, Sucursal, Lista, Vigente): which row prices a line when several match
+- LAN: SpVTASInsertArtSolCreditoLinea.sql:243-262 INSERT...SELECT writes one line per matching row, all with the same Orden.
+- ServicioSAP: OrderMethods.cs:933-948 filters OrgVtas, then FirstOrDefault in response order. FinalListProperMethods.cs:85 has no $orderby and no CDistr/Sucursal/Vigente criteria.
+- Example: SKU X, OrgVtas 05, two 12IV rows (CDistr 01 at 1,146 and 02 at 1,200). LAN-style: 2 lines with Orden 1. ServicioSAP: 1 line at whichever row SD29 lists first.
+- Options: A: deterministic filter (e.g. CDistr '02' = credit, Vigente) plus a sap.log warning when several remain · B: copy the fan-out · C: keep the first row
+- Recommendation: A, with the filter chosen from a real SD29 capture and the LAN history query.
+
+**Q18** 
+- What: VTASdArtCreditoWeb.costo
+- LAN: SpVTASInsertArtSolCreditoLinea.sql:229-241 (articles) and :194-206 (SEGU00001) call spVerCosto; the result can be NULL.
+- ServicioSAP: OrderMethods.cs:905 costoArticulo = 0m, written at :982 for every line.
+- Example: OSTE00443: LAN had the Intelisis cost or NULL (value NO EVIDENCE); ServicioSAP writes 0.
+- Options: A: accept 0 if nobody reads costo · B: port a cost from SAP (equivalence unverified)
+- Recommendation: A, once the liberador owner confirms nobody reads it.
+
+**Q22** 
+- What: Request field costoEnvio, which decides the SEGU00001 line
+- LAN: LAN OrderMethods.cs:616-617: added when the text is not "0" and not "" (LAN OrderRequest.costoEnvio is a string).
+- ServicioSAP: OrderMethods.cs:1774-1775: added when the decimal is > 0 (OrderRequest.cs:21).
+- Example: Captured payloads: "0" gives no line in both; "150" gives a line at 150 in both (magento_payloads.md:26, :55). The rules differ only for "0.00" or a negative value, and Magento's (float)number_format has not produced either in any capture.
+- Options: A: accept as equivalent and close · B: copy the text rule
+- Recommendation: A: close. Optionally confirm with the SEGU00001 precio <= 0 count on the LAN history.
+
+**NEW-A** 
+- What: articulos[0].condicion = '05 M MA P DIF' / '05 M VIU P DIF', which has no entry in the fallback PaymentConditionCatalog
+- LAN: LAN ProductMethods.cs:758-767 publishes credit_price_5_dif, so Magento can offer it. The SP prices any text present in VTASCCondicionesCredVtaLinea.
+- ServicioSAP: PaymentConditionCatalog.cs:40-43 has only the '05 ... P INM' entries. Unless SIGMAVI resolves the value (Q6), GetCondicionAsync returns "" (OrderMethods.cs:3336).
+- Example: '05 M VIU P DIF'. LAN: the line is priced if a row exists. ServicioSAP today: orphan header and 'Concluido'. After Q5: 'Error, ...'.
+- Options: A: add the SD29 code (NO EVIDENCE of the code; take it from an SD29 capture) · B: the business confirms it is not sold on credit web · C: rely on SIGMAVI (Q6)
+- Recommendation: Ask the Magento/business owners. If the plan is sold, choose A with the real code.
+
+**Q21** 
+- What: Available-credit check (BP05MA to_Cte.ZlimCred) before inserting the request
+- LAN: checkSaldo (LAN CreditMethods.cs:766-802) always returns 0, and the result is discarded (:126-133).
+- ServicioSAP: None: ProcessCreditPaymentAsync checks existence only (OrderMethods.cs:652-657).
+- Example: Total 15000 with ZlimCred 0: both insert.
+- Options: A: parity, no check; mark FLUJO §5.1 as superseded · B: a new feature (needs ZlimCred, debts and pending orders)
+- Recommendation: A. Record it in §23.9 to end the contradiction with FLUJO §5.1.
+
+### 24.4 Bugs
+
+| Sev. | Where | Bug | Since 09-26 |
+|---|---|---|---|
+| high | `FinalListProperMethods.cs:85` | Verified in the code. GetFinalListProperBySkuAsync puts the raw SKU into the SD29 URL ($filter=Articulo%20eq%20'{sku}'): no Uri.EscapeDataString and no doubling of apostrophes. It is used by the credit lines (OrderMethods.cs:922) and the cash path. The file dates from 2026-09-09. |  |
+| medium | `OrderMethods.cs:1777` | Verified. On the new-client path (R2) the SMS phone lookup runs with cuenta '' (sDatosPedido[36]). ObtenerNumeroTablaSmsAsync (:589-613) has no blank guard, and its result is written into LadaValidar/TelefonoValidar (:661-664, :811-812). |  |
+| medium | `BusinessPartnerMethods.cs:842` | Verified. LinkMagentoAccountAsync builds the CSRF-fetch URL and the PATCH URL with no sap-client=110, while every other SAP call in the file pins client 110 (:30, :76-77, :252, :302, :386, :882). The method is older, but yesterday's NIP port (credit/getSms, CreditMethods.cs:271-276) made it run for every logged-in customer. | yes |
+| medium | `CreditMethods.cs:140` | Verified, and present at HEAD. SendSmsNewNumberAsync builds the INSERT into TcAAEA00030_EnvioMensajes with string.Format on request.Cliente, which is not escaped (:140-144). The route is credit/SendSmsNewNumber, [Authorize]. It is a copy of LAN CreditMethods.cs:2010-2014. |  |
+| medium | `OrderMethods.cs:1796` | Verified. This is outside the credit branch (cash path). codigoPostal is read from sDatosPedido[20], which ToArray fills with estado (codigoPostal is index 17). ValidarRegionCelulares (:2066-2120) then rewrites '-R5'/'-R6' SKUs using the first character of the state name. |  |
+| low | `OrderMethods.cs:610` | ObtenerNumeroTablaSmsAsync writes errors only to Console. LAN logged them to file (LAN OrderMethods.cs:849). Its sibling IsValidatedAsync was moved to Logger.SAP on 09-26 (:630); this one was not (R4). |  |
+| low | `OrderMethods.cs:645` | Verified. The guest guard requires a blank cliente, but Magento sends cliente = (int)customerId (OrderManagement.php:703), so a guest arrives as "0" and is classified as a new client. |  |
+| low | `OrderMethods.cs:1087` | Verified. HandlePromoCodeAsync commits the burn UPDATE (:1070-1077) and then calls AS_GET_ZQBP_AGENTE with no guard (:1087). If the call throws, the regeneration INSERT never runs; the error goes to Console (:1143) and the caller discards the result (:681). Q8 option A removes this from the credit path. |  |
+| low | `SolicitudCreditoWebMethods.cs:242` | Verified. Rows without a BP use req.Sexo raw, and CrearSolicitudCreditoAsync hard-codes Sexo = "" (OrderMethods.cs:783). Since yesterday's SexoLegado change, BP rows turn '' into 'Masculino', but new-client rows still store ''. | yes |
+| low | `OrderMethods.cs:2646` | Verified in the uncommitted diff. The deleted OrderMethods.MapGender (M=1, F=2, unknown '') was replaced by BusinessPartnerMethods.MapGender (H=1, M=2, unknown '3'). For BPs created from an order, 'M' flips from male to female and 'F' becomes '3'. §23.9 does not record this. | yes |
+| low | `SolicitudCreditoWebMethods.cs:389` | Verified. Since Q4, one credit order calls A_GET_TelefonoValidado twice (OrderMethods.cs:1778, then here), each with a new HttpClient. The two calls handle errors differently: IsValidatedAsync swallows and returns '', while ConstruirContextoAsync propagates. | yes |
+| low | `CreditMethods.cs:174` | Verified. The newly parameterized GetIdRefAsync uses AddWithValue, which sends @Cliente and @IdCarrito as nvarchar. If the columns are varchar or int, SQL Server converts implicitly, which can turn an index seek into a scan. Results are unchanged. | yes |
+| low | `OrderMethods.cs:626` | The validated phone (ZtelCte) is never reduced to digits before it is split into LadaValidar/TelefonoValidar or cut to 10 for the comparison. A '+52' value exists in a real to_CteTel capture (CAPTURAS_REALES_APIS.md:55, a validated TRABAJO phone). |  |
+| low | `OrderMethods.cs:939` | sap.log never records what the line loop did. Skipped SKUs (:939, :950-954), zero-price lines (:976) and the inserted count (:998) go only to Console. The failure line (:686-688) has no inserted count. |  |
+| low | `OrderMethods.cs:3319` | GetCondicionAsync assigns a possibly null condicionMagento to SqlParameter.Value. SqlClient reports 'parameter not supplied', and the log says '[ORDER GetCondicion ERROR]', which reads like a SIGMAVI failure. |  |
+| low | `Logger.cs:28` | Verified. Directory.CreateDirectory for bin\Logs runs outside any try (:26-31), and Logger.SAP is called from catch blocks. |  |
+| low | `SolicitudCreditoWebMethods.cs:283` | CRED_SOLICITUD_WEB_DATOS_TEMP.fecha comes from DateTime.Now on the IIS host. The SP used SQL Server GETDATE() (SP_CREDITO_WEB_DATOS.sql:170). |  |
+
+### 24.5 Information needed
+
+| # | From | Item | Why | How to get it | Unblocks |
+|---|---|---|---|---|---|
+| 1 | user | How the current build will be served, and a JWT: you start X:\ServicioSAP (17:43:38 build) under IIS Express, or rebuild the share and press F5, then paste only the token from login/auth. | The share's bin\ServicioSap.dll (2026-09-26 08:21) has none of yesterday's code, and every route is [Authorize]. | "C:\Program Files\IIS Express\iisexpress.exe" /path:X:\ServicioSAP\ServicioSap\ServicioSap /port:62337, then POST http://localhost:62337/login/auth {Username, Password} and paste the returned token. | Test steps 0 and 3-14 |
+| 2 | user | Test BPs and test data: (a) a BP with NO validated phone, for order tests; (b) a BP whose validated MOVIL belongs to the team, for SMS tests (1500007539 per SPEC §7, or 1500008218); (c) its Magento customer id; (d) a 10-digit team phone; (e) confirmation of SKU OSTE00443 / '12 M MA P INM' and a VIU SKU without '+'. | Positive tests need a BP that exists in SAP client 110 and a SKU priced for SalesOrg 04/05. A real SMS must reach a team phone. | You choose them. Check each with the step 1 GET (A_GET_TelefonoValidado) and the step 4 GET (partner/client/{BP}). | Test steps 4-12 |
+| 3 | DBA | Q2: is mavicbosandroid.grupomavi.com/ServicioAndroid production? Is there a non-production copy? Who deletes test rows (CRED_SOLICITUD_WEB_DATOS_TEMP by idMagento, VTASdArtCreditoWeb by IdArtCreditoWeb, VTASDCodigoVerificacioneCommerce/TcAAEA00030_EnvioMensajes by Cliente+IdCarrito)? | Every write test lands in the same database LAN, the Credit area and the liberador use. | Ask the ServicioAndroid DBA or owner. If there is a copy, change the connection string only in the local X: Web.config. | Test steps 8-12 |
+| 4 | businesspartner-api owner | The deployed A_GET_TelefonoValidado: its source or commit, and real responses. Does it filter ZtipoCte='MOVIL'? Does it filter Zvaltel=true BEFORE max()? Where do null Zfecha/ZfechaCap sort (the share copy turns them into '00000000', which wins)? What is the exact ZtelCte format (10 digits, or '+52'/spaces)? Is ZvalTel a JSON boolean or number (a string 'X' reads as false in EsVerdadero)? Does it need auth? What is URL_BP_API in production? | It is the single source for @TelefonoValidado, LadaValidar/TelefonoValidar and the getSms phone (Q4). With the share copy, the captured BP's validated MOVIL 5522122584 loses to an undated unvalidated phone, so getSms answers '0' and ValidacionTelefono is 1. | The businesspartner-api owner shares the deployed code. You run GET https://businesspartner-api.mavi.fun/A_GET_TelefonoValidado?sCliente=<the captured BP (CAPTURAS_REALES_APIS.md:49-56)> and for 1500007539 / 1500008218, and paste the JSON. | Q4-residual; expected values of test steps 8, 10 and 11 |
+| 5 | other (AWS configurables owner / BP phone-validation owner) | AWS catalog 'ORIGEN VALIDACION NUMERO CTE': is it registered? Does Valor1 hold the origin names? What does AI_GET_CatalogoConfiguracion answer for an unregistered name (200 [] or 404/empty)? Which ZappOrig value does web phone validation write to CteTelSet? | Q3. An error answer makes every order for a BP with a validated phone fail with 'Error, ...', where LAN inserted with ValidacionTelefono 1. A ZappOrig missing from Valor1 always gives 1. | Ask the AWS configurables owner and the BP / e-commerce phone-validation owner. Or you run GET {AwsBaseUrl}AI_GET_CatalogoConfiguracion?NOMBRECATALOGO=ORIGEN%20VALIDACION%20NUMERO%20CTE and GET {AwsBaseUrl}AI_GET_CatalogoConfiguracion?NOMBRECATALOGO=NO%20EXISTE%20TEST. | Q3; test step 10 |
+| 6 | user | DDL of the ServicioAndroid tables. You run: SELECT TABLE_NAME, COLUMN_NAME, DATA_TYPE, CHARACTER_MAXIMUM_LENGTH, NUMERIC_PRECISION, IS_NULLABLE, COLLATION_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME IN ('CRED_SOLICITUD_WEB_DATOS_TEMP','VTASdArtCreditoWeb','VTASDCodigoVerificacioneCommerce','TcAAEA00030_EnvioMensajes') ORDER BY TABLE_NAME, ORDINAL_POSITION; | To confirm a 10-digit BP fits in every Cliente column (only a document claims varchar(10)), that articulo is at least 20 characters, the types of precio/Abono/costo, and whether the nvarchar AddWithValue in GetIdRefAsync forces conversions. | You run the query on ServicioAndroid (mavicbosandroid) and paste the output. | Test steps 8 and 11; the AddWithValue finding |
+| 7 | user | Empty-Cliente rows in the SMS tables. You run: SELECT COUNT(*) FROM VTASDCodigoVerificacioneCommerce WITH (NOLOCK) WHERE ISNULL(Cliente,'') = ''; SELECT COUNT(*) FROM TcAAEA00030_EnvioMensajes WITH (NOLOCK) WHERE ISNULL(Cliente,'') = ''; | Bug 2: on the new-client path the SMS lookup runs with Cliente = '', and a match puts another person's phone on the row. | You run it on ServicioAndroid. | Severity and priority of bug 2 |
+| 8 | user | Baselines before the positive runs. You run on ServicioAndroid: SELECT MAX(id) FROM CRED_SOLICITUD_WEB_DATOS_TEMP; SELECT COUNT(*) FROM CRED_SOLICITUD_WEB_DATOS_TEMP WHERE idMagento LIKE 'TST%'; reader A: SELECT TOP 1 Telefono FROM TcAAEA00030_EnvioMensajes WITH(NOLOCK) WHERE IdRegistro IN (SELECT IdCodigoVerificacioneCommerce FROM VTASDCodigoVerificacioneCommerce CV WITH(NOLOCK) WHERE CV.Cliente = '<BP>') ORDER BY Id DESC; reader B: SELECT TOP 1 Telefono FROM TcAAEA00030_EnvioMensajes WITH (NOLOCK) WHERE Cliente = '<BP>' ORDER BY Id DESC; | These give the expected LadaValidar/TelefonoValidar and @TelefonoAValidar for the test BP, and ids to compare against afterwards. | You run them and paste the output. | Expected values of test steps 8-11 |
+| 9 | SIGMAVI | SIGMAVI CondicionesCredVtaLinea. You run: SELECT COLUMN_NAME, DATA_TYPE, CHARACTER_MAXIMUM_LENGTH, COLLATION_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME='CondicionesCredVtaLinea' ORDER BY ORDINAL_POSITION; SELECT TOP 20 * FROM CondicionesCredVtaLinea WITH (NOLOCK);. Also, which host is behind the Settings.Server alias 'DEVMAVI'. | Q6. GetCondicionAsync expects CondicionMagento and SD29 codes, while GetPlazosAsync and LAN use the legacy columns (Condicion = Magento text). Depending on which is true, product lines are priced through the catalog fallback, or silently skipped. It also decides where Q5 goes. | You run it on SIGMAVI; the SIGMAVI owner confirms the DEVMAVI host. | Q6, Q5; expected lines of test steps 8-9 |
+| 10 | user | SD29 capture: GET /ZAPI_PROPRELIST_SRV/PropreListSet?sap-client=110&$format=json&$filter=Articulo eq 'OSTE00443'. Also for DIB+00104, twice: once with a raw '+' and once with %2B. Per row: OrgVtas, Sucursal, CDistr, Lista, Condicion, Vigente, Precio, Abono, Descuentocategoria (exact JSON name). | Confirms or refutes B1 ('+' read as a space), counts the 04/05 rows per condition (Q16), gives the code for '05 M P DIF' (NEW-A), and checks that the discount field name matches the model. If it does not, the CEILING discount is never applied. | You or Basis run it through Hoppscotch (Claude does not call SAP). | Bug B1 severity, Q16, NEW-A; expected prices of test steps 8-9 |
+| 11 | user | LAN history on ServicioAndroid. You run: SELECT origen, COUNT(*) FROM CRED_SOLICITUD_WEB_DATOS_TEMP GROUP BY origen; SELECT sexo, COUNT(*) FROM CRED_SOLICITUD_WEB_DATOS_TEMP GROUP BY sexo; SELECT TOP 50 nombre FROM CRED_SOLICITUD_WEB_DATOS_TEMP WHERE nombre LIKE '% %' ORDER BY id DESC; SELECT TOP 50 IdArtCreditoWeb, Orden, COUNT(*) n FROM VTASdArtCreditoWeb WITH (NOLOCK) GROUP BY IdArtCreditoWeb, Orden HAVING COUNT(*) > 1 ORDER BY IdArtCreditoWeb DESC; SELECT SUM(CASE WHEN costo IS NULL THEN 1 ELSE 0 END) nulos, SUM(CASE WHEN costo = 0 THEN 1 ELSE 0 END) ceros, SUM(CASE WHEN costo > 0 THEN 1 ELSE 0 END) positivos FROM VTASdArtCreditoWeb WITH (NOLOCK); SELECT COUNT(*) total, SUM(CASE WHEN precio <= 0 THEN 1 ELSE 0 END) cero_o_neg FROM VTASdArtCreditoWeb WITH (NOLOCK) WHERE articulo = 'SEGU00001'; | Decides with data: Q15 (did any origen other than PRODUCTOS MX ever arrive?), the sexo case and domain question, Q19 (how often nombre has two names), Q16 (did LAN's fan-out really happen?), Q18 (what LAN wrote in costo), Q22 (zero/negative shipping lines). | You run the queries and paste the output. | Q15, Q19, Q16, Q18, Q22, sexo-case question |
+| 12 | user | Intelisis marital-status domain. You run: SELECT EstadoCivil, COUNT(*) FROM Cte WITH (NOLOCK) GROUP BY EstadoCivil; and the SAP functional team provides the Marst code list with texts. | Q14: to map BP05MA Marst to LAN's estadoCivil text. | You run it on Intelisis; the SAP functional / master-data team sends the code table. | Q14 |
+| 13 | user | BP05MA captures: GET partner/client/ma/{BP} for (a) a BP without a birth date, (b) a migrated customer with two given names, (c) a customer with a known marital status. Also GET partner/client/{BP} to see whether ZB_DATOS_CLIENTE returns ZidMagento filled. | The empty Birthdt wire format (/Date(-62135596800000)/ would be stored as 0001-01-01 instead of 1900-01-02, Q11); Namemiddle (Q19); Marst (Q14); ZidMagento (Q9 option C). | You run the GETs through the local ServicioSAP (test step 4) and paste the fields. | Q11 edge case, Q19, Q14, Q9 option C |
+| 14 | Basis | SAP Basis: (a) the default logon client of the gateway when no sap-client is sent; (b) whether the ServicioSAP technical user may PATCH ZSDT_CTE_ODATA_SRV/ZSDT_CTE_ENTITYSet; (c) whether every BP in ZB_DATOS_CLIENTE has a ZSDT_CTE row; (d) read access to ZQBP_EDITARCLIENTE_SRV/CteTelSet; (e) whether the Gateway decodes '+' in a query string as a space; (f) whether Gender '3' is valid in BP01. | (a)-(c) are the ways getSms turns into '-1' (Q9 and the sap-client bug). (d) is needed for test step 10. (e) is the actual impact of B1. (f) is the MapGender question. | Ask SAP Basis/ABAP. Or, with approval, run test step 12 on the test BP and read '[SAP ZidMagento PATCH RESPONSE]'. | Q9-PATCH, test steps 10 and 12, B1 severity, MapGender question |
+| 15 | DBA | The SMS dispatcher SpAAea00030_ArmadoSMS: its source, or whether it joins Cliente to Intelisis Cte/CteTel. | If it does, BP-keyed rows are never sent, EstatusEnvio stays 1, and every later getSms answers '3' without a real SMS (LAN branch :2136-2139). | The ServicioAndroid DBA or SMS team sends it; you can run sp_helptext 'SpAAea00030_ArmadoSMS' (only named at SPVTASCodigoSeguridadeCommerce.sql:83, not on the share). | Test step 11 |
+| 16 | other (liberador owner) | The liberador contract (R3): which orders trigger it (existing BP, new client, or both); which cliente value it expects (BP, Magento id, or nothing); whether it still writes Intelisis Venta; the exact callback payload the DMZ expects; which columns of CRED_SOLICITUD_WEB_DATOS_TEMP / VTASdArtCreditoWeb it reads (nombre, sexo and its case, estadoCivil, rfc, origen, costo); and whether costo NULL and 0 are treated differently. | The commented block (OrderMethods.cs:692-730) targets the opposite population to LAN and sends the Magento id. The column readers set the priority of Q14, Q15, Q18, Q19 and the sexo case. | Ask the liberador service owner (service on 172.16.215.51:3026; Valentin per FLUJO_CREDITO_LAN_VS_SAP.md §10). | Liberador-trigger question, Q18, and the priority of Q14/Q15/Q19/sexo case |
+| 17 | Magento | Magento / app answers: (a) which client sets payment additional_data 'origen', with which values, and whether 'DIMAS MX' is still possible; (b) the full list of credit conditions per store, including whether '05 M MA/VIU P DIF' is sold; (c) whether a guest (customer id 0) can reach credit checkout; (d) whether the credit checkout enforces a 10-digit phone; (e) whether order/new ever carries infoCliente.sexo (Magento248 PlaceOrder does not set it; MaviCredito CreditoManagement.php:531 sends MASCULINO/FEMENINO in another payload); (f) at the BP release, confirmation that getSms 'cuenta' and order/new 'infoCliente.cuenta' carry the identical BP string. | Q15, NEW-A, the guest bug, Q10, the MapGender question, and the key the order uses to find the texted phone. | Ask the Magento / Mavi_CreditoCheckout / app team; or check Magento logs for '[CreditQuote] Sync Body' entries that contain "origen". | Q15, NEW-A, guest bug severity, Q10, MapGender question |
+| 18 | other (DMZ owner) | The deployed DMZ: its production Web.config values for URL_INTELISIS and URL_SAP, and which build is deployed. The share working copy has URL_INTELISIS = https://localhost:44399/ and URL_SAP = the deployed kdll3fhcyo-lan/SAP. | It decides when real credit orders with C... accounts reach ServicioSAP (R1). If production looks like the share copy, getSms/validateSms/credit/codigoPromocion would go to ServicioSAP, which has no codigoPromocion route, so the promoter checkout box would break. | Ask the DMZ owner. | Test step 14; timing of the Q9 switch |
+| 19 | SIGMAVI | Whether any commission or report process reads SIGMAVI VentasCupones.IdEcommerce / FechaUtilizacion for credit web orders. | It is the only data effect of Q8 option A. | Ask the SIGMAVI and commissions owners. | Q8 option A |
+| 20 | Credit area | Credit-area rulings: Q12 (a brand-new web client or a blank ZtipoCliente: ValidacionTelefono 1 or 0? should BPs created by ServicioSAP get ZtipoCliente 'Nuevo'?) and Q10 (is 'no row, visible error' acceptable for a short phone?). | Business rules that LAN never exercised, because it wrote no row for new clients or short phones. | Ask the Credit area. | Q12, Q10 |
+| 21 | other (Conexion.dll owner) | Whether Conexion.dll resolves SAP and SigMavi on machines other than magalindo's (CATECINF214119D). | All SAP URLs and credentials come from Conexion.dll. If it does not resolve on Claude's machine, the local run in step 0 fails every SAP call. | Ask the Conexion.dll owners (Marcos/Diego, AUDITORIA R-12), or it shows up at test step 4. | Test steps 4-12 on Claude's machine |
+| 22 | user | The runtime sap.log of the instance under test, after each step: C:\inetpub\wwwroot\log\sap.log or <baseDir>\Logs\sap.log. | It is the only runtime evidence. The share's Logs\sap.log was last written 2026-09-17 and shows no getSms or PATCH run. | You copy it after each test step. | Verification of every test step |
+| 23 | user | Your decisions on the pending items: Q5 go-ahead and error texts; Q8 option A; Q9-PATCH (A/B/C); Q20 log fix; the R4 logging package; NEW-B; Q10; Q15; Q19; Q14; Q12; new-client sexo; sexo case; MapGender letter codes; liberador trigger; Q16; Q18; Q22 close; NEW-A; Q21 record; and a fix go-ahead for bugs B1, 2, 3 (sap-client) and SendSmsNewNumber. | Each one is a code change or a documented acceptance of a difference from LAN. | Answer in chat. Each question above has options and a recommendation. | Code changes, and test step 13 |
+| 24 | user | Optional: the clock and time zone of the IIS host vs the ServicioAndroid SQL host (run SELECT GETDATE(), SYSDATETIMEOFFSET() and compare with the IIS server time), plus a data.db with table servicio_guias and a local-only Web.local.config SQLITE_DB_PATH on X:. | The fecha = DateTime.Now finding, and seeing the R5 guide row on Claude's machine. | You run the SELECT and copy a data.db. | Low-priority fecha bug; R5 visibility in local tests |
+
+### 24.6 Documentation corrections (these supersede the older statements; the older sections are kept as history)
+
+- PLAN_EJECUCION_SP_CREDITO_A_CODIGO.md:1934 (§23.9 Q8) says 'remove only the burn (OrderMethods.cs:705-709)'. The burn is now at ProcessCreditPaymentAsync :678-682 (HandlePromoCodeAsync call at :681); the try/catch is :674-690 and the liberador block :692-730. promo_removal_2026-09-26.json cites the same stale lines (:705-709, :701-717, :719-757). Anyone applying option A must grep for the lines first.
+- PLAN :1887-1893 (§23.5 bugs), current lines: B2 is :749-753 (throw :654-655); B3 is UPDATE :1070-1077 plus the agent GET at :1087; B4 is :1777; B5 is :645-646; B6 is :681. B7 is half fixed: IsValidatedAsync now logs to sap.log (:630), only ObtenerNumeroTablaSmsAsync (:610) is still Console-only. :1895 'sDatosPedido[20] ... not verified' is now verified (ToArray index 20 = estado, 17 = codigoPostal; used at :1796; SKU rewrite at ValidarRegionCelulares :2066-2120).
+- PLAN :1940 (§23.9 Q20): CheckClientCreditAsync is now :741-754 and the throw :654-655. :1938 (Q14): EstadoCivil "" is now :794 and Marst "2" is :2650. :1941 (Gender) and §23.8 :1924: OrderMethods.cs:2673/:2670 is now :2646.
+- PLAN :1941 (§23.9 Gender row) says the order path 'already defaulted to "1"'. It does not record that OrderMethods' own MapGender (M/MASCULINO=1, F/FEMENINO=2, unknown '') was deleted and replaced by BusinessPartnerMethods.MapGender (H=1, M=2, unknown '3'), which flips the meaning of 'M'. The claim that it 'closes §17.4' is too strong: the Console-only line-loop logs (:939, :976, :998) are still open, and :1297 ('MapGender empty returns ""') is stale; it now returns "1".
+- PLAN :1917 (§23.8 SexoLegado) and :1859 (§23.4 Q1 recommendation) still say sexo = '' for an empty Gender, and :1869 (Q11) says 'No Birthdt: NULL'. The code maps ''/'1' to Masculino and a missing Birthdt to 1900-01-02 (SolicitudCreditoWebMethods.cs:240, :553, :571-574). The §23.9 Gender row supersedes them, but these sections are not marked.
+- PLAN :1702 and :1808 (§22.3, §22.8 #1) still list 'truncate MetodoEnvio/sexo or ALTER' as pending. Q1 resolved it: Sizes at SolicitudCreditoWebMethods.cs:166-224, @sexo 9, @MetodoEnvio 12.
+- PLAN :1736-1739, :1754, :1809, :1862, :1867 (§22.4 option A, §22.5 #5, §22.8 #2, §23.4 Q4/Q9) still recommend a CteTelSet C# helper with LAN's rule. It was superseded by the Q4 answer: no helper exists (TelefonoValidadoLan removed), and all three consumers call GetTelefonoValidadoAsync.
+- PLAN :1124 (§15.1) says A_GET_TelefonoValidado already applies Tipo='Movil' AND ValidacionTel=1. The share copy (businesspartner-dev A_GET_TelefonoValidado.py:17-36) applies neither: it takes max() over all phones, and null dates become '00000000' (AS_GET_ZQBP_EditarCliente_CteTel.py:60-62), so undated phones win. Only the MOVIL filter of the deployed API has been asserted, by the user.
+- PLAN :1935 (§23.9 Q9) lists 'phone tie-break by numeric ZidcteTel' as a ServicioSAP fix. That helper was removed by Q4; the only tie-break now lives in the API (A_GET_TelefonoValidado.py:5-15). The same row says 'DMZ NOT switched (still LAN)'. That is true for the code (curl.Post on URL_INTELISIS), but the share's DMZ working copy has URL_INTELISIS = https://localhost:44399/ (DMZ WebApiMagento\Web.config:17), so in that copy getSms/validateSms already reach a local ServicioSAP. The production config is unknown.
+- PLAN :1907 (§23.7 step 1) and :1845 treat the 08:21:56 bin as current. The share bin\ServicioSap.dll (2026-09-26 08:21:56) is older than every §23.8/§23.9 change (sources 13:38-17:43). The only current build is X:\ServicioSAP\...\bin\ServicioSap.dll (17:43:38). Step 1 should say a rebuild is required.
+- PLAN :1751 (§22.5 #2) cites ProcessCreditPaymentAsync at :665; it is at :638, with the CrearSolicitudCreditoAsync call at :667. :868, :1354, :1378, :1647 cite the liberador at :755-787/:740-772/:724-756 and esClienteNuevo at :720; now it is :692-730 (if at :693) and :645. §22.7 (:1767-1792): all ServicioSAP lines have shifted by about -24 (SetOrderAsync :1704, credit branch :1765-1788, SD36 :1732, cash guide :1819, BuildSapOrderAsync :1828).
+- PLAN §23.9 is missing these open items: Q2, Q3, Q6, Q7, Q10, Q12, Q15, Q16, Q18, Q19, Q21 (no balance check = parity), Q22 (can be closed, see evidence); the R7 decision that the cash gaps are out of scope (§22.7 A-C, §22.8 #5-#7); the Q4 residual (the API selection rule); and the new-client sexo/case items.
+- SPEC_NIP_SMS_SERVICIOSAP.md:3-4 says 'design only, no code written yet'; the code exists (CreditController.cs:29-71, CreditMethods.cs:236-463). The body describes the pre-Q4 design: :56, :79, :93, :125, :127, :167 (CteTelSet + C# MOVIL/Zvaltel filter; GetCteTelAsync/FechaSap internal). The code calls A_GET_TelefonoValidado plus a trim and a 10-character check (CreditMethods.cs:355-359); GetCteTelAsync and FechaSap are private; GetTelefonoValidadoAsync is internal.
+- SPEC :65 and :126 say validateSms returns 'err' on an exception or a null input. The code returns e.Message (CreditMethods.cs:458-462), as LAN does. :92 and :154 say GetIdRefAsync is built with string.Format; it is parameterized (:168-175). The remaining string.Format INSERT is SendSmsNewNumberAsync :140-144. :112 and :124: int.Parse is in the controller (CreditController.cs:39), and ExistingCustomerAsync uses a regex, Contains and partner != null (:331-350). :80 and :166 say the PATCH goes to client 110; it sends no sap-client (BusinessPartnerMethods.cs:842-843). :143 (order side inconsistent) was resolved by Q4. :38, :43, :73, :102: OrderMethods.cs:1804 is now :1777. :173: the test prep should read A_GET_TelefonoValidado, not to_CteTel.
+- SPEC :134 treats 'no [SAP ZidMagento PATCH] line in Logs\sap.log' as evidence. The share's Logs\sap.log was last written 2026-09-17, and Logger.SAP also writes C:\inetpub\wwwroot\log\sap.log (Helpers\Logger.cs:11), so the share file says nothing about the running build.
+- FLUJO_CREDITO_LAN_VS_SAP.md:1-5 is marked 'vigente, 2026-09-11'; most of it is superseded by runbook §9, §17, §22-§23 and it should be marked historical. Specifically: :105-113 and :341-349 (SP called by position/name; now a direct INSERT, SolicitudCreditoWebMethods.cs:35-230); :111 (HandlePromoCodeAsync unreachable; it is at :681); :115, :325, :441 (guide never saved for credit; it is at :1767); :136 (throws on zero lines; false: no throw, and :684-690 swallows and answers 'Concluido'); :204-209 (SD29 '?? FirstOrDefault' fallback; now OrgVtas filter + condition match + skip, :933-954); :216-227, :432, :448 (IsValidatedAsync via BP05MA, HasValidPhoneOriginSAPAsync; now A_GET_TelefonoValidado, and the helper was deleted).
+- FLUJO :268-271 (§5.1 'DECISIÓN TOMADA: stop the order on balance') contradicts runbook §16.5/§23.3 and the code, which has no balance check (LAN parity: checkSaldo was dead). :300 (logic still reads IntelisisTmp over a linked server) is now C# (SolicitudCreditoWebMethods.cs:315-331, :384-404). :314-325 (§6: rfc/sexo/fecha empty, sucursal 0, sucursalDestino 0, lada 0): now rfc = Stcd1, sexo = SexoLegado, fecha = Birthdt or 1900-01-02, sucursal 504/505 (:800), sucursalDestino and RedimirMonedero from the order (:808-809), lada split 2/3 (:768-774); only estadoCivil is still ''. :328 and :434 ('Magento does not send origen') are false: OrderManagement.php:452-454 and :705-708. :359 ('400 with the message') contradicts :436 and the code, which answers 200 'Error, ...' (OrderController.cs:45-46). :392-393 (the SPs are kept) is superseded. :175-177: codigo_promotor and OrigenIdMagento now exist in InfoClienteRequest (:56, :67), and origen is hard-coded as 'PRODUCTOS MX', not 'ServicioSAP'. :231, :236, :245, :400, :402: the liberador is now :692-730, Web.config:40 and :42 hold liberador URLs (host 172.16.215.51:3026), esClienteNuevo is :645/:693, the return is :1782-1787, BuildSapOrderAsync is :1828.
+- _IMPLEMENTACION_SP_CREDITO/credit_parity_2026-09-26.json describes the pre-Q1/Q4 state: orchestration step 3 and the phone steps (numeroValidado via BP05MA to_CteTel), row steps 5, 7, 19, 24, 30 (no Size, NULL birth date, 8152), testability :2777, :2801, :2913, :2919 (D1 blocking with 8152, incrementId <= 20 characters; @idMagento is now Size 12, so a longer incrementId is cut), :2789 (the binary is 'already done'; it is stale), and the lines step 16 (unsized @Articulo; now Size 20). Web.config citations are off by one after the removal of SAP_BASE_URL (URL_BP_API is :29, AwsBaseUrl :27, SQLITE_DB_PATH :59, URL_DMZ :56, JWT/hash keys :31-39).
+- Code comments: ServicioSap Methods\Credit\CreditMethods.cs:256 says 'CteTel -> CteTelSet'; the source is A_GET_TelefonoValidado (:355-359). Models\SAP\Order\InfoClienteRequest.cs:58-66 says OrigenIdMagento is 'PENDIENTE DE ACLARAR'; Magento fills it from mavi_monedero_data.original_order_id (OrderManagement.php:722-726), i.e. the original order behind a wallet redemption.
+
+### 24.7 Contradictions resolved
+
+- §23.9 and the Gender row. The request-row and testability agents said §23.9 has no Gender row; the docs agent cited it at :1941. I read the file: the Gender row exists and is the last line (1941; wc -l gives 1940 because there is no trailing newline). The correction that remains valid is that the row does not record the MapGender letter-code flip.
+- Q22. Orchestration said EQUIVALENT (Magento sends a float); lines-condition said DIFFERENT. Decided EQUAL_TO_LAN in practice. getDecimalFormat returns (float)number_format (OrderManagement.php:1002-1005), and the captured payloads show "costoEnvio":"0"/"150" (magento_payloads.md:26, :55). The rules differ only for "0.00" or a negative value, and neither has been observed. Recommended: close.
+- Guest bug severity. Orchestration said low, docs said medium. Kept low: verified at :645-646 with Magento sending (int)customerId (OrderManagement.php:703), but whether a guest can reach credit checkout is NO EVIDENCE, and the effect is an orphan request row, not money.
+- HandlePromoCodeAsync line and severity. The agents cited 1082 and 1087, and low vs medium. Both describe the same code: UPDATE at :1070-1077, unguarded AS_GET_ZQBP_AGENTE GetAsync at :1087. Kept low: coupons are deprecated, and Q8 option A removes the call from the credit path.
+- LinkMagentoAccountAsync missing sap-client. diff-review marked it not introduced on 09-26. Verified at BusinessPartnerMethods.cs:842-843. The method is older, but yesterday's NIP port (CreditMethods.cs:271-276) made it run on every logged-in getSms, so the failure scenario comes from yesterday's change. Marked introduced = true, with that explanation.
+- Q5 blocks testing. Lines-condition said true; orchestration and request-row said false. Decided false for the current plan, because positive tests use a valid condition. Test step 13 is added for after the change is applied.
+- Q9-PATCH blocks testing. nip-sms said true; diff-review and testability said false. It blocks only the cliente > 0 step; every other getSms test sends cliente '0'. Marked true, scoped to test step 12.
+- Q6 blocks testing. Lines-condition said false but also said the expected product line of P2/P3 is NO EVIDENCE until the schema is known. Marked true, because a pass/fail judgment of the positive line test depends on it.
+- DMZ switch. PLAN §23.9 Q9 says 'DMZ NOT switched (still LAN)'; the Q8 row and the share DMZ Web.config say otherwise. Verified: DMZ CreditController.cs:76, :107 still use curl.Post (URL_INTELISIS), but the working copy's URL_INTELISIS is https://localhost:44399/ and URL_SAP is https://kdll3fhcyo-lan.grupomavi.com/SAP/ (Web.config:16-19); order/new already uses PostSAP. Both statements hold, one for the code and one for the working-copy config. The production config is NO EVIDENCE.
+- A_GET_TelefonoValidado filtering. PLAN §15.1 says it filters Movil and ValidacionTel; the user says the deployed version filters MOVIL; the share copy filters neither. Verified in the share copy (A_GET_TelefonoValidado.py:17-36, AS_GET_ZQBP_EditarCliente_CteTel.py:60-62): max() over all phones, with undated phones sorting first. Kept open as the Q4 residual, with the deployed source requested.
+- Balance check. FLUJO §5.1 says it must stop the order; runbook §16.5/§23.3 and the code say there is no check. Decided: parity with LAN (checkSaldo was dead), recorded as Q21 with a doc correction.
+- Error answer. FLUJO §7 says HTTP 400; FLUJO §10 and the code say 200 'Error, ...' (OrderController.cs:45-46). Decided 200, per R4.
+- Orchestration step 13 (the phone split is DIFFERENT) vs the phone agent step 5 (SAME). Both are right in scope: the source chain SMS, then validated, then order phone is the same; the handling of short phones differs (Q10).
+
+## 25. 2026-09-28/29: decisiones y cambios de paridad
+
+_Fuentes: re-evaluación de las 143 reglas de [[MATRIZ_REGLAS_CREDITO_WEB_LAN_VS_SAP]] contra el código actual (workflow wf5) y paridad columna por columna de las 59 columnas de `CRED_SOLICITUD_WEB_DATOS_TEMP`, defaults del SP vs ServicioSAP (workflow wf4), ambos del 2026-09-29 (JSON de sesión, no copiados al vault). El detalle de cada cambio está en [[CAMBIOS_PARIDAD_CREDITO_2026-09-29]]. Código: working copy **sin commit** de `ServicioSAP`, rama `SpExportaEcommerce`, 3 archivos (`Methods\Credit\SolicitudCreditoWebMethods.cs`, `Methods\Order\OrderMethods.cs`, `Models\SAP\Order\InfoClienteRequest.cs`; +69/−41 según `git diff --stat`). Compila (Roslyn, 221 archivos, exit 0). Las secciones anteriores se conservan como historia; donde esta sección las contradice, manda esta._
+
+> [!note] Numeración
+> D1-D10 de esta sección son las decisiones del usuario del 2026-09-28/29. No son las D1-D10 de diseño de [[FLUJO_SP_CREDITO_WEB_DATOS_A_CODIGO]] ni la columna "Rel." de la §23.4.
+
+> [!warning] wf4 y wf5 son anteriores a tres arreglos
+> Se aplicaron después de lanzar esos workflows y se dan por resueltos aunque los JSON digan otra cosa: (1) G2-13 `estadoCivil` desde `Marst`; (2) G2-12 `sexo` con `Gender` vacío → `''`; (3) `uen`/`sucursal` con comparación exacta de `storeId`. Ver §25.2.
+
+### 25.1 Decisiones del usuario (2026-09-28/29)
+
+| # | Decisión del usuario | Qué implica |
+|---|---|---|
+| D1 | Las cadenas de conexión del `Web.config` (`MAVICBOSANDROID` `:13`, `ADMINDOC` `:15`, login `usrintranet`) son la fuente correcta de las BD SQL; `Conexion.dll` es para S4. Los valores de ambiente (credenciales, `URL_DMZ` `:56`, `URL_INTELISIS` del DMZ) son de Dev y cambiarán en QA/Prod: **no son stoppers**. | `ConexionSQL.cs:47`, `:106`, `:140`, `:171` se quedan como están. **Abierto:** SIGMavi hoy también sale de `Conexion.dll` (`Conexion.Data.getconexion(settings.Server, "SIGMavi")`, `ConexionSQL.cs:19`, `:79`): ¿se queda así o pasa al `Web.config`? |
+| D2 | Magento mandará en `infoCliente.cuenta` **solo el BP numérico de SAP**; las cuentas Intelisis `C…` nunca llegan a ServicioSAP (configuración y datos del lado de Magento). Toda regla de LAN que dependía del prefijo `C` se lee como "BP existente". | Mientras Magento248 siga mandando `getCuentaIntelisis()` (`Omnipro\PlaceOrder\Model\OrderManagement.php:719`, wf5 G1-13), toda orden real de crédito termina en `sin cuenta`: es tema de Magento, no de ServicioSAP. |
+| D3 | El catálogo AWS `ORIGEN VALIDACION NUMERO CTE` ya está dado de alta con 23 valores `Valor1` (lista en `MappingMetods\CatalogoConfiguracion.csv`). | `@ValidacionOrigen` ya no cae en el `throw` de catálogo inexistente (`ProductMethods.cs:708-735`). **Abierto:** si se agregan orígenes de la era SAP como `CteXpressFrontSAP`. |
+| D4 | `A_GET_TelefonoValidado` (businesspartner-api) ya devuelve el teléfono validado más reciente: aceptado. | Cierra el residual de Q4 (§24.3). El análisis de la copia del share (`A_GET_TelefonoValidado.py:17-36`) queda como historia. |
+| D5 | Regla de paridad de valores: ServicioSAP debe guardar **exactamente** lo que guardaban LAN + SP en cada columna (NULL vs `''` vs default del SP, literal, `ISNULL` o `GETDATE`), tomando como fuente el equivalente SAP. | Origen de los cambios de `?? ""`, `@fecha`, `confirmado` y `RedimirMonedero` (§25.2). Es el criterio para todo lo pendiente de §25.5. |
+| D6 | Crédito solo para un BP existente: cuenta vacía o no encontrada → `sin cuenta`, sin fila. Se quitó el camino de "cliente nuevo" e invitado, igual que `checkCliente` de LAN (`CreditMethods.cs:124`, `:257`, `:725`). | Gate en `ProcessCreditPaymentAsync` (`OrderMethods.cs:642-650`). |
+| D7 | `origen` exactamente como LAN/SP: el `infoCliente.origen` de Magento si viene; si no, `PRODUCTOS MX` (LAN `OrderMethods.cs:646`). | `InfoClienteRequest.origen` (`:74`) y `Origen = info.origen ?? "PRODUCTOS MX"` (`OrderMethods.cs:798`). |
+| D8 | `fecha` la arma el SP internamente (`DECLARE @fecha` / `SELECT @fecha = GETDATE()`, SP `:162`, `:170`). El INSERT de ServicioSAP es ahora textualmente el del SP: 59 columnas y valores, literal `1` en `confirmado`, `ISNULL(@RedimirMonedero, 0.00)` (SP `:223-344`, `:336`). | `SolicitudCreditoWebMethods.cs:38-39`, `:143`, `:152`, `:212`. Cierra el bug de `fecha = DateTime.Now` (§24.4). |
+| D9 | `SIGMavi.VentasCupones` es la misma tabla que `IntelisisTmp.VTASCVentaCupon` (renombrada); solo difieren las reglas. | Cierra la parte "¿qué tabla?" de Q7. Las reglas (TOP 1, validar antes, regenerar siempre: MATRIZ G5-07/G5-08) siguen en Q8. |
+| D10 | Tabla de códigos `Marst` tomada del SAP GUI: 1 Soltero, 2 Casado, 3 Viudo, 4 Divorciado, 5 Separado, 6 Pareja de hecho. Los códigos de `Gender` siguen `BusinessPartnerMethods.MapGender` (`:777`). | `EstadoCivilLegado` (`SolicitudCreditoWebMethods.cs:594-606`) y `SexoLegado` (`:567-589`). |
+
+### 25.2 Cambios de código (working copy, sin commit; verificar con `git diff`)
+
+- **`OrderMethods.ProcessCreditPaymentAsync`** (`:638`): gate `sin cuenta` en `:642-650`. Si la `cuenta` está vacía o `CheckClientCreditAsync` no encuentra el BP, escribe `[CREDITO SIN CUENTA]` en sap.log (`:648`) y lanza `sin cuenta` antes del único INSERT (`:660`). Se quitaron `esClienteNuevo`/`esInvitado` y los mensajes "Los invitados no pueden pagar con crédito" y "no tiene crédito activo en SAP". Devuelve siempre `cuentaBp` (`:723`). El bloque del liberador sigue comentado, ya sin el `if (esClienteNuevo)` y con la nota `PENDIENTE (T18)` (`:685-686`).
+- **`OrderMethods.CrearSolicitudCreditoAsync`** (`:751`): `uen = order.storeId == "viu" ? 2 : 1` (`:755`), comparación exacta como LAN `OrderMethods.cs:628`; arregla también `sucursal` 504/505. Sin `?? ""` en `Email`, `Direccion`, `Exterior`, `Interior`, `Delegacion`, `Poblacion`, `Estado`, `Colonia`, `Condicion`, `UtmSource` y `MetodoEnvio` (`:779-800`). `Origen = info.origen ?? "PRODUCTOS MX"` (`:798`).
+- **`InfoClienteRequest`**: nueva propiedad opcional `origen` (`:74`).
+- **`SolicitudCreditoWebMethods`**: `QueryInsert` empieza con `DECLARE @fecha DATETIME; SELECT @fecha = GETDATE();` (`:38-39`), `confirmado` es el literal `1` (`:143`) y `ISNULL(@RedimirMonedero, 0.00)` (`:152`). Se quitaron los parámetros `@fecha`/`@confirmado` (`:212`) y `fila.Fecha = DateTime.Now`. En `ArmarFila`, `EstadoCivil = EstadoCivilLegado(maestro.Marst)` (`:261`); `@estado_civil` Size 11 (`:190`) recorta `Pareja de hecho` → `Pareja de h`, como el SP (`:113`); otro código o vacío → `''`. `SexoLegado`: `Gender` vacío → `''` (paridad LAN, `CreditMethods.cs:837`), `1` Masculino, `2` Femenino, otro → `NO ESPECIFICADO`, que `@sexo` Size 9 (`:177`) deja en `NO ESPECI`.
+
+### 25.3 Qué cierran o cambian respecto de lo anterior
+
+| Punto anterior | Estado anterior | Ahora |
+|---|---|---|
+| Q1 anchos (§23.8) | Aplicado | **Sigue vigente**: `Size` = ancho del SP, `@cliente` 10. Cubre también `estadoCivil` (11) y `sexo` (9). |
+| Q2 ambiente / BD de pruebas (§24.3) | 🔴 bloqueaba pruebas | **No es stopper** por D1: los valores del `Web.config` son de Dev. Toda escritura de prueba sigue necesitando el visto bueno del usuario (§24.2). |
+| R1 cuentas `C…` (§24.1; pasos 5, 6 y 15 de §24.2) | Magento todavía manda `C…` | D2: solo llega el BP numérico; `C…` equivale a "BP existente". `C01575835` solo sirve como caso negativo (`sin cuenta`). |
+| Q3 catálogo AWS | 🔴 sin dar de alta | Cerrado por D3 (23 valores). Abierto: orígenes de la era SAP (`CteXpressFrontSAP`). |
+| Q4 residual (regla de selección de la API) | 🔴 | Cerrado por D4. Sigue abierto el bug bajo de §24.4: `ZtelCte` no se reduce a dígitos (`+52…`, `OrderMethods.cs:626`). |
+| Q5 corte temprano por condición | Decidido el 09-26, no aplicado | ⚠️ **Choca con D5.** Con una condición desconocida LAN igual escribe `SEGU00001`, quema el cupón y dispara el liberador (MATRIZ G4-24). Hoy ServicioSAP lanza en `InsertCreditArticlesAsync` (`OrderMethods.cs:847-850`) antes de cualquier línea, y el `catch` (`:677-683`) deja la cabecera sin líneas y responde `Concluido`. El arreglo de paridad es **seguir escribiendo `SEGU00001`** (con 0 líneas de artículo) y continuar, no cortar antes. El usuario tiene que elegir entre Q5 y D5. |
+| Q10 teléfono corto | Pendiente | Pasa a los no-row gates (§25.5). |
+| Q11 `1900-01-02` | Aplicado | Con D5 es candidato a no-row gate: en LAN un CTE sin fecha de nacimiento no escribía fila (`CreditMethods.cs:835`, `:860-865`); ServicioSAP escribe la fila con `1900-01-02`. |
+| Q12 `ValidacionTelefono` de cliente nuevo; Q13 `ClienteMagento`; "sexo de cliente nuevo" (§24.3) | Pendiente / cerrado | **Ya no aplican** por D6: no hay fila sin BP. |
+| Bugs de §24.4: invitado `"0"` (antes `:645`) y lookup SMS con cuenta `''` (antes `:1777`) | Abiertos | El invitado termina en `sin cuenta`. Los lookups SMS/validado siguen corriendo con `''` (`OrderMethods.cs:1774-1775`), pero su valor ya no llega a ninguna fila. |
+| Bug de §24.4: `sexo` `''` en filas sin BP (antes `SolicitudCreditoWebMethods.cs:242`, hoy `:246`) | Abierto | Ya no aplica (D6). |
+| Q14 `estadoCivil` | `''` fijo | Cerrado por D10 (`EstadoCivilLegado`). Queda el tema de mayúsculas. |
+| Q15 `origen` | Fijo `PRODUCTOS MX` | Cerrado por D7. Borde inalcanzable: con `origen` explícito `null` LAN guardaba NULL y ServicioSAP guarda `PRODUCTOS MX` (Magento solo lo agrega si no está vacío, `OrderManagement.php:705-708`). |
+| `Gender` / `SexoLegado` (§23.9 fila Gender; §24.3 códigos de letra) | Vacío → `Masculino` | D10 + decisión `MapGender`: vacío → `''`; `1`/`2` según `MapGender`. Supera la fila Gender de §23.9 solo en lo que toca a `SexoLegado`, no a la creación del BP. |
+| Q20 texto del log | Pendiente | La respuesta es ahora `sin cuenta`, como LAN. Un error de SAP dentro de `CheckClientCreditAsync` sigue viéndose igual que un BP inexistente (como el `catch` vacío de LAN). El log `[CREDITO SIN CUENTA]` entra en "logs más allá de LAN" (G5-20). |
+| Q7/Q8 cupones | Pendiente | D9 cierra la pregunta de la tabla; el alcance sigue abierto (§25.5). |
+| Bug `fecha = DateTime.Now` (§24.4, antes `SolicitudCreditoWebMethods.cs:283`; la línea ya no existe) | Abierto | Cerrado por D8. |
+| Disparo del liberador (§24.3) | Pendiente | Con D6, las filas que llegan al punto del liberador son la misma población que en LAN (BP existente = `C…`). Sigue bloqueado por el dueño del liberador. |
+
+### 25.4 Recuento de paridad
+
+- **MATRIZ (143 reglas), wf5:** 46 EQ, 39 EQ-R, 12 N/A, 10 FALTA, 6 DIF, 30 PENDIENTE; 67 reglas cambiaron de estado respecto de la matriz del 2026-09-24 (corr. verificador 2026-09-29: decía 60, pero 60 es el conteo de `changed_today` de wf5, que además incluye 6 reglas sin cambio de estado) (51 EQ, 13 EQ-R, 8 N/A, 26 FALTA, 37 DIF, 8 DEP). Con los tres arreglos posteriores, G2-12 y G2-13 pasan de PENDIENTE a EQ-R (solo queda el tema de mayúsculas): **46 EQ, 41 EQ-R, 12 N/A, 10 FALTA, 6 DIF, 28 PENDIENTE**. Es un ajuste manual, no re-verificado por workflow.
+- **Columnas de `CRED_SOLICITUD_WEB_DATOS_TEMP` (59), wf4:** 35 iguales, 9 con cambio de fuente aceptado, 11 pendientes conocidos, 4 distintas. Ajustado: `uen` y `sucursal` pasan a iguales, y `sexo` y `estadoCivil` a cambio de fuente aceptado, lo que da **37 / 11 / 9 / 2**. Las 2 distintas son `fechaNacimiento` (no-row gate, Q11) y `origen` con `null` explícito (inalcanzable). Los 20 defaults NULL del SP, `estatus` 0, `fecha` = `GETDATE()`, `confirmado` 1 y `ValidacionTelefono` ya salen igual.
+  - *Nota del verificador (2026-09-29):* [[CAMBIOS_PARIDAD_CREDITO_2026-09-29]] §4 y la MATRIZ §0.1 agrupan distinto el mismo 37/11/9/2. `fechaNacimiento` va con los 9 PENDIENTE, porque es una compuerta sin fila. `OrigenIdMagento` sale de los pendientes y queda con `origen` en los 2 BORDE, los dos por un `null` explícito que Magento no manda. Así ninguna columna es distinta en un caso real.
+- **Veredicto de wf5:** la cabecera ya es igual; el proceso completo todavía no (líneas, cupón, todo lo posterior al alta, respuestas y no-row gates). El crítico encontró 5 reglas sin id en la matriz: el reenvío de la orden autorizada (`PedidoExistente`), el contrato HTTP del DMZ de la era LAN, los nulos que abortan LAN, `codigo_promotor` null, y los anchos y el paso único del cupón. También propuso 2 re-scores a PENDIENTE (no-row gates): G2-10/G1-19 y G5-04/G1-05.
+  - *Nota del verificador (2026-09-29):* la MATRIZ ya les dio id, con la marca "NUEVA 2026-09-29", fuera de las 143: reenvío = G5-24, contrato HTTP del DMZ = G5-25, nulos que abortan = G1-25, `codigo_promotor` null = G5-26, anchos y paso único del cupón = G5-27. De la revisión por columna salió una más, G3-19 (errores de los lookups de teléfono). La MATRIZ deja los 2 re-scores como sensibilidad (EQ-R 41 → 37, PENDIENTE 28 → 32, MATRIZ §0.2). [[CAMBIOS_PARIDAD_CREDITO_2026-09-29]] §1 sí los aplica.
+
+### 25.5 Lo que sigue abierto
+
+**Decisiones del usuario:**
+
+1. **Q5 vs D5** (§25.3): cortar antes o seguir escribiendo `SEGU00001` como LAN.
+2. **No-row gates:** LAN no escribía fila cuando venían null los nombres, `codigoPostal`, `incrementId`, `storeId`, `telefono`, `cantidad`, `entityId` o `telefonoClienteMavi`, cuando faltaba la fecha de nacimiento, cuando fallaba el guardado de la guía o cuando `articulos` venía vacío. ServicioSAP escribe la fila; quedan `?? ""`/`?? "0"` en `EntreCalles`, `CodigoPostal`, `IdMagento` y `OrigenIdMagento` (`OrderMethods.cs:784-785`, `:799`, `:807`) y los defaults de teléfono (`:654-657`). MATRIZ G1-07, G1-08, G1-18, G1-20, G1-25, G2-23, G2-29, G3-09 y G5-17.
+3. **Cupones (Q8):** alcance: solo la quema en crédito (`OrderMethods.cs:671-675`) o toda la funcionalidad. ¿Algún proceso de comisiones lee `VentasCupones`?
+4. **DIMAS MX:** ¿deprecado? PLAN `:943` y `:2111` dicen que sí (MATRIZ G2-03). Con D7 el valor ya es alcanzable y el override de `CREDICCondicionArt` del SP (`:174-183`) no está portado.
+5. **Mayúsculas:** LAN guardaba nombres, `sexo` y `estadoCivil` en MAYÚSCULAS (`SP_eCommerceCtenuevo.sql:116-132`); ServicioSAP guarda la capitalización del BP o de SAP.
+6. **Precio de las líneas:** fuente SD29 vs `PropreListaDFinal` (G4-21, Q6); varias filas de precio por SKU (Q16, G4-25); `costo` por `spVerCosto` (Q18, G4-29..G4-37); precisión float de `SEGU00001` (G4-09).
+7. **Staging `eCommerceDetPedidos`** (G4-02) y **swap TELEFONIA** (Q17, diferido por el negocio; G4-03, G4-12, G4-15..G4-19).
+8. **Herramienta de reproceso** (G1-04/G5-03).
+9. **Contrato de respuesta HTTP de crédito** (G3-16 y la regla del DMZ que encontró el crítico de wf5, MATRIZ G5-25).
+10. **Logs más allá de LAN** (G5-20), incluido el nuevo `[CREDITO SIN CUENTA]` (`OrderMethods.cs:648`).
+11. **Limpieza de `ArmarFila`:** los fallbacks a datos de Magento quedaron muertos, porque `maestro` ya no llega null (wf5). También `nombre = NameFirst + Namemiddle` (Q19).
+12. **Errores de los lookups de teléfono:** el SP insertaba igual; deberían contar como "no encontrado" en lugar de cortar la fila (MATRIZ G3-16, G3-19).
+13. **Lookups con el número de BP:** hoy se consulta con la `cuenta` cruda (`SolicitudCreditoWebMethods.cs:25`, `:27`) y se guarda `maestro.Partner` (`:281`).
+14. **Abiertos de D1 y D3:** SIGMavi vía `Conexion.dll`; orígenes de la era SAP en el catálogo.
+15. **Sin cambio desde §24:** Q9 (falla del PATCH `ZidMagento`) y los bugs de §24.4 que no se mencionan arriba (B1: SKU sin escapar en SD29; `sap-client` en `LinkMagentoAccountAsync`; `SendSmsNewNumber`).
+
+**Otros equipos:** liberador + callback (dueño del liberador); `creditStatus`/`updateCreditOrderId` (dónde vive la decisión de crédito).
+
+Detalle y evidencia por cambio: [[CAMBIOS_PARIDAD_CREDITO_2026-09-29]] · Matriz: [[MATRIZ_REGLAS_CREDITO_WEB_LAN_VS_SAP]] · Flujo: [[FLUJO_CREDITO_LAN_VS_SAP]]
+
+---
+
+## 26. Plan vigente (2026-09-30)
+
+> [!important] El plan vigente del crédito web está en [[CREDITO_WEB_ANALISIS_COMPLETO_Y_PLAN_FINAL]]
+> Ahí están el análisis completo (los 38 pasos de LAN contra ServicioSAP, todas las reglas G1-G5 más las nuevas del 2026-09-30 y las decisiones DU1-DU10) y el **plan de implementación final**: tablero, specs de las tareas LISTO, decisiones con la opción recomendada, tareas de otros equipos, kit V1-V4, sesiones S1-S4 y el tutorial de Fable 5.1.
+> Sustituye a la §9 como plan de ejecución y al borrador de §26 del 2026-09-29, que nunca se publicó aquí (no correr `apply_s26.py`).
+> Las §0-§25 quedan como historia y evidencia. Sus líneas no se movieron, así que las citas `PLAN:NNNN` siguen valiendo.
+
+#migracion #SAP #dotnet #analisis_bd
+
+
+## 27. 2026-10-02 — vault vs code: credit parity re-verified, readiness to test
+
+_Workflow `wf_d4c2961d-4e5` (5 rule-group verifiers + testability + decision consistency + synthesizer, read-only). Full result: `_IMPLEMENTACION_SP_CREDITO\credit_vault_parity_2026-10-02.json`. Code: HEAD 2cf425f + uncommitted 2026-10-01 12:12 edits (+109/-64). Share `bin\ServicioSap.dll` 2026-10-02 10:15:08 contains the current code._
+
+**Answer:** Partly. You can start component tests of the credit-request logic now, by POSTing order/new directly. End-to-end testing through Magento is not possible yet. I applied every user decision up to DU20 and re-checked the code (branch SpExportaEcommerce, HEAD 2cf425f plus the uncommitted 2026-10-01 edits, +109/-64). On that basis 119 of the vault's 160 LAN rules behave like LAN or differ only by a user decision (74 %). By group: eligibility 18/25, header 36/40, phone validation 17/23, lines 31/40, after the request 17/32. The vault says 86/160 (54 %) because it counts about 25 rules as open while they wait for a confirmation (P12, P16, P17, P9, Q22, P1 G-d), and its rule tables never absorbed DU14-DU17. On that stricter basis the code reaches about 94/160 (59 %). The 41 open rules are 19 decisions (mostly the P1 'no row' gates), 5 differences (the reprocess tool, the R1 Trim, callback keys and transport) and 17 waiting on other teams (liberador DU11, TELEFONIA Q17, SAP OData DU20). The share build bin\ServicioSap.dll (2026-10-02 10:15) contains the current code. Before a positive test, you need to confirm the served instance, pick a test BP, check SIGMavi CondicionesCredVtaLinea.Condicion (Q6), and check the Android login's INSERT permission. If Q6 or the permission fails, ServicioSAP writes a header with no product lines and still answers 'Concluido'. Phone-validation and getSms tests also need TEL-1 settled: the share copy of A_GET_TelefonoValidado returns the newest phone of any type, with undated phones first, not LAN's newest validated mobile. Business Rules Ecommerce matches the code; MATRIZ, CREDITO_WEB_ANALISIS and ACTIVIDADES are stale in the places listed below.
+
+### 27.1 Parity by group (verified on code, user decisions up to DU20 as ground truth)
+
+| Group | Total | Closed | Pending decision | Different/missing | Other team | Vault said | Key gaps |
+|---|---|---|---|---|---|---|---|
+| G1 Eligibility (who gets a credit request) | 25 | 18 | 5 | 1 | 1 | ACTIVIDADES 2026-10-01: 9/25 closed (36 %), 13 waiting for a decision, 3 other team. MATRIZ 09-29: mostly EQ/EQ-R after D6. | P1 no-row gates: G1-07 missing keys, G1-08 empty articulos, G1-18 total, G1-20 short phone, G1-25 null keys. G1-04 reprocess tool getOrderInfoAndSet is missing (P11, recommended retire). G1-22 liberador blocked by DU11. 8 of the 18 closed rules only wait for a confirmation: P9, P12, P16, P17, P1 G-d. Business rows match LAN: only an existing BP gets a row, and 'sin cuenta' is thrown before the only INSERT (OM:644-647). |
+| G2 Header (CRED_SOLICITUD_WEB_DATOS_TEMP, 59 columns) | 40 | 36 | 4 | 0 | 0 | ACTIVIDADES: 30/40 (75 %). MATRIZ/CAMBIOS 09-29 column table: 37 equal, 11 equal with SAP source, 9 pending, 2 edge cases. | G2-16 codigoPostal null is stored as '' (OM:770). G2-23 empty articulos still writes a header. G2-29 short phone stores lada 0 and number '' (OM:749-755). G2-40 a Birthdt sentinel would store 0001-01-01 (SCW:604-629). The INSERT text equals SP_CREDITO_WEB_DATOS (59/59). DU12, DU13, DU18 are applied. 5 closed rules wait for confirmations (P4, P12 x2, Q11/G-d, DU13 Trim). |
+| G3 Phone validation (ValidacionTelefono, LadaValidar/TelefonoValidar) | 23 | 17 | 3 | 2 | 1 | ACTIVIDADES: 12/23 (52 %). | G3-04 and G3-08 differ by the R1 fix (OM:626 Trim, OM:651 IsNullOrWhiteSpace), which only matters for values with spaces. Pending: G3-09 short phone (P1), G3-20 the early return in ConstruirContextoAsync, which only matters on error paths (R2-b), and G3-23 ZtelCte with '+52'. Blocked: G3-02, because the DMZ still sends getSms to LAN. I scored G3-15 and G3-21 as closed (ZtipoCliente 'Prospecto', user statement of 2026-09-21; the P16 confirmation is pending), so they match G1-21. Risk TEL-1: the A_GET_TelefonoValidado selection rule (G3-11, G3-22). |
+| G4 Lines (VTASdArtCreditoWeb) | 40 | 31 | 3 | 0 | 6 | ACTIVIDADES: 26/40 (65 %). MATRIZ 09-29: 'lines not yet' (Q5 not applied, costo open, price source open). | TELEFONIA region swap G4-12, G4-15..19 waits for the business (Q17). P7/P8b: which SD29 row is used, and fan-out (G4-25). P8d: SEGU00001 float precision (G4-09). P18: '05 M ... P DIF' (G4-40). G4-21 depends on Q6, which is unverified: whether SIGMavi Condicion holds SD29 codes. The costo rules (DU14 NULL), condition without equivalent (DU15) and staging (R7) are closed in code but still open in the MATRIZ. |
+| G5 After the request (coupon, liberador, callback, status, rename, duplicates, response, logs) | 32 | 17 | 4 | 2 | 9 | ACTIVIDADES: 9/32 (28 %); the per-rule mapping is not reproducible. | G5-11 and G5-12: the callback payload is snake_case (OM:1234-1240) and it accepts any certificate (OM:1200-1201); fix T1a is ready. Blocked by DU11/DU20: liberador, creditStatus, updateCreditOrderId, duplicate resend (G5-02, G5-24), id types. Pending: reprocess and request log (P11/P13), forzarOrder null (P1), DMZ HTTP codes (P12). Coupon (DU16) and logs (DU17) are closed in code; the vault tables still show them open. |
+| NIP SMS routes credit/getSms, credit/validateSms (outside the 160; Business Rules RCR-7..22) | 8 | 5 | 1 | 1 | 1 | PLAN 23.9 Q9: coded 2026-09-26 and verified; SPEC_NIP_SMS. Not part of the 160-rule count. | NIP-02: when the ZidMagento PATCH fails, getSms returns -1 before the SMS (Q9-PATCH unanswered), and the PATCH URL has no sap-client=110 (BPM:842-843). NIP-07: the DMZ still routes both calls to LAN (DMZ CreditController.cs:76, :107). NIP-08: the checkout gate credit/GetPhoneValidatedClientSecretName is not ported and not tracked in any vault rule. |
+| TOTAL (160 vault rules G1-G5) | 160 | 119 | 19 | 5 | 17 | ACTIVIDADES 2026-10-01: 86/160 (54 %); 46 decision, 8 development, 6 test, 14 other team. MATRIZ 09-29 (143 rules): EQ 46 + EQ-R 41 + N/A 12 = 99 (69 %), DIF 6, FALTA 10, PENDIENTE 28. | Why 119 here and 86 in the vault: (1) about 25 rules that already behave like LAN, or are covered by R4/R5/R7/Q11/D2, wait only for a confirmation (P12, P16, P17, P9, Q22, P1 G-d), and the vault counts them open; (2) the vault rule tables never applied DU14 (costo, 8 rules), DU15 (G4-24, G1-14), DU16 (coupon, 4 rules) or DU17 (G5-20); (3) it counts the R3/R4 cleanups, which change no stored value, as development. Counted the vault's strict way, the code gives about 94/160 (59 %). |
+
+### 27.2 Readiness: PARTIAL. Component tests of request creation (header and lines via a direct POST order/new) can start after user-run prerequisites. Phone-branch and getSms tests also need TEL-1 and NIP-1. Liberador, callback, status, rename and Magento end-to-end are not testable. There is no runtime evidence yet: Logs/sap.log was last written 2026-09-17 and has no credit entries.
+
+**Ready now:**
+- L0 Build: the current source compiles. Share bin\ServicioSap.dll (2026-10-02 10:15:08) contains the 10-01 literals ('sin condicion de pago', '[CREDITO SD29 FILTRO]', '[ORDER ObtenerNumeroSms ERROR]', ObtenerPreciosCreditoAsync) and none of the removed ones ('Los invitados no pueden', '[CREDITO SIN CUENTA]'). Do not use the X: build of 09-26.
+- L1 Serve that build (you, VS or IIS Express https://localhost:44399/) and get a JWT. Confirm with a fresh line in Logs\sap.log.
+- L2 Read-only captures and SELECTs (you run them): BP05/BP05MA of the test BP, SD29 by Articulo+OrgVtas+Condicion, A_GET_TelefonoValidado, the Q6 SIGMavi SELECT, the ServicioAndroid permission and column-type queries.
+- L3 Contract checks: no token gives 401 ([Authorize] OC:12); a null body gives 400 (OC:20-23, same as LAN); getCondicion/{store}/{cond}.
+
+**Ready after prerequisites:**
+- L4 Negatives N1-N3 (cuenta '', '0000000000', 'C00000000') expect 200 'Error, Error en SetOrder: sin cuenta', 0 rows, and only [ORDER NEW ERROR] in sap.log. Run them only after one SAP smoke GET passes, because a SAP outage also gives 'sin cuenta' (OM:730-734).
+- L4 Negatives N4-N6 need your go-ahead to write to ServicioAndroid and corrected expected values (ACT-04). N4, an unknown condition with costoEnvio 150, gives header + SEGU00001 only (Orden 2, qty 1, price 150, Abono 12, costo NULL) and 'Concluido'. N6, a null condition, gives a header with condicion NULL, 0 lines and [CREDITO ARTICULOS ERROR].
+- L5 Positives V2 (MA), V2b (VIU with shipping), V2c (SKU with '+') need: a test BP (exists in client 110, not Prospecto, no validated phone, Gender and Birthdt filled); the Q6 SELECT; an SD29 capture for the SKUs; the MAVICBOSANDROID INSERT permission on VTASdArtCreditoWeb; a write go-ahead with a DBA cleanup owner (it is the same DB LAN uses); expected values with nombre = NameFirst+Namemiddle, costo NULL and the R4/P12-A body. Avoid TELEFONIA SKUs and '05 ... P DIF'.
+- L6 The validated-phone branch needs TEL-1 resolved (paste a real A_GET_TelefonoValidado response), the R2-V captures, and a BP whose newest dated phone is a validated 10-digit mobile with a ZappOrig in the 23-value catalog, plus an SMS row.
+- L7 NIP SMS: validateSms, and getSms with an unknown BP and cliente '0', can run after L1. Positive getSms sends a real SMS, so it needs your go-ahead, the widths of the Cliente column in both SMS tables, and confirmation that the dispatcher accepts BP-keyed rows. Use cliente '0' until NIP-1 is decided.
+- L8 Cash regression (E5 escaping, Marst '1') needs your go-ahead to create a BP and an order in SAP DEV.
+
+**Not possible yet:**
+- L9 Liberador and Magento callback. The liberador is under construction by the other team (DU11). The callback sends {entity_id, customer_account, credit_request_id}, while the DMZ expects {entityId, cuenta, idSolicitud} (DMZ CreditRequest.cs:212-218). The commented block OM:677-711 does not compile (it uses idClienteMagento and await inside a non-async lambda).
+- L10 creditStatus, updateCreditOrderId, the post-authorization resend without a duplicate, and Magento end-to-end (V4). No routes exist in ServicioSAP; the DMZ calls URL_INTELISIS; the SAP OData for ZIdEcommerce is pending (DU20). Magento still sends getCuentaIntelisis() (OrderManagement.php:719), so real orders end in 'sin cuenta' while Magento shows PROCESANDO. The checkout gate GetPhoneValidatedClientSecretName is not ported, and the DMZ still routes getSms/validateSms to LAN.
+
+### 27.3 Decision conflicts (explicit format)
+
+**GEN-1**
+- What: CRED_SOLICITUD_WEB_DATOS_TEMP.sexo (VARCHAR 9) when BP05MA Gender is empty. On 2026-09-26 you said empty means 1 by default (PLAN 23.9 'Gender' row). D5 (value parity, 09-28/29) leads to '' instead, but no quote from you reverses the 09-26 row.
+- LAN: CreditMethods.getClientInfo LCM:837 dr['Sexo'].ToString() (Intelisis CTE.Sexo; NULL gives '') -> @sexo LCM:158 -> SPD:100 VARCHAR(9)
+- ServicioSAP: SolicitudCreditoWebMethods.ArmarFila SCW:244 -> SexoLegado SCW:563-583: '' stays '', '1' Masculino, '2' Femenino, anything else 'NO ESPECIFICADO' (cut to 'NO ESPECI'). BP creation still uses empty -> '1' (OM:2655, BPM MapGender).
+- Example: Migrated BP with Gender '': LAN stored '', ServicioSAP today stores '', the 09-26 rule would store 'Masculino'.
+- Options: A: keep '' (D5) and record that D5 supersedes the 09-26 Gender row for the credit row only · B: restore the 09-26 rule: SexoLegado(MapGender(Gender)), so empty gives 'Masculino' · C: empty gives 'NO ESPECI'
+- Recommendation: A, but record your explicit confirmation as a DU. Fix Business Rules RCRE-25, which says 'same codes as MapGender'.
+
+**LIM-1**
+- What: Order total against BP05MA to_Cte.ZlimCred before inserting the request. Your 2026-09-11 decision says 'sí debe frenar' (FLUJO_CREDITO 5.1, still marked vigente). PLAN 24.1/24.7 later called that stale and recorded parity, without an answer from you (P17 open).
+- LAN: ProductosCreditoWeb_SaveData LCM:126-133: checkSaldo (LCM:766-802) sets res 'insuficiente' or 'OK'. SetPedido discards it (LOM:649), so the row is always written.
+- ServicioSAP: ProcessCreditPaymentAsync OM:638-720 has no balance or limit check; it only checks that the BP exists (OM:644-647).
+- Example: Total 15000 with ZlimCred 0.000: LAN inserts and ServicioSAP inserts. Under the 09-11 rule every order would stop while ZlimCred is 0.
+- Options: A: parity now (no stop) and defer the 09-11 decision until ZlimCred has data · B: stop on ZlimCred now (rejects every order today) · C: revoke the 09-11 decision
+- Recommendation: A. Record it in your words (P17) and mark FLUJO_CREDITO 5.1 as deferred.
+
+**TEL-1** 🔴 blocks testing
+- What: The validated phone behind ValidacionTelefono, LadaValidar/TelefonoValidar and the getSms target. Q4/D4 assume A_GET_TelefonoValidado returns the newest validated MOVIL. The share copy takes max() over all phones by (Zfecha, ZfechaCap, ZidcteTel) and does not filter by type or validation. Undated phones become '00000000' and sort first.
+- LAN: SP_CREDITO_WEB_DATOS.sql:193-202 and LAN OrderMethods.IsValidated LOM:786-817: CteTel Tipo='Movil' AND ValidacionTel=1 ORDER BY Fecha DESC. getSms GetValidatedPhoneNumber LCM:2224-2243 also requires LEN=10.
+- ServicioSAP: SolicitudCreditoWebMethods.GetTelefonoValidadoAsync SCW:478-521 keeps the first row only if ZvalTel is true (:517-519). Callers: SCW:387, OM:625, CreditMethods.cs:357. API: businesspartner-dev/apps/api/routes/A_GET_TelefonoValidado.py:5-35; dates defaulted in AS_GET_ZQBP_EditarCliente_CteTel.py:61-62.
+- Example: Captured BP: the validated MOVIL is 5522122584 (dated), plus undated unvalidated phones. LAN: TelefonoValidado 5522122584, and getSms texts it and answers 3. ServicioSAP with the share API: null, so ValidacionTelefono is 1 and getSms answers 0 with no SMS.
+- Options: A: the deployed API already filters MOVIL and Zvaltel and sorts null dates last; no change · B: the businesspartner-api owner adds those filters (keeps Q4/D4) · C: compute the value in ServicioSAP from CteTelSet with LAN's rule (overrides Q4) · D: accept the difference
+- Recommendation: First paste one real response for the captured BP and one for the test BP. If the API behaves like the share copy, choose B. Until then, test only with BPs that have no validated phone.
+
+**NIP-1** 🔴 blocks testing
+- What: SAP ZSDT_CTE_ENTITYSet(ZclienteBp).ZidMagento, set by getSms when the request field cliente > 0. Q9 says 'same as LAN', but a PATCH failure returns -1 and no SMS is sent. The 'Q9-PATCH' choice has never been answered.
+- LAN: VTASCodigoSMSEcommerce LCM:2102-2120 -> UpdateMagentoId LCM:2191-2206, an UPDATE that runs before the existence check. A 0-row UPDATE does not fail, so the SMS flow continues.
+- ServicioSAP: CreditMethods.VTASCodigoSMSEcommerceAsync CreditMethods.cs:266-276 -> BusinessPartnerMethods.LinkMagentoAccountAsync BPM:835-875. Its URLs have no sap-client=110 (:842-843). Any exception returns -1 (CreditMethods.cs:322-326) before an SMS row is written.
+- Example: BP 1500007539, cliente '12345', PATCH answers 403/404. LAN queues the SMS and answers '3'. ServicioSAP answers '-1'; the DMZ answers 400 and Magento shows a connection error.
+- Options: A: keep -1 · B: try/catch around the PATCH only, log it, and continue the SMS flow (the LAN outcome) · C: B, plus skip the PATCH when ZB_DATOS_CLIENTE already holds that ZidMagento
+- Recommendation: B, plus add sap-client=110 to both URLs. Until then, test getSms with cliente '0'.
+
+**GATE-1**
+- What: Whether a CRED_SOLICITUD_WEB_DATOS_TEMP row is written when the birth date is missing, the phone is too short, codigoPostal/names/incrementId/forzarOrder are null, or articulos is empty. Q11/R5 (09-26) accepted placeholders; D5 (09-28/29) asks for exactly what LAN stored, and LAN stored no row. P1 is unanswered.
+- LAN: getClientInfo LCM:835 (NULL date -> 'err', no row); SaveData LCM:139-148 (Substring on a short phone -> 'err'); SetPedido LOM:599, :603-605 (.Trim() on null codigoPostal or names -> ''); LOM:588 (empty articulos -> float.Parse('') -> ''); LOM:562 (forzarOrder null, outside the try).
+- ServicioSAP: SCW:242/:551 (1900-01-02); OM:651-654 ('0'/'0'); OM:749-755 (lada 0, number ''); OM:770 CodigoPostal ?? ''; OM:783 IdMagento ?? '0'; OM:1776-1784 (guide plus header with condicion NULL for an empty list).
+- Example: telefono '5' with no SMS and no validated phone. LAN: 0 rows. ServicioSAP: 1 row with lada_particular 0, telefono_particular '', LadaValidar 0, TelefonoValidar '0'.
+- Options: A: copy the gates per P1 (A1+A3+A4+A5), keep Q11 1900-01-02 (A-d1), no guide gate (R5) · B: accept the rows as decided differences · C: copy only the gates Magento can reach (empty articulos, null codigoPostal, null names, short phone)
+- Recommendation: A (the plan's recommendation), with C as the minimum. Capture one BP05MA without Birthdt first (G2-40).
+
+**LOG-1**
+- What: The sap.log entry when CheckClientCreditAsync (BP05 ZB_DATOS_CLIENTE) fails. R4 says 'every error visible'; DU17 says 'no logs LAN did not have'. The Q20 log-only fix was offered and never answered.
+- LAN: checkCliente LCM:724-763: empty catch, returns false, then 'sin cuenta' (LCM:257) with no log.
+- ServicioSAP: OrderMethods.CheckClientCreditAsync OM:722-735 writes to Console only; OM:646 throws 'sin cuenta'; OC:45 logs '[ORDER NEW ERROR] ... sin cuenta'. Logs LAN lacked are still present at OM:1004 [CREDITO SD29 FILTRO] and OM:3342 [ORDER GetCondicion ERROR].
+- Example: An SAP 401/timeout for an existing BP, a missing BP '0000000000' and 'C01575835' all produce the same sap.log line.
+- Options: A: keep as is · B: Logger.SAP the exception in CheckClientCreditAsync (no business change) and keep the two traces · C: strict DU17: also remove [CREDITO SD29 FILTRO] and [ORDER GetCondicion ERROR]
+- Recommendation: B. It satisfies both R4 and DU17, and it makes negative tests meaningful.
+
+**SD29-1**
+- What: The SD29 PropreListSet row that sets VTASdArtCreditoWeb.precio and Abono. E5 (09-29) added a server-side $filter on Articulo+OrgVtas+Condicion, a retry with the Magento text and a SKU-only fallback, with 4 new methods. GUIA 1.9b says no new methods without asking. Ratification P20 is pending.
+- LAN: SpVTASInsertArtSolCreditoLinea.sql:243-262: INSERT...SELECT from PropreListaDFinal JOIN VTASCCondicionesCredVtaLinea WHERE c.Condicion=@Condicion, with no org filter.
+- ServicioSAP: InsertCreditArticlesAsync OM:906-933 + ObtenerPreciosCreditoAsync OM:986-1008; FinalListProperMethods FLP:87-104 (escaped).
+- Example: SKU 'DIB+00104', VIU, '12IV'. Before E5, an unescaped '+' could become a space and the line was skipped. With E5 it is filtered correctly. A row whose Condicion differs only in case was found before E5 and not with OData eq (not tested).
+- Options: A: ratify E5 (P20) · B: revert to SKU-only and keep only the escaping
+- Recommendation: A. Validate it in the same V2 run, together with the SD29 capture.
+
+**COND-1**
+- What: Credit product lines when GetCondicionAsync cannot translate articulos[0].condicion because SIGMavi fails (or the CondicionMagento column is missing). Q5 (09-26, 'stop at the start') was replaced by DU15 (09-30, 'continue like LAN'); the error-path residual (ACT-16) is open.
+- LAN: LAN never translated the condition (LCM:110 commented). SPL:258-262 joined on the Magento text, so a known condition was always priced.
+- ServicioSAP: GetCondicionAsync OM:3314-3346: the catch at :3340-3343 logs and falls back to PaymentConditionCatalog; '' gives condicionSinEquivalente (OM:832-835); products are skipped (OM:895-899).
+- Example: '05 M VIU P DIF' with SIGMavi down (not in PaymentConditionCatalog.cs:40-43). LAN: priced lines + SEGU00001. ServicioSAP: header + SEGU00001 only, 'Concluido'.
+- Options: A: accept as an error-path difference · B: fail the credit order before the header when the SIGMavi read throws
+- Recommendation: Decide after the Q6 SELECT. If CondicionMagento does not exist in SIGMavi, choose B.
+
+**CUP-1**
+- What: infoCliente.codigo_promotor and the DMZ route credit/codigoPromocion. DU16 removed the burn from credit, but the Magento promoter checkbox and the route are still live.
+- LAN: SaveData LCM:203-206 CodigoPromocion(code,'Elimina') -> SpVTASVentaCupon.sql:115-165 (burn the newest free coupon and regenerate one).
+- ServicioSAP: ProcessCreditPaymentAsync OM:638-720 has no HandlePromoCodeAsync call (removed in the uncommitted diff). HandlePromoCodeAsync still serves order/validatecupon. There is no credit/codigoPromocion route in CreditController.
+- Example: Code 'AG123'. LAN stamps the coupon with IdEcommerce CRED... and inserts a new one. ServicioSAP leaves VentasCupones untouched.
+- Options: A: keep DU16 and ask Magento to remove the box before the DMZ switch · B: A, plus delete HandlePromoCodeAsync and validatecupon later · C: revert DU16 if a commission process reads VentasCupones
+- Recommendation: A. Confirm that no commission or report process reads VentasCupones.IdEcommerce.
+
+**ORI-1**
+- What: CRED_SOLICITUD_WEB_DATOS_TEMP.condicion and articulo when infoCliente.origen = 'DIMAS MX'. D7 passes origen through, while on 2026-09-22 you deprecated CREDICCondicionArt. P4 is still listed open, and Business Rules RCRE-32 already says it is deprecated.
+- LAN: SP_CREDITO_WEB_DATOS.sql:174-183 overrides @Condicion and @Articulo from CREDICCondicionArt; origen comes from LOM:646.
+- ServicioSAP: CrearSolicitudCreditoAsync OM:776 Articulo '', OM:778 raw condicion, OM:782 Origen = info.origen ?? 'PRODUCTOS MX'.
+- Example: origen 'DIMAS MX', '12 M MA P INM'. LAN takes condicion and articulo from CREDICCondicionArt. ServicioSAP stores '12 M MA P INM' and ''.
+- Options: A: confirm deprecated, no code (P4-A) · B: reject 'DIMAS MX' · C: port the override
+- Recommendation: A, recorded as a DU.
+
+**NOM-1**
+- What: CRED_SOLICITUD_WEB_DATOS_TEMP.nombre VARCHAR(25). DU13 (09-30) joins NameFirst and Namemiddle. The 'LISTO' task R4 text would revert that.
+- LAN: getClientInfo LCM:834 CTE.PersonalNombres (all given names, untrimmed) -> @nombre LCM:154
+- ServicioSAP: ArmarFila SCW:238-240 joins the trimmed NameFirst and Namemiddle. The R4 text is at CREDITO_WEB_ANALISIS_COMPLETO_Y_PLAN_FINAL.md:562: 'fila.Nombre = maestro.NameFirst ?? "";'
+- Example: NameFirst 'MARIA', Namemiddle 'GUADALUPE'. LAN and the code today give 'MARIA GUADALUPE'. R4 as written gives 'MARIA'.
+- Options: A: fix the R4 text to keep the DU13 join · B: apply R4 as written
+- Recommendation: A, and confirm the per-part Trim (ACT-13).
+
+**LIB-1**
+- What: Which orders will call LiberarCliente plus the Magento callback when T1b is enabled. The commented block still has the R2 (new-client) shape, which D6 replaced.
+- LAN: SaveData LCM:208-241: runs only after the lines succeed (LCM:201; a failure goes to the catch at :246), only for accounts starting with 'C', and sends the account.
+- ServicioSAP: OM:677-711 (commented): sends idClienteMagento, which no longer exists; sits after the lines try/catch (OM:664-675), so it would fire even when the lines failed; uen uses ToUpper()=='VIU' (OM:682) while the header uses 'viu' (OM:744).
+- Example: An order for existing BP 1500008218 whose line INSERT fails. LAN does not call the liberador. The block as written would call it and notify Magento.
+- Options: A: existing BP, success path only, send cuentaBp, uen = storeId == 'viu' · B: A, plus excluding prospects (P16) · C: wait for the liberador contract (DU11)
+- Recommendation: C before enabling it. Meanwhile rewrite the commented block to shape A (or B) so it no longer carries R2 logic.
+
+**TQ-1 (Q6, G4-21)** 🔴 blocks testing
+- What: SIGMavi CondicionesCredVtaLinea.Condicion, the value GetCondicionAsync returns and the code then uses as SD29 PropreListSet.Condicion to price VTASdArtCreditoWeb.precio and Abono.
+- LAN: SpVTASInsertArtSolCreditoLinea.sql:258-262: JOIN VTASCCondicionesCredVtaLinea c ON c.CondicionPropre = p.Condicion WHERE c.Condicion = @Condicion. @Condicion is the Magento text from LOM:632 articulos[0].condicion via LCM:111/:910; there is no C# translation (LCM:110 commented).
+- ServicioSAP: OrderMethods.GetCondicionAsync OM:3314-3346 (SELECT TOP 1 Condicion WHERE CondicionMagento=@ AND REPLACE(TiendaVirtual,' ','_')=@StoreId; a non-empty value skips PaymentConditionCatalog), called at OM:832, then the SD29 filter (OM:986-1008, FLP:87-92) and the match (OM:930-933). Hint: GetPlazosAsync reads CondicionPropre from the same table and still translates it through PaymentConditionCatalog (CreditMethods.cs:28-45).
+- Example: '12 M MA P INM', muebles_america. LAN: a priced product line. ServicioSAP: priced if SIGMavi returns '12IA'. If it returns '12 M MA P INM' or 'Credito MA ...', every product line is skipped, only SEGU00001 is written, the answer is 'Concluido', and the only trace is Console output (OM:924, :961).
+- Options: A: you run (read-only, SIGMavi): SELECT COLUMN_NAME, DATA_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME='CondicionesCredVtaLinea'; SELECT TOP 20 CondicionMagento, Condicion, CondicionPropre, TiendaVirtual FROM CondicionesCredVtaLinea WITH (NOLOCK) · B: if Condicion is not the SD29 code, pass the SIGMavi value through PaymentConditionCatalog as GetPlazosAsync does (code change, needs approval) · C: use only PaymentConditionCatalog for credit lines (code change)
+- Recommendation: A before any positive line test; B only if the codes are not in Condicion.
+
+**TQ-2 (TEL-1, G3-11, G3-22, NIP-03)** 🔴 blocks testing
+- What: How A_GET_TelefonoValidado picks the validated phone, which feeds CRED_SOLICITUD_WEB_DATOS_TEMP.ValidacionTelefono, LadaValidar, TelefonoValidar and the getSms target TcAAEA00030_EnvioMensajes.Telefono.
+- LAN: SPD:193-202 and LOM IsValidated :786-817: CteTel Tipo='Movil' AND ValidacionTel=1 ORDER BY Fecha DESC (Intelisis).
+- ServicioSAP: SCW GetTelefonoValidadoAsync :478-521 (first row with ZvalTel true). Share API A_GET_TelefonoValidado.py:5-35 takes max() over all phones with no type or validation filter; null dates become '00000000' (AS_GET_ZQBP_EditarCliente_CteTel.py:61-62) and sort first.
+- Example: Captured BP: LAN gives TelefonoValidado 5522122584 and getSms '3'. ServicioSAP gives null, ValidacionTelefono 1, and getSms '0' with no SMS.
+- Options: A: the deployed API already filters; no change · B: the API owner adds the MOVIL + Zvaltel filter and puts null dates last · C: compute it in ServicioSAP from CteTelSet · D: accept the difference
+- Recommendation: Paste one real response first. If it behaves like the share copy, choose B.
+
+**TQ-3 (G3-23)**
+- What: Format of the validated phone ZtelCte used for ValidacionTelefono, LadaValidar/TelefonoValidar and getSms.
+- LAN: SPD:193-202 and LOM:786-817 use CONCAT(Lada,Telefono) from IntelisisTmp.CteTel (digits only); getSms LCM:2224-2243 requires LEN=10.
+- ServicioSAP: SCW:387 Recortar(ZtelCte,10); OM:626 Trim only; CreditMethods.cs:357-358 requires Length == 10. A captured validated phone is '+523333333333' (CAPTURAS_REALES_APIS.md).
+- Example: ZtelCte '+523333333333' with SMS row '3333333333'. LAN digits are equal, so 0. ServicioSAP compares '+523333333' with '3333333333', so 1, and stores LadaValidar 52. getSms sees length 13 and answers '0'.
+- Options: A: keep the raw value · B: keep digits and the last 10 in GetTelefonoValidadoAsync (new rule, needs your OK) · C: the API returns the 10-digit national number
+- Recommendation: Capture e-commerce mobiles (ACT-18) first. If they carry '+52', choose C (B as an interim). For V2, use a BP with a 10-digit ZtelCte.
+
+**TQ-4 (P1 no-row gates: G1-07/08/18/20/25, G2-16/23/29, G3-09, G5-17)**
+- What: Whether CRED_SOLICITUD_WEB_DATOS_TEMP (and VTASdArtCreditoWeb) get a row when articulos is empty, or codigoPostal/names/incrementId/forzarOrder are null, or infoCliente.telefono (or the number to validate) is shorter than its lada.
+- LAN: SetPedido LOM:588 (float.Parse('') on empty articulos), LOM:599/:603-605 (.Trim() on nulls), LOM:562 (forzarOrder.ToString()); SaveData LCM:139-148 (Substring on a short phone gives 'err'). LAN writes no row in each case.
+- ServicioSAP: OM:1776-1784 (guide plus list); OM:651-654 ('0'/'0'); CrearSolicitudCreditoAsync OM:749-755, :770 CodigoPostal ?? '', :783 IdMagento ?? '0'; InsertCreditArticlesAsync OM:813-817, :829-830. A row is written and the answer is 'Concluido'.
+- Example: articulos []: LAN 0 rows; ServicioSAP 1 header with condicion NULL and 0 lines. telefono '5': LAN 0 rows; ServicioSAP a row with LadaValidar 0, TelefonoValidar '0', telefono_particular ''.
+- Options: A: A1 (gate before SaveGuideAsync) + A3 (phone gate after R1) + A4 + A5, keep Q11 (A-d1), no guide gate · B: accept the rows as decided differences · C: copy only the gates Magento can reach
+- Recommendation: A, with C as the minimum. These decide the expected results of the V3 P1 cases.
+
+**TQ-5 (P7 / P8b, G4-25)**
+- What: Which SD29 row prices VTASdArtCreditoWeb.precio and Abono, and how many lines are written, when Articulo+OrgVtas+Condicion returns several rows (CDistr, Sucursal, Vigente).
+- LAN: SPL:243-262: INSERT...SELECT without TOP writes one line per matching row, all with the same Orden.
+- ServicioSAP: InsertCreditArticlesAsync OM:918-933 takes the OrgVtas filter and then FirstOrDefault, so one line; GetCondicionAsync is TOP 1 without ORDER BY (OM:3322).
+- Example: Two SD29 rows for OrgVtas 05 / 12IV, at 1146.00 and 1199.00. LAN (by analogy) writes 2 lines with Orden 1. ServicioSAP writes 1 line with whichever row SAP returns first.
+- Options: P7 A: no extra filter · P7 C: Sucursal + Vigente filters · P7 D: CDistr confirmed by SAP SD · P8 b1: fan-out like LAN · P8 b2: one line
+- Recommendation: Capture SD29 for 2-3 credit SKUs. You run SELECT TOP 50 IdArtCreditoWeb, Orden, COUNT(*) FROM VTASdArtCreditoWeb WITH (NOLOCK) GROUP BY IdArtCreditoWeb, Orden HAVING COUNT(*) > 1. If history has no duplicates, choose b2.
+
+**TQ-6 (NIP-1, NIP-02)** 🔴 blocks testing
+- What: SAP ZSDT_CTE_ENTITYSet.ZidMagento PATCH failure during credit/getSms when cliente > 0.
+- LAN: LCM:2111-2114 -> UpdateMagentoId LCM:2191-2206: an UPDATE before the existence check, which never blocks the SMS.
+- ServicioSAP: CreditMethods.cs:271-276 -> BPM LinkMagentoAccountAsync :835-875 (no sap-client at :842-843); any error returns -1 (CreditMethods.cs:322-326) and no SMS row is written.
+- Example: PATCH 403 for BP 1500007539, cliente '12345': LAN answers '3' with the SMS queued; ServicioSAP answers '-1' and the DMZ answers 400.
+- Options: A: keep -1 · B: catch only the PATCH, log it and continue · C: B, plus skip the PATCH when ZidMagento already matches
+- Recommendation: B, plus sap-client=110. Until then, test with cliente '0'.
+
+**TQ-7 (T2c, G5-02, G5-24)**
+- What: Duplicate guard for credit resends: CRED_SOLICITUD_WEB_DATOS_TEMP.idMagento against the request incrementId / infoCliente.idCarrito.
+- LAN: SetPedido LOM:538-542 obtenerIdVenta(IdEcommerce) on IntelisisTmp.Venta answers 'PedidoExistente' once the liberador has created the Venta and UpdateCreditOrderId (LOM:2007-2016) has renamed it.
+- ServicioSAP: SetOrderAsync OM:1737-1749 checks SD36 PurchNoC ZSD_ZMER_{incrementId}, which never matches a credit request; the credit branch OM:1774-1797 inserts every time (idMagento = incrementId, OM:783).
+- Example: After authorization Magento resends 000123456 (idCarrito 9909291, forzarOrder '0'). LAN answers 'PedidoExistente' with 0 rows. ServicioSAP writes a second header and lines. A direct resend of the same CRED order today also writes a second row.
+- Options: T2c-A: look up idMagento = incrementId (only works if the rename also covers idMagento) · T2c-B: if incrementId does not start with 'CRED' and a row exists with idMagento 'CRED'+idCarrito, answer 'PedidoExistente' · C: rely on a SAP sales document created at authorization (DU20)
+- Recommendation: T2c-B (the plan's choice). Record the decision now; implement it after DU11.
+
+**TQ-8 (NIP-08, not in the vault rules)** 🔴 blocks testing
+- What: Response is_client_valid / is_phone_validated of credit/GetPhoneValidatedClientSecretName, the Magento checkout gate that runs before getSms and order/new.
+- LAN: LAN CreditController.cs:541-545 -> CreditMethods.GetPhoneValidatedClientSecretName LCM:1783-1806 (+ IsInTableStd LCM:1967-1989, Intelisis CteTel/TablaStD).
+- ServicioSAP: No route in ServicioSAP (grep = 0). DMZ CreditController.cs:290-298 sends it to LAN with curl.Post.
+- Example: Magento sends BP 1500008218. LAN does not find it in Intelisis, returns is_client_valid false, and the credit checkout stays disabled, so getSms and order/new are never reached from Magento.
+- Options: A: port it with A_GET_TelefonoValidado + the AWS catalog and switch it in the DMZ together with ACT-34 · B: keep it in LAN with a BP-to-Intelisis mapping (contradicts D2)
+- Recommendation: A. Add it as a G3 rule and an ACT item; it blocks V4 end-to-end.
+
+### 27.4 Bugs
+
+| Sev. | Where | Bug |
+|---|---|---|
+| high (latent, no caller yet) | `OrderMethods.cs:1234` | CallMagentoAuthorizationCallbackAsync sends {entity_id, status, customer_account, credit_request_id}. The DMZ CreditAuthorizationRequest (DMZ Models/CreditRequest.cs:212-218) and Magento expect {entityId, status, cuenta, idSolicitud}, so with T1b on and no T1a, Magento gets quote 0, the DMZ answers 500 and the row stays PENDIENTE forever. Spot-checked in both files. |
+| high if confirmed (depends on Q6 data) | `OrderMethods.cs:3322` | GetCondicionAsync returns SIGMavi CondicionesCredVtaLinea.Condicion as the SD29 code with no check. If that column holds the Magento text or a Propre description, every credit product line is silently skipped (OM:930-937), only SEGU00001 is written, and the answer is still 'Concluido'. Supporting hint: GetPlazosAsync translates CondicionPropre from the same table through PaymentConditionCatalog (Methods/Credit/CreditMethods.cs:28-45). |
+| high for parity (external dependency, share copy; the deployed version is NO EVIDENCE) | `A_GET_TelefonoValidado.py:29` | max() over all CteTelSet phones by (Zfecha, ZfechaCap, ZidcteTel), with no MOVIL or Zvaltel filter. Null dates are defaulted to '00000000' (AS_GET_ZQBP_EditarCliente_CteTel.py:61-62), which sorts above '/Date(...)/', so an undated unvalidated phone wins. ServicioSAP then sees no validated phone (SCW:517-519), which changes ValidacionTelefono and LadaValidar/TelefonoValidar, and getSms answers 0 with no SMS (TEL-1). |
+| medium | `Logger.cs:28` | Directory.CreateDirectory for {BaseDir}\Logs runs outside any try (Logger.cs:28-31). On an IIS site where Logs is missing and the app pool cannot create it, every Logger.SAP call throws, including the one inside the OrderController catch (OC:45), so the decided 200 'Error, ...' (R4) becomes a 500. The same throw from the OM:610 or OM:671 catches turns an order whose header is already written into an error. |
+| medium | `BusinessPartnerMethods.cs:842` | LinkMagentoAccountAsync builds the CSRF and PATCH URLs without sap-client=110 (:842-843). Every other call in the file sends it (e.g. :30, :76). If the gateway's default client is not 110, getSms with cliente > 0 returns -1 and no SMS is queued (CreditMethods.cs:322-326). |
+| medium (latent) | `OrderMethods.cs:1200` | The callback HttpClient uses a handler that accepts any TLS certificate (OM:1200-1201, passed at :1208). LAN created the same handler but never passed it to HttpClient, so LAN validated certificates. With T1b on, the DMZ credentials would go to an endpoint with an invalid certificate. |
+| medium (security, inherited from LAN LCM:2007-2010) | `CreditMethods.cs:140` | SendSmsNewNumberAsync builds the INSERT into TcAAEA00030_EnvioMensajes with string.Format and request.Cliente unescaped. This is SQL injection on ServicioAndroid for any authenticated caller. It does not affect business parity. |
+| low (latent, unconfirmed) | `SolicitudCreditoWebMethods.cs:613` | FechaSap turns '/Date(-62135596800000)/' into 0001-01-01 instead of treating it as empty, which bypasses the Q11 default of 1900-01-02 (G2-40). The BP05MA format for an empty Birthdt has not been captured. |
+| low | `OrderMethods.cs:677` | The commented liberador block is not a usable template. It uses idClienteMagento, which was removed (:680), has await inside non-async lambdas (:690, :700), compares uen with ToUpper()=='VIU' (:682) while the header uses 'viu' (:744), and sits after the lines try/catch, so it would fire even when the lines failed. LAN does not. |
+| low | `BusinessPartnerMethods.cs:30` | The credit gate puts the raw infoCliente.cuenta into the ZB_DATOS_CLIENTE $filter (:30) and the BP05MA key (:302) without escaping or URL encoding. getSms has a regex guard (CreditMethods.cs:338); order/new does not. No row impact today, since BP05MA would fail; it is an injection hygiene issue. |
+| low | `OrderMethods.cs:347` | The SD29 sales organization matches 'viu' case-insensitively with contains (OM:347), while the header uen and sucursal use an exact 'viu' (OM:744). With storeId 'VIU', the header gets MA (uen 1, sucursal 504) while the lines are priced for VIU (05). |
+| low (comment only) | `OrderMethods.cs:803` | The XML remarks of InsertCreditArticlesAsync (OM:803-810) still describe the old SKU-only SD29 lookup; since E5 the code uses Articulo+OrgVtas+Condicion (OM:986-1008). |
+
+### 27.5 Vault corrections (code wins — not applied; proposed)
+
+- MATRIZ_REGLAS_CREDITO_WEB_LAN_VS_SAP.md §0.1 (:20), G4-24 (:299), G1-14 (:191), G2-22 (:229); CREDITO_WEB_ANALISIS §1 (:60), §2 step 17 (:100), §3 G4-24/G4-40; PLAN §24.2 step 13 (:1991): they say a condition without an equivalent throws before the loop, writes no SEGU00001, and Q5 is pending. The code follows DU15: product lines are skipped and SEGU00001 is written ('Concluido') (OM:829-835, :895-899) (code wins).
+- MATRIZ G1-10 (:187), G5-20 (:339), §0.5 #10 (:92); CREDITO_WEB §2 step 18 (:101), §5.1 E1 (:417), §3 G1-10/G5-20; CAMBIOS §3.1 (:123); PLAN §25.2 (:2329): they say a [CREDITO SIN CUENTA] log exists at OM:648. The code throws 'sin cuenta' with no log (OM:644-647; DU17); only OC:45 [ORDER NEW ERROR] is written (code wins).
+- MATRIZ G3-12, CREDITO_WEB §3.3 G3-12 and §6.3.1 R2-V: they say there is a log [CREDIT ObtenerTelefonoAValidar ERROR] at SCW:368. The code is catch(Exception){throw;} (SCW:364-367) (code wins).
+- MATRIZ G3-03: says the ObtenerNumeroTablaSms error goes only to Console. The code writes Logger.SAP '[ORDER ObtenerNumeroSms ERROR]' (OM:610) (code wins).
+- MATRIZ §0.1 (:21), G5-02, G5-06..08, G5-27 (:326); CREDITO_WEB §1 (:61), §2 step 32 (:115), §3 G5-06..08/G5-27, §6.4.1 T1b (c), §6.5.4 V4 step 7: they describe the promoter coupon burn as active or P3 as open. The credit path has no HandlePromoCodeAsync call (ProcessCreditPaymentAsync OM:638-720; DU16) (code wins).
+- MATRIZ G4-29..G4-37, §0.5 #5; CREDITO_WEB §2 steps 29/31 (:112, :114), §3, §6.3.9 and §6.5.2: they say costo = 0 (OM:902). The code writes DBNull on every line (OM:967; DU14) (code wins).
+- MATRIZ G4-21, §0.5 #5; CAMBIOS §5 (:324, :349): they say the price source (SD29 or PropreListaDFinal) is open and the SKU goes unescaped (FLP:85). SD29 was decided on 2026-09-11, and the filter is escaped (FLP:87-104) (code wins).
+- MATRIZ G4-02/G4-03: they score the eCommerceDetPedidos staging as FALTA. R7/09-26 removed it (OM:527-528), so it is decided-different, pending only the P9 confirmation (code wins).
+- MATRIZ G2-08, CREDITO_WEB §3.2 ('solo NameFirst') and §6.1 (P6), CAMBIOS §4.2 row 3: they say nombre = NameFirst only. The code joins NameFirst and Namemiddle (SCW:238-240; DU13), so the V2 expected nombre derived from CAMBIOS §4.2 is wrong (code wins).
+- CREDITO_WEB_ANALISIS §6.2.1 R4 step 2 (:562): 'fila.Nombre = maestro.NameFirst ?? "";' would undo DU13 (SCW:238-240). Fix the task text before Fable S1.
+- MATRIZ G2-13 (:220), CREDITO_WEB §6.3.15 P14 (:887): they say a BP created from an order gets Marst '2' (OM:2647). The code sets Marst '1' (OM:2659; DU18) (code wins).
+- MATRIZ §0.5 #4 and the G2-06/07/08/11/12/13/18 notes, CAMBIOS §4.2 rows 1/2/3/7/12/20 and §5.1 #5, CREDITO_WEB §6.0 (:464, P5=C) and §6.1: they say uppercase is pending. DU12 closed it: the BP text is stored as-is (SCW:236-259) (code wins).
+- MATRIZ G3-02 note: says SendSmsNewNumber uses A_GET_TelefonoValidado. It texts request.NumeroTelefono (CreditMethods.cs:122, :140-144) (code wins).
+- CREDITO_WEB §3.3 G3-22: says all three sort keys are compared as strings. ZidcteTel is compared as int (A_GET_TelefonoValidado.py:5-15).
+- Business Rules Ecommerce RCR-67 and RCRE-38: they say A_GET_TelefonoValidado returns the newest validated phone. The share API returns the newest phone of any type with its own Zvaltel, and undated phones win (A_GET_TelefonoValidado.py:17-35; AS_GET_ZQBP_EditarCliente_CteTel.py:61-62). The ServicioSAP side (SCW:517-519) is described correctly.
+- Business Rules Ecommerce RCRE-25 (:933): says sexo uses 'the same codes as MapGender'. For empty, MapGender gives '1' (BPM:781-784) while SexoLegado gives '' (SCW:563-570) (code wins; see GEN-1).
+- Business Rules Ecommerce RCRE-21: says order fields are passed with no null-to-'' conversion. OM:769 EntreCalles, :770 CodigoPostal, :782 Origen, :783 IdMagento and :791 OrigenIdMagento do convert (code wins).
+- Business Rules Ecommerce RCOM-5 (:1170): says no logs LAN lacked are added. [ORDER GetCondicion ERROR] (OM:3342) and [CREDITO SD29 FILTRO] (OM:1004) remain (code wins).
+- Business Rules Ecommerce 'POST order/getGuide' says 'Pendientes: ninguno'. ServicioSAP reads a different data.db (SQLiteDb.cs:16-21, SQLITE_DB_PATH) from LAN's (LAN OrderMethods.cs:737/:758), so guides saved by LAN are not found. RGUI-3 cites OrderController.cs:201-210; the crash line is :222.
+- Business Rules Ecommerce credit 'Pendientes conocidos' (~:1087): omits the empty-articulos gate (G2-23). RCRE-46/RCRE-64 assume SIGMavi Condicion holds the SD29 code, which is unverified (Q6); add the caveat.
+- Business Rules Ecommerce, credit 'Quién la llama': presents DMZ validateCredit as planned toward order/new. It is N/A and deprecated (DMZ OrdersController.cs:365-370 commented; no ServicioSAP route).
+- Business Rules Ecommerce glossary / RCOM-3: says Magento sends the BP in infoCliente.cuenta (DU2). Magento248 OrderManagement.php:719 still sends getCuentaIntelisis().
+- ACTIVIDADES §1 (:22) risk 3, ACT-22 (:170), CREDITO_WEB §5: they say bin\ServicioSap.dll is from 2026-09-29 16:14, older than the code. It is 2026-10-02 10:15:08 and contains the 10-01 literals; which instance runs it is NO EVIDENCE.
+- ACTIVIDADES §1/§3/ACT-02 (+161/-64) and CREDITO_WEB §5/§6.6/§8 (+126/-44): the diff baseline. git diff --stat today is 4 files, +109/-64, so Fable's baseline check would stop.
+- ACTIVIDADES §3/§5 line citations predate the 10-01 edit: gate :647/:650 is now OM:644-647; return :722 is :713; branch :1802 is :1774; guide :1804 is :1776; liberador :684-720 is :677-711; callback :1205-1293 (payload :1262-1268) is :1177-1265 (:1234-1240); SD36 :1764-1776 is :1737-1749. Business Rules Ecommerce already uses the current lines.
+- ACTIVIDADES §1: says the liberador is the only blocker. Q6, the Android INSERT permission, TEL-1, NIP-1 and the unported checkout gate GetPhoneValidatedClientSecretName also gate the tests.
+- CREDITO_WEB §6.5.3 (V3) and PLAN §24.2 step 6 (:1984): the expected texts are '[CREDITO SIN CUENTA]', the pre-DU15 N4 result, and 'no tiene crédito activo' / 'Los invitados no pueden pagar con crédito'. Today the body is 200 'Error, Error en SetOrder: sin cuenta', and N4 gives header + SEGU00001; N6 (null condition) is missing.
+- CAMBIOS §3.1 (:124), PLAN §25.2, CREDITO_WEB §5.1 E1, ACT-17(a/b): they describe rule comments and a 'PENDIENTE (T18)' note in the code. Both are gone; only the 'Paridad LAN' comment at OM:1728 remains.
+- FLUJO_CREDITO_LAN_VS_SAP.md §5.1 (estado vigente): says 'DECISIÓN TOMADA 2026-09-11: sí debe frenar'. The code has no limit check (OM:638-720), and PLAN §24.1/§24.7 record parity; mark it deferred (LIM-1).
+- MATRIZ G5-25: cites DMZ HEAD eb28c7c. The DMZ checkout is at 09cb341.
+- MATRIZ §0.5 #3, CAMBIOS §5.1 #4, CREDITO_WEB §6.1: they list P4 (DIMAS MX) as open, while Business Rules RCRE-32 says deprecated and the code has no override (OM:776-782). Record it as a DU.
+
+### 27.6 Information needed
+
+| From | Item | How | Unblocks |
+|---|---|---|---|
+| User | Which ServicioSap.dll the test instance serves, its URL, and who built the 2026-10-02 10:15 share build | Run the share project (VS F5 or IIS Express https://localhost:44399/), make one deliberate 400 or getCondicion call, and check that a fresh line appears in ServicioSap\Logs\sap.log | Every runtime level (L3-L8). It proves the tests run the 10-01 code (E1-E5, DU13-DU18) and not the 09-26 X: build. |
+| User | Test BP for V2/V3: infoCliente.cuenta, which becomes CRED_SOLICITUD_WEB_DATOS_TEMP.cliente | GET partner/client/<BP> (BP05) and partner/client/ma/<BP> (BP05MA). It must exist in client 110, have ZtipoCliente not 'Prospecto', have no validated phone, and have Gender, Birthdt and two given names if possible | V2/V2b/V2c and N4-N6; it fixes the expected 59-column header. |
+| User | Q6: the contents of SIGMavi CondicionesCredVtaLinea (Condicion vs CondicionMagento vs CondicionPropre), including '05 M ... P DIF' | SELECT COLUMN_NAME, DATA_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME='CondicionesCredVtaLinea'; SELECT TOP 20 CondicionMagento, Condicion, CondicionPropre, TiendaVirtual FROM CondicionesCredVtaLinea WITH (NOLOCK) (you run it; read-only) | Pass/fail of every credit product line (G4-21); P18 and COND-1. |
+| User + ServicioAndroid DBA | MAVICBOSANDROID login permissions, and column types and widths (VTASdArtCreditoWeb.precio for P8d; Cliente in VTASDCodigoVerificacioneCommerce and TcAAEA00030_EnvioMensajes for 10-digit BPs) | As that login on ServicioAndroid: SELECT HAS_PERMS_BY_NAME('dbo.CRED_SOLICITUD_WEB_DATOS_TEMP','OBJECT','INSERT'), HAS_PERMS_BY_NAME('dbo.VTASdArtCreditoWeb','OBJECT','INSERT'); plus SELECT TABLE_NAME, COLUMN_NAME, DATA_TYPE, CHARACTER_MAXIMUM_LENGTH FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME IN ('VTASdArtCreditoWeb','VTASDCodigoVerificacioneCommerce','TcAAEA00030_EnvioMensajes') | V2 step 0 (without the permission, lines fail silently and the answer is still 'Concluido'), P8d, and positive getSms. |
+| User + ServicioAndroid DBA + credit area | Go-ahead to write test rows to ServicioAndroid (the same DB LAN uses), a cleanup owner, and the credit-area readers to warn (e.g. the 'TSTF' idMagento prefix) | Name the DBA who deletes the lines and then the header the same day; tell the credit area the test prefix | N4-N6, V2, L6 and positive getSms. |
+| User | SD29 PropreListSet rows for 2-3 credit SKUs (MA 04/12IA, VIU 05/12IV, one SKU with '+') | GET ZAPI_PROPRELIST_SRV/PropreListSet?sap-client=110&$format=json&$filter=Articulo eq '<SKU>' and OrgVtas eq '04' and Condicion eq '12IA' (Hoppscotch). Also run the LAN Orden-duplicates SELECT for P8b | Expected precio and Abono for V2 and the P7/P8b decision. |
+| User | Real A_GET_TelefonoValidado responses (the captured BP and the test BP), CteTelSet through obtenerUrl, and the 23-value catalog read (R2-V) | GET <URL_BP_API>/A_GET_TelefonoValidado?sCliente=<BP>, and the CteTelSet and catalog GETs used by SCW:404-443 and :523-532 | TEL-1, G3-19, G3-23, and the validated-phone branch (L6). |
+| User | BP05MA capture for a BP without Birthdt | GET partner/client/ma/<BP without birth date>; look at the Birthdt value | G2-40 (whether FechaSap stores 0001-01-01) and P1 G-d. |
+| User | Confirmation of what the 2026-10-01 12:12 edit removed (the earlier version is not in git), so ACT-02 can reset the baseline to +109/-64 | You confirm it was only comment removal; Fable re-verifies the diff in ACT-26 | Fable S1 (R1, R3, R4, T1a), which otherwise stops at its baseline check. |
+| ServicioAndroid DBA / SMS team | SMS dispatcher behaviour with BP-keyed rows | sp_helptext 'SpAAea00030_ArmadoSMS' (read-only) | Positive getSms (L7). |
+| Valentín (liberador team) | Liberador contract: does it accept the BP as Cliente, what idVenta it returns, and whether it reads eCommerceDetPedidos, VentasCupones or costo (Q-T1-1..8, ACT-11) | Send the ACT-11 questions | T1b, P9, DU14 confirmation, G5-28, L9. |
+| Credit area + Valentín + SAP SD team (Alan) | Source of creditStatus and the id type of idSolicitud (Q-T2-1..3), and the SAP OData for ZSDT_VBAK.ZIdEcommerce with its ETA and the SD29 CDistr code (DU20, Q-T2-4/5) | Ask the credit area and SAP SD | T2a, T2b, T2c, L10. |
+| Magento team (Javier/Dev2) + DMZ owner | Magento release that sends the BP in infoCliente.cuenta, removes the promoter box, and updates the credit JS account regex; the DMZ switch of getSms, validateSms and GetPhoneValidatedClientSecretName to PostSAP | Coordination items ACT-34 and ACT-35 | V4 end-to-end through Magento. |
+
+### 27.7 Evidence 2026-10-02 — real A_GET_TelefonoValidado response (pasted by the user)
+
+`[{"ZtelCte": "3352323422", "ZvalTel": false}]` for the test BP (BP number not stated yet). User: `ZvalTel` false = the phone is not validated yet (internal validation; COFETEL "real number" is a different check).
+- Confirms the deployed response shape matches `TelefonoValidadoResponse` (ZtelCte string, ZvalTel boolean) and `EsVerdadero` → false.
+- Expected with this BP: `@TelefonoValidado` null (ConstruirContextoAsync returns early, no CteTelSet/AWS read) → `ValidacionTelefono` 1 (0 only if Prospecto); `IsValidatedAsync` "" → LadaValidar/TelefonoValidar from the SMS row or the order phone (3352323422 → 33 / 52323422); `credit/getSms` → code row inserted, no SMS, answer `0` (same as LAN).
+- Suitable for V2 (positive order without a validated phone). Not suitable for the validated-phone case or a positive getSms.
+- TEL-1 NOT closed: one row cannot show whether the API skips an older validated MOVIL. Needed: the BP number and its full CteTelSet / BP05MA `to_CteTel` (ZtipoCte, ZtelCte, Zvaltel, Zfecha, ZidcteTel).
+### 27.8 Decision 2026-10-02 — test writes and rollback (user)
+
+"The rows get inserted, don't worry about that; the delete can be manual; don't do a rollback if LAN doesn't do it."
+- **Test writes approved:** credit-flow tests (order/new credit, getSms) may insert rows in ServicioAndroid through the service. Cleanup is manual, by the user. Claude still runs no SQL.
+- **No rollback where LAN has none:** if the lines (or anything after the header) fail, the header stays written, as in LAN (`ProductosCreditoWeb_SaveData` has no transaction; its catch returns "err"). This closes NEW-B (§24.3) as "keep LAN behavior"; no TransactionScope / BEGIN TRAN is to be added to `CrearSolicitudCreditoAsync` / `InsertCreditArticlesAsync`.
+### 27.9 Decision 2026-10-02 — TEL-1 closed (user)
+
+The response in §27.7 is for **BP 1500008218** (`A_GET_TelefonoValidado?sCliente=1500008218` → `ZtelCte 3352323422`, `ZvalTel false` = not validated). User: "the value of the Client MA BP is not the value you need to take for validate phone; use this API with the BP, like the code, to get the validated phone."
+- **Rule:** the validated phone is exactly what `A_GET_TelefonoValidado` returns for the BP (kept only when `ZvalTel` is true). It is NOT derived from or cross-checked against BP05MA `to_CteTel` or `CteTelSet`. This confirms D4 and Q4; TEL-1 (§27.3) is closed; the "newest validated MOVIL" comparison with LAN's CteTel query is no longer a test prerequisite.
+- The code already follows it: `SolicitudCreditoWebMethods.GetTelefonoValidadoAsync` feeds `@TelefonoValidado`, `OrderMethods.IsValidatedAsync` and `credit/getSms` (`CreditMethods.GetValidatedPhoneNumberAsync`). No change.
+- Drop the §27.5 correction about Business Rules RCR-67/RCRE-38 ("the API returns the newest phone of any type"): the API's selection is the accepted rule.
+- BP05MA remains the source of the request's master data (R7: names, gender, birth date, RFC) — only the phone is excluded.
+- Test BP 1500008218: expected ValidacionTelefono 1 (0 if Prospecto), LadaValidar/TelefonoValidar from the SMS row or the order phone, getSms → code row, no SMS, `0`. A BP whose API answer has `ZvalTel true` is still needed for the validated-phone case and a positive getSms.
+### 27.10 SD29 real row 1026233 (PRIN00043) — line pricing vs LAN (workflow `wf_5f6050e8-5fb`, `_IMPLEMENTACION_SP_CREDITO\sd29_row_check_2026-10-02.json`)
+
+Row pasted by the user: OrgVtas 04, Sucursal 0504, Condicion `Credito Viu 12M P INM`, Descripcion `Credito MA 12M P INM`, Precio 1146.00, Abono 0.00, DescuentoCategoria 0.00, Formato `INST Test Mayoreo 1/16`.
+- **Two different conversions exist and only one is implemented.** (1) Magento text → SAP payment-term code (`12IA`/`12IV`): `GetCondicionAsync` (SIGMavi `Condicion WHERE CondicionMagento`, fallback `PaymentConditionCatalog`). It is needed by SD01 `PaymentTerms` (`BuildSapOrderAsync`) and `order/getCondicion` — keep it. (2) Magento text → **CondicionPropre** text (`Credito Viu 12M P INM`): what LAN used for the lines (`SpVTASInsertArtSolCreditoLinea.sql:258-262`: `JOIN VTASCCondicionesCredVtaLinea c ON c.CondicionPropre = p.Condicion WHERE c.Condicion = @Condicion(Magento text) AND p.articulo = @artRegion`, no UEN/Sucursal/Vigente filter, no TOP). SD29 `Condicion` = PropreListaDFinal `Condicion` (same Propre-text style). ServicioSAP does not do conversion (2) for the lines.
+- **Today:** the credit line matches SD29 `Condicion` against `{12IA|12IV, raw Magento text}`. A Propre-text row is never matched → product line skipped silently, only SEGU00001, "Concluido". MA with this row: no line (LAN: no line either, because the row's text is Viu). VIU: no line (OrgVtas 04 ≠ 05 and the key misses); LAN would write 1146 / Abono 0.
+- **Proposed fix (not applied, needs user approval + the SIGMavi query to choose the column):** in `InsertCreditArticlesAsync` only — primary key = all `CondicionPropre` values from SIGMavi `CondicionesCredVtaLinea` for the Magento text (no TOP, no TiendaVirtual filter, like the SP); secondary key = today's code `condicionSap` (also via `PaymentConditionCatalog.GetSapPaymentCode(row.Condicion)`); read SD29 by SKU only (`GetFinalListProperBySkuAsync`) and match in memory ignoring case; keep the OrgVtas 04/05 filter (user decision 2026-09-11, FLUJO:347); drop the raw-Magento-text comparison; do not use Descripcion. `GetCondicionAsync`, `BuildSapOrderAsync`, `order/getCondicion` untouched.
+- **Row 1026233 looks like inconsistent DEV test data** (OrgVtas/Sucursal/Descripcion = MA, Condicion = Viu, Abono 0). Ask the SD29/PCP owner which store it is for.
+- Still needed: SIGMavi `SELECT * FROM CondicionesCredVtaLinea WHERE Mensualidades = 12` (+ column list); SKU-only SD29 responses for 2-3 credit SKUs (MA and VIU); optionally the LAN IntelisisTmp join for the same SKUs.- **2026-10-02, user:** row 1026233 was only an example; SD29 will contain the proper rows for each condition when the query runs. → Q2 (store of row 1026233) closed, no data action. The match-key gap remains: if real rows store the Propre text, today's code skips the line; the proposed fix (CondicionPropre primary key + code secondary key, SKU-only read, OrgVtas filter kept) prices both formats. Offered: A = implement now using the same SIGMavi column as `GetCondicionAsync` (`CondicionMagento`), confirm with the SIGMavi query later; B = wait for the query. Awaiting the user's choice.
+### 27.11 Task list to the first functional credit test (2026-10-02)
+
+| # | Phase | Task | Owner | Depends on | Done when |
+|---|---|---|---|---|---|
+| T1 | 0 Inputs | Choose SD29 fix A (implement now, Diego's column `CondicionMagento`) or B (wait for the query) | User | — | Answered |
+| T2 | 0 Inputs | SIGMavi `SELECT * FROM CondicionesCredVtaLinea WITH (NOLOCK) WHERE Mensualidades = 12;` | User | — | Magento-text column and CondicionPropre for `12 M MA P INM` known |
+| T3 | 0 Inputs | Real credit SKU for MA (+ VIU) and its SKU-only SD29 response | User | — | All 04/05 rows of the SKU seen |
+| T4 | 0 Inputs | `HAS_PERMS_BY_NAME` INSERT on CRED_SOLICITUD_WEB_DATOS_TEMP and VTASdArtCreditoWeb for the MAVICBOSANDROID login | User | — | Both 1 |
+| T5 | 0 Inputs | Who rebuilds/serves, URL, who gets the login/auth token | User | — | Test host known |
+| T6 | 1 Code | Fix in `InsertCreditArticlesAsync` (CondicionPropre primary key, code secondary key, SKU-only read, OrgVtas kept, no raw Magento text; `GetCondicionAsync` untouched) | Claude | T1 (T2 if B) | Written |
+| T7 | 1 Code | MSBuild VS18 (output off the share) + adversarial check vs LAN | Claude | T6 | 0 errors, check OK |
+| T8 | 1 Code | Update Business Rules Ecommerce (credit lines) + runbook in the same change | Claude | T6 | Docs = code |
+| T9 | 2 Prep | Rebuild/serve the binary with the fix | User | T7 | Fresh line in Logs\sap.log |
+| T10 | 2 Prep | Captures: GET partner/client/ma/1500008218; the 2 SMS-table SELECTs for the BP | User (Claude gives the text) | T9 | Pasted |
+| T11 | 2 Prep | Request JSON (MA, costoEnvio 150, forzarOrder "1", new incrementId ≤ 12) + expected 59 columns, lines, response + verification SELECTs | Claude | T3, T10 | Delivered |
+| T12 | 3 Run | Smoke: GET partner/client/1500008218; no token → 401; empty body → 400 | User | T9 | As expected |
+| T13 | 3 Run | Negatives: cuenta '' / 0000000000 / C00000000 → 200 "Error, … sin cuenta", 0 rows | User | T12 | As expected |
+| T14 | 3 Run | Positive MA order (V2) → Concluido, 1 header + product line + SEGU00001 | User | T11, T12, T4 | Rows written |
+| T15 | 3 Run | Paste response, sap.log and the 2 SELECTs; field-by-field comparison vs LAN | User + Claude | T14 | Match or list of differences |
+| T16 | 3 Run | Optional VIU order | User | T14 | As expected |
+| T17 | 3 Run | Manual cleanup of test rows | User | T15 | Clean |
+| T18 | 4 Close | Record results; apply vault corrections of §27.5 | Claude (with go-ahead) | T15 | Done |
+| T19 | 4 Close | Commit | User | T18 | Committed |
+
+Later (not needed for the first test): GEN-1, LIM-1, P1, NIP-1 (+ sap-client=110), Q20; bugs Logger.CreateDirectory, callback keys T1a, SendSmsNewNumber injection; NIP SMS test (BP with ZvalTel true + team phone + dispatcher); other teams (Magento BP + promoter box, DMZ switch, liberador, creditStatus/updateCreditOrderId, TELEFONIA); Fable plan fixes (`REVISION_PLAN_FABLE_2026-10-02.md`).- **2026-10-02, user (SIGMavi semantics):** in `CondicionesCredVtaLinea`, `CondicionMagento` = the value Magento sends and `Condicion` = the value converted for SAP; `GetCondicionAsync` reads by `CondicionMagento` and returns `Condicion` for use inside the SAP process (including the SD29 match at OM:908/:931). → Q6 answered for the columns. If SIGMavi `Condicion` equals the SD29 `Condicion` text of the price rows, today's code prices the line and **fix A / T6 is not needed** (T1 closes as "no fix"). Remaining check (T2 reduced): `SELECT CondicionMagento, Condicion, TiendaVirtual FROM CondicionesCredVtaLinea WITH (NOLOCK) WHERE CondicionMagento IN ('12 M MA P INM','12 M VIU P INM');` or, without SQL, `GET order/getCondicion/muebles_america/12 M MA P INM` and `/viu/12 M VIU P INM` on the running service (a `12IA` answer may be the catalog fallback — look for `[ORDER GetCondicion ERROR]` in sap.log). Residual risk, noted only: when SIGMavi fails, the `PaymentConditionCatalog` fallback returns a code that will not match text rows → line skipped (logged).
+### 27.12 2026-10-02 — Fable root path corrected (user: "yes change the root path")
+
+`\\CATECINF214058D\Migracion SAP` → `\\172.16.214.58\sap` in `SKILL.md` (9 mentions), `GUIA_MIGRACION_FABLE.md:94`, `Resources\MemoryClaude\convenciones-migracion-sap.md:13`, `LAN - Mapa.md:13`. Historical/explanatory mentions kept. Remaining fixes before Fable S1 (package 1, T1.1-01): build without `Z:` (GUIA §9b → 01 §0.5 V1), X-1 (who updates Business Rules), X-2 (HTTP status policy), remove T1.1-02. See `REVISION_PLAN_FABLE_2026-10-02.md` §4 and §8.
+- **X-1 answered 2026-10-02:** Fable updates Business Rules Ecommerce in the same change when the change rests on rules already defined; asks otherwise. Applied in 01_CustomersController.md (§0.6 exception, S1 prompt) and PLAN_FABLE_POR_CONTROLADOR.md (mandatory reading 4, closure criterion).

@@ -1,4 +1,5 @@
 # Master Migration Summary Unified: LAN a SAP (Estado Global y Arquitectura)
+> 2026-10-01: cómo funciona ServicioSAP hoy está en [[Business Rules Ecommerce]] (fuente única). Este documento queda como historia; si contradice a esa fuente, gana la fuente.
 
 > [!info] Documento Maestro Unificado (Single Source of Truth)
 > **Proyecto:** Migración LAN (Intelisis) a SAP S/4HANA (Módulo Órdenes, E-Commerce, Crédito y Servicios)
@@ -7,7 +8,6 @@
 > **Última Sincronización:** 01 de Septiembre de 2026
 
 ---
-
 ## 🆕 Actualización: 01 de Septiembre 2026 (Refinamiento Async y Fixes de Integración SAP Gateway)
 
 Durante esta fase de estabilización se realizaron correcciones críticas en la comunicación OData con SAP S/4HANA (SD40 y PropreList) para resolver ABAP Dumps y errores de mapeo:

@@ -3,8 +3,8 @@ tags: [contrato, endpoint, migracion, ola-4]
 partida: E-07
 actualizado: 2026-09-03
 ---
-
 # E-07 — `credit/guardardocumento`
+> 2026-10-01: cómo funciona ServicioSAP hoy está en [[Business Rules Ecommerce]] (fuente única). Este documento queda como historia; si contradice a esa fuente, gana la fuente.
 
 Guarda un documento del expediente del cliente (INE, comprobante, contrato…) en
 `MAVI_DOC_CTE`, la tabla de documentos de **AdminDoc**.

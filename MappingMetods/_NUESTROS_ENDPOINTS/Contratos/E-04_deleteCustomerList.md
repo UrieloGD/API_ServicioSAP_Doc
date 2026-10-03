@@ -3,8 +3,8 @@ tags: [contrato, endpoint, migracion, ola-2]
 partida: E-04
 actualizado: 2026-08-07
 ---
-
 # E-04 — customer/deleteCustomerList
+> 2026-10-01: cómo funciona ServicioSAP hoy está en [[Business Rules Ecommerce]] (fuente única). Este documento queda como historia; si contradice a esa fuente, gana la fuente.
 
 Da de baja un correo. **Solo de la lista blanca**, pese al nombre genérico.
 

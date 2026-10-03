@@ -5,6 +5,7 @@ estado: vigente
 ---
 cambiar
 # Guía de migración LAN → DMZ → ServicioSAP
+> 2026-10-01: cómo funciona ServicioSAP hoy está en [[Business Rules Ecommerce]] (fuente única). Este documento queda como guía y análisis; si contradice a esa fuente, gana la fuente.
 
 > [!abstract] Para qué sirve este documento
 > Es la **referencia de desarrollo** para migrar el backend de e-commerce de MAVI a S/4HANA, pensada para ser consumida directamente por Fable 5.1. Unifica los tres proyectos:
@@ -27,7 +28,6 @@ cambiar
 > - ❌ **refutado** — se reportó y se cayó; no volver a levantarlo
 
 ---
-
 ## 0. El objetivo, y dónde viven las reglas
 
 > [!important] Qué significa que esta migración esté terminada
@@ -91,7 +91,7 @@ cambiar
 Todas las rutas del skill cuelgan de: (cabe mencionar que esa es la ruta remota, por lo tanto si algun dato maneja una ruta absoluta sin entrar por red, debes no)
 
 ```
-\\CATECINF214058D\Migracion SAP\.agents\skills\lan-sap-migration
+\\172.16.214.58\sap\.agents\skills\lan-sap-migration
 ```
 
 Si una ruta del `SKILL.md` no resuelve, **no inventes la ubicación**: reporta y pide verificación (regla 5).
@@ -567,7 +567,7 @@ Todas verificadas con compilación limpia (Roslyn, 210 fuentes, **0 errores**).
 |---|---|
 | `FN_MAVIRM0906CobxPol` | `credit/getClienteSaldo/` sigue en LAN |
 | `TcAAea00030_EnvioMensajes` | `credit/codigoRecomendado` sigue en LAN |
-| `VTASdArtCreditoWeb` | `credit/CreditoWeb_SaveData_Articulos` sigue en LAN |
+| `VTASdArtCreditoWeb` | `credit/CreditoWeb_SaveData_Articulos` sigue en LAN · **Corrección 2026-09-30:** esa ruta sigue en LAN, pero la tabla **ya tiene consumidor en ServicioSAP**: la rama de crédito de `order/new` escribe `VTASdArtCreditoWeb` directo, con la conexión Android del `Web.config` (`MAVICBOSANDROID`, vía `ConexionSQL.obtenerConexionAndroidAsync`), en `OrderMethods.InsertCreditArticlesAsync` (`OrderMethods.cs:857-885`, INSERT en `:871-873`); el SP de líneas ya no se llama. Por el criterio de arriba ahora sí califica: su DDL (tipo de `precio`, `costo` NULL) se necesita para P8. Ver [[CREDITO_WEB_ANALISIS_COMPLETO_Y_PLAN_FINAL]] |
 | `fnSplit`, `fnQuitarAcentos`, `FnTINomenclaturaCamelCase`, `FN_eCommerceUrlkey` | exportación de catálogo, no puenteada |
 | `Fn_MaviDM0173CalcPorcMonedero`, `SP_InsertaTarjetaMonVirtual`, `spRedimirMovMonederoMAVI` | creación de pedido **de LAN**, reemplazada por `order/new` |
 

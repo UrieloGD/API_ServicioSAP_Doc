@@ -3,8 +3,8 @@ tags: [contrato, endpoint, migracion, ola-2]
 partida: E-02
 actualizado: 2026-08-11
 ---
-
 # E-02 — customer/setCustomerList
+> 2026-10-01: cómo funciona ServicioSAP hoy está en [[Business Rules Ecommerce]] (fuente única). Este documento queda como historia; si contradice a esa fuente, gana la fuente.
 
 Da de alta un correo en la lista blanca o negra de eCommerce.
 

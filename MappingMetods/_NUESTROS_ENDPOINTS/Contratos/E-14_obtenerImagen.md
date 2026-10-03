@@ -3,8 +3,8 @@ tags: [contrato, endpoint, migracion, ola-6]
 partida: E-14
 actualizado: 2026-09-03
 ---
-
 # E-14 — `product/obtenerImagen`
+> 2026-10-01: cómo funciona ServicioSAP hoy está en [[Business Rules Ecommerce]] (fuente única). Este documento queda como historia; si contradice a esa fuente, gana la fuente.
 
 Copia una imagen desde el share de imágenes optimizadas a la carpeta local desde la que
 después se suben a Magento, renombrándola por el camino.

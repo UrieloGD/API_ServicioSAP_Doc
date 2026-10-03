@@ -1,7 +1,7 @@
 # Registro General de Tareas Implementadas en ServicioSAP
+> 2026-10-01: cómo funciona ServicioSAP hoy está en [[Business Rules Ecommerce]] (fuente única). Este documento queda como historia; si contradice a esa fuente, gana la fuente.
 
 Este documento engloba de forma generalizada todas las tareas arquitectónicas y de desarrollo que se han realizado en la capa `ServicioSAP` (.NET 4.7.2) para cada Controlador y Método, conectando Magento/DMZ con S/4HANA.
-
 ## 🛠️ Tareas Generales por Componente
 
 ### 1. Controladores (`ServicioSap\Controllers`)[Optimista: 1 día, Promedio:  3 días, Pesimista:  6 días]

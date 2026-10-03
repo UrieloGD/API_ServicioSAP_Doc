@@ -1,4 +1,5 @@
 # Master Migration Summary Unified: LAN a SAP (Estado Global y Arquitectura)
+> 2026-10-01: cómo funciona ServicioSAP hoy está en [[Business Rules Ecommerce]] (fuente única). Este documento queda como historia; si contradice a esa fuente, gana la fuente.
 
 > [!info] Documento Maestro Unificado (Single Source of Truth)
 > **Proyecto:** Migración LAN (Intelisis) a SAP S/4HANA (Módulo Órdenes, E-Commerce, Crédito y Servicios)
@@ -7,7 +8,6 @@
 > **Última Sincronización:** 25 de Agosto de 2026
 
 ---
-
 ## 🏗️ Diccionario de Infraestructura (URLs Base y Rutas Locales)
 
 En la siguiente tabla se mapean las constantes y orígenes de datos utilizados en la capa de consumo hacia su destino real:

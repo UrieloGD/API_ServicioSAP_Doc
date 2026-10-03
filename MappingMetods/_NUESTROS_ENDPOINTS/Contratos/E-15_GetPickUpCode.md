@@ -5,8 +5,8 @@ endpoint: order/GetPickUpCode
 probado: 2026-09-14
 actualizado: 2026-09-14
 ---
-
 # E-15 — `order/GetPickUpCode`
+> 2026-10-01: cómo funciona ServicioSAP hoy está en [[Business Rules Ecommerce]] (fuente única). Este documento queda como historia; si contradice a esa fuente, gana la fuente.
 
 Devuelve la clave con la que el cliente recoge su pedido en sucursal. **Solo lee**: los tres
 procesos que escriben la clave son partidas aparte.

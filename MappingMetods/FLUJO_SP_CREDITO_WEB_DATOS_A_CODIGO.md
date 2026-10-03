@@ -4,9 +4,10 @@ fecha: 2026-09-18
 alcance: SP_CREDITO_WEB_DATOS (3 ramas) + pre-solicitud + satelites, migrado a codigo de ServicioSAP
 estado: diseno verificado contra codigo · 3 decisiones abiertas · 1 verificacion bloqueante
 ---
-
 # `SP_CREDITO_WEB_DATOS` migrado a codigo — el flujo completo
+> 2026-10-01: cómo funciona ServicioSAP hoy está en [[Business Rules Ecommerce]] (fuente única). Este documento queda como historia; si contradice a esa fuente, gana la fuente.
 
+**2026-09-30 — Lectura principal del crédito web:** [[CREDITO_WEB_ANALISIS_COMPLETO_Y_PLAN_FINAL]] (todas las reglas G1-G5, decisiones DU1-DU10, plan final y tutorial de Fable). Este documento queda como historia y detalle; sus afirmaciones desactualizadas están en la §7.2 de ese documento. (Línea agregada sin mover la numeración.)
 > [!abstract] Que es este documento
 > El SP y sus satelites, convertidos en un plan de codigo para **`ServicioSAP` (C#)**. Una sola pieza por unidad de logica: que hace el SQL, cual es su equivalente, que estado sale de tabla y pasa a codigo, y donde va en el proyecto.
 >
@@ -20,7 +21,6 @@ estado: diseno verificado contra codigo · 3 decisiones abiertas · 1 verificaci
 > Lo que este documento **no** tiene: una sola ejecucion real. Nada de aqui se probo contra la base ni contra SAP. Antes de escribir codigo hay que cerrar la verificacion de §6, porque puede invalidar la linea base.
 
 ---
-
 ## 1. Las decisiones que rigen este diseno
 
 Tomadas por el usuario el 2026-09-18. No son supuestos: son el marco. Donde el corpus las contradiga, ganan estas.

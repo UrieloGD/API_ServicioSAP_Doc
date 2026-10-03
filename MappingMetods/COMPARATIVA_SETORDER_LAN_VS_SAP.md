@@ -1,11 +1,11 @@
 # Comparativa de creación de orden: `SetPedido` (LAN) vs `SetOrderAsync` (ServicioSAP)
+> 2026-10-01: cómo funciona ServicioSAP hoy está en [[Business Rules Ecommerce]] (fuente única). Este documento queda como análisis; si contradice a esa fuente, gana la fuente.
 
 > Documento de análisis + plantilla de verificación de paridad funcional.
 > Base analizada: `C:\BackEndEcommerce\Migracion SAP` — solo lectura, sin cambios aplicados.
 > Fecha de análisis: 2026-09-07
 
 ---
-
 ## 1. Identificación de los dos flujos
 
 | | LAN (legado) | ServicioSAP (destino) |

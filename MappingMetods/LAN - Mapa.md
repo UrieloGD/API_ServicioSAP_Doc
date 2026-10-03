@@ -10,7 +10,7 @@ agente: Nexo
 
 Mapa principal de la capa **LAN (APIMagento)** para el proyecto de migración a SAP. Este documento es la raíz del grafo: **todo `.md` y `.csv` del vault debe estar enlazado aquí**.
 
-> **Bóveda designada para esta migración:** `\\CATECINF214058D\Users\magalindo\Documents\Migracion SAP\.agents\skills\lan-sap-migration\MappingMetods`
+> **Bóveda designada para esta migración:** `\\172.16.214.58\sap\.agents\skills\lan-sap-migration\MappingMetods`
 > Autorizada explícitamente por el usuario el 2026-08-03 como raíz documental del esfuerzo, en lugar de la bóveda general de `urvalencia`.
 
 ---

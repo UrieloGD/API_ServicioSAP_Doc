@@ -2,8 +2,8 @@
 tags: [contratos, endpoints, migracion, indice]
 actualizado: 2026-09-08
 ---
-
 # Contratos de endpoints — Migración LAN → SAP
+> 2026-10-01: cómo funciona ServicioSAP hoy está en [[Business Rules Ecommerce]] (fuente única). Este documento queda como historia; si contradice a esa fuente, gana la fuente.
 
 Una ficha por partida migrada: qué recibe en el body, qué responde en cada código HTTP, y
 cómo viaja esa respuesta de vuelta al cliente a través de la DMZ.

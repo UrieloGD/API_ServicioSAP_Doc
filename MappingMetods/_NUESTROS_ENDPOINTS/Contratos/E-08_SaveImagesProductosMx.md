@@ -3,8 +3,8 @@ tags: [contrato, endpoint, migracion, ola-4]
 partida: E-08
 actualizado: 2026-09-03
 ---
-
 # E-08 — `credit/SaveImagesProductosMx`
+> 2026-10-01: cómo funciona ServicioSAP hoy está en [[Business Rules Ecommerce]] (fuente única). Este documento queda como historia; si contradice a esa fuente, gana la fuente.
 
 Guarda el lote de imágenes de un expediente de crédito: las de INE en disco, y la selfie en
 disco **y** en `MAVI_DOC_CTE`.

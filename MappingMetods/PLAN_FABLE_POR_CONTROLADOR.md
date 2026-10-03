@@ -58,6 +58,7 @@ No se repite en cada sección. Fable lo lee una vez y lo arrastra.
 1. `SKILL.md` — las 32 reglas de construcción
 2. [[GUIA_MIGRACION_FABLE]] §0 a §2 — objetivo, clases de ruta, evidencia válida
 3. El controlador de **LAN** homólogo, para ver qué hace de verdad
+4. [[Business Rules Ecommerce]] — fuente única de cómo funciona ServicioSAP hoy: el bloque de cada ruta del paquete (decisión del usuario 2026-10-02, X-1)
 
 ### Criterio de cierre de cada paquete
 
@@ -66,6 +67,7 @@ No se repite en cada sección. Fable lo lee una vez y lo arrastra.
 - [ ] El puente del DMZ usa `PostSAP` / `GetSAP` / `PatchSAP`, nunca HTTP a mano
 - [ ] Los `.cs` nuevos están en `ServicioSap.csproj` (regla 19)
 - [ ] **MSBuild** compila sin errores (guía §9b — no basta el `csc` suelto)
+- [ ] [[Business Rules Ecommerce]] actualizado en el mismo cambio: el bloque de cada ruta tocada y sus citas `archivo:línea` (SKILL.md; decisión X-1 del 2026-10-02). Solo con reglas ya definidas; si falta una, se pregunta
 - [ ] E2E documentada por ruta: request enviado y response exacto (regla 25)
 - [ ] Lo que quedó bloqueado está anotado con **quién** lo desbloquea
 
@@ -141,9 +143,9 @@ El flujo central, y el más documentado: [[COMPARATIVA_SETORDER_LAN_VS_SAP]] y [
 
 | | Rutas | Nota |
 |---|---|---|
-| **7a · Creación** | `setOrder` → `order/new` | Ya conectado. Pendiente: `PedidoExistente` viaja con HTTP 200 donde LAN daba 409 |
+| **7a · Creación** | `setOrder` → `order/new` | Ya conectado. Pendiente: `PedidoExistente` viaja con HTTP 200 donde LAN daba 409 · **Nota 2026-09-30 (crédito):** la rama de crédito de `order/new` se trabaja con [[CREDITO_WEB_ANALISIS_COMPLETO_Y_PLAN_FINAL]] §6. Hecho en el working copy, sin commit y sin E2E: E1-E5 (la cabecera ya guarda lo mismo que LAN + SP). Faltan las compuertas "sin fila", el precio y el costo de las líneas, el cupón y todo lo posterior al alta |
 | **7b · Cancelación y devolución** | `cancelOrder`, `returnOrder` | `setreturn` **ya está en producción** y tiene defectos confirmados. Prioridad |
-| **7c · Crédito** | `creditStatus`, `updateCreditOrderId`, `validateCredit` | **Bloqueado**: falta la URL del liberador (Valentín) |
+| **7c · Crédito** | `creditStatus`, `updateCreditOrderId`, `validateCredit` | **Bloqueado**: falta la URL del liberador (Valentín) · **Nota 2026-09-30:** `validateCredit` es **N/A**: en el DMZ la ruta está dentro de un bloque comentado (`OrdersController.cs:366-402`), Magento248 no la llama (0 llamadas) y ServicioSAP no la tiene; no se migra. `creditStatus` y `updateCreditOrderId` quedan bloqueadas por **T2** (dónde vive la decisión de crédito, qué id consulta Magento y qué se renombra: área de crédito, Valentín, Alan y Dev 2); hoy el DMZ las manda con `curl.Get`/`curl.Post` a `URL_INTELISIS` (`:467`, `:411`). El liberador y el aviso a Magento quedan bloqueados por **T1** (Valentín): el bloqueo ya no es la URL, porque las llaves del liberador existen en el `Web.config` de ServicioSAP, sino el contrato. Diseño listo en [[CREDITO_WEB_ANALISIS_COMPLETO_Y_PLAN_FINAL]] §6.4 |
 | **7d · Openpay y pickup** | `checkOpenpay`, `createStorepickupCode`, `insertPaymentData` | `checkOpenpay` es la brecha más grande del flujo de contado |
 | **7e · Consultas** | `getIntelisisStatuses`, `getPosCancellations`, `getOrderId`, `getOrderInfoAndSet`, `estimated-delivery` | `getPosCancellations` está mapeado a `cancelInvoice`, que es **la operación inversa** |
 
@@ -163,7 +165,7 @@ El más grande después de crédito. **Partirlo en tres:**
 
 El paquete más grande y el de más bloqueos externos. **No tomarlo hasta tener los tres primeros hechos.**
 
-Contexto obligatorio: [[FLUJO_CREDITO_LAN_VS_SAP]].
+Contexto obligatorio: [[FLUJO_CREDITO_LAN_VS_SAP]]. **Nota 2026-09-30:** la solicitud de crédito que crea `order/new` (cabecera `CRED_SOLICITUD_WEB_DATOS_TEMP`, líneas `VTASdArtCreditoWeb`, cupón, liberador y aviso a Magento) y las rutas `creditStatus` y `updateCreditOrderId` no se trabajan en este paquete: van por [[CREDITO_WEB_ANALISIS_COMPLETO_Y_PLAN_FINAL]].
 
 **Fuera de alcance dentro de este controlador:** todo lo de **Credilana** (`CreditoWeb_Seguro`, `SaveCredilanaInfo`). Guía §1.6b.
 

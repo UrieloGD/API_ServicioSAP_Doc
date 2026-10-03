@@ -3,8 +3,8 @@ tags: [contrato, endpoint, migracion, ola-6]
 partida: E-11
 actualizado: 2026-08-25
 ---
-
 # E-11 — `customer/getCuenta`
+> 2026-10-01: cómo funciona ServicioSAP hoy está en [[Business Rules Ecommerce]] (fuente única). Este documento queda como historia; si contradice a esa fuente, gana la fuente.
 
 Consulta la cuenta de crédito que Magento tiene registrada para un correo.
 

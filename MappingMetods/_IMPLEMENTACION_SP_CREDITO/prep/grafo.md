@@ -1,4 +1,4 @@
-
+> 2026-10-01: cómo funciona ServicioSAP hoy está en [[Business Rules Ecommerce]] (fuente única). Este documento queda como análisis; si contradice a esa fuente, gana la fuente.
 
 ## crear_solicitud_verbatim
 

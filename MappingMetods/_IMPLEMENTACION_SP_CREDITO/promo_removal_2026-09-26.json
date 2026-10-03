@@ -1,0 +1,608 @@
+{
+ "synthesis": {
+  "answer": "If you remove only the \"Elimina\" call from the credit flow (Option A: SAP Methods\\Order\\OrderMethods.cs:705-709), nothing changes in how the flow behaves. Its result is thrown away (:708), and HandlePromoCodeAsync catches every exception and returns \"err\" (:1033, :1168-1172). So the credit header, the article lines, the error handling and the \"Concluido\" response to Magento (:1809-1814) all stay the same, and neither Magento nor the DMZ reads anything from it. The only side effect is on data: ServicioSAP stops stamping FechaUtilizacion/IdEcommerce and stops inserting a new free row in SigMavi VentasCupones (:1098, :1147-1159). That row is the only place a credit web order gets tied to its promoter. The credit header's Agente/Codigo stay NULL (:803-840), order.Agente is only used on the cash path (:1852, :2367, :2621->:2790), and LAN also recorded the promoter only through SpVTASVentaCupon. No code in any repo reads either coupon table, but commissions or reports outside the repos could not be checked (NO EVIDENCE). The burn never limited reuse anyway: LAN's ValidarCupon only returns 0 or 1, so \"Utilizado\" can never come back (SpVTASVentaCupon.sql:60-113). So the Q8 question about LAN's rules (stamp only the newest free row vs ServicioSAP stamping all free rows at :1098) stops mattering. Also deleting HandlePromoCodeAsync and GET order/validatecupon (Option B) breaks no live caller. But the Magento checkout still blocks the order unless the promoter code gets an exact \"OK\" from DMZ credit/codigoPromocion, and that is true under both options.",
+  "option_a_remove_burn_only": {
+   "side_effects": [
+    "No change to flow control or to the response. HandlePromoCodeAsync catches everything (OrderMethods.cs:1033, :1168-1172), so the catch at :711-717 only ever caught InsertCreditArticlesAsync failures (:703), and it keeps doing that. The return value (:759), the credit OrderResponse (:1809-1814) and the order/new body (Controllers\\OrderController.cs:28-35) have no promo field.",
+    "DATA CHANGE (verified): promoter-assisted credit orders no longer get UPDATE VentasCupones SET FechaUtilizacion=GETDATE(), IdEcommerce=incrementId (OrderMethods.cs:1098), and no new free row is inserted (:1147-1159). ServicioSAP keeps the promoter nowhere else for credit orders. CrearSolicitudCreditoAsync never sets Agente/Codigo/CodigoRecomendador (:803-840; mapped as-is at Methods\\Credit\\SolicitudCreditoWebMethods.cs:287, :292-293). The credit branch returns (:1809-1814) before order.Agente is used (:1852, BuildSapOrderAsync Z1 at :2367-2369, BuildBpClientFromOrder Zusuariopos at :2790 via :1840->:2621). LAN is no different: LAN Metodos\\CreditMethods.cs contains no Agente parameter, and the promoter only went to IntelisisTmp.VTASCVentaCupon through the SP (SpVTASVentaCupon.sql:115-159).",
+    "The attribution loss only matters if something reads the ledger. No reader of VentasCupones or VTASCVentaCupon exists in ServicioSAP (only :1044/:1098/:1147), LAN (only CreditMethods.cs:403 calls the SP), DMZ or Magento app\\code. The IntelisisTmp ledger stops receiving credit web rows at the LAN cutover whether or not A is done, because ServicioSAP writes SigMavi and not IntelisisTmp.",
+    "No change to the Magento checkout. Validation goes Magento /rest/V1/omnipro-credito/codigoPromocion -> config cupon_promotion (Omnipro\\MaviCredito\\Model\\CreditoManagement.php:589-603, Helper\\Data.php:41-43) -> DMZ credit/codigoPromocion (DMZ Controllers\\CreditController.cs:126-138). It never goes to ServicioSAP order/new. LAN ValidarCupon counts any row, used or not (SpVTASVentaCupon.sql:64-73), so the burn never changed its answer, and 'Utilizado' (LAN CreditMethods.cs:442-445, Conteo=2) is unreachable.",
+    "Removes a mis-attribution. Magento sends promoCodeN whether or not the box is ticked (Mavi\\CreditoCheckout\\...\\credito-checkout-functions.js:324); the field is only reset when the box is ticked on (:901-903). It falls back to quote.bank (Omnipro\\PlaceOrder\\Model\\OrderManagement.php:466, :715), which CreditoManagement.php:601 saves whatever the validation result. Today a valid code the customer unticked still gets burned (the gate at OrderMethods.cs:1094 only checks validity).",
+    "Performance/robustness: up to 3 SigMavi connections (:1042, :1096, :1145) and up to 4 synchronous HTTP calls (:1062 SuccessFactors, :1069 AWS catalog, :1114 URL_BP_API AS_GET_ZQBP_AGENTE, :1133 S4 ZAPI_SUCURSALES_SRV) leave order/new for promoter orders. HttpClient at :1112 and BusinessPartnerMethods.cs:352 is created with no explicit Timeout, so the 100 s default applies.",
+    "Bugs B3 (burn committed before an unguarded agent lookup, :1109-1110) and B6 (result discarded, :708) no longer affect the credit path. No sap.log lines are lost: the promo path writes only to Console (:1084, :1141, :1170).",
+    "Deliberate divergence from LAN, which burned right after the article lines (LAN Metodos\\CreditMethods.cs:201-206). It reverses the recorded decision 'la quema del cupón se queda en el flujo de la orden' (MappingMetods\\FLUJO_CREDITO_LAN_VS_SAP.md:188) and the parity claim 'promo burn after lines' (PLAN_EJECUCION_SP_CREDITO_A_CODIGO.md:1851). It has to be written down as a decision.",
+    "InfoClienteRequest.codigo_promotor (Models\\SAP\\Order\\InfoClienteRequest.cs:56) is no longer read by anything. Keeping it is harmless. Deleting it is also safe, because no MissingMemberHandling is configured (App_Start\\WebApiConfig.cs:11-23; grep over *.cs: 0 hits).",
+    "GET order/validatecupon keeps working. With no burn, ServicioSAP never writes VentasCupones, so validation depends on rows that already exist or on SuccessFactors plus the catalog (:1057-1086). No runtime caller, so no practical effect."
+   ],
+   "code_changes": [
+    "\\\\172.16.214.58\\sap\\ServicioSAP\\ServicioSap\\ServicioSap\\Methods\\Order\\OrderMethods.cs:705-709 — delete the `codigoPromotor` read and the `if (...) await HandlePromoCodeAsync(codigoPromotor, order.incrementId, \"Elimina\")` block. Keep :703 and the try/catch :701-717, which still guards InsertCreditArticlesAsync.",
+    "Optional: \\\\172.16.214.58\\sap\\ServicioSAP\\ServicioSap\\ServicioSap\\Models\\SAP\\Order\\InfoClienteRequest.cs:56 — keep codigo_promotor to document the Magento contract, or delete it. Both are safe.",
+    "Do NOT touch OrderMethods.cs:1031-1173 or OrderController.cs:102-120 under Option A; ValidateCupon (:113) still calls the method.",
+    "Docs: \\\\172.16.214.58\\sap\\.agents\\skills\\lan-sap-migration\\MappingMetods\\PLAN_EJECUCION_SP_CREDITO_A_CODIGO.md — record the user's answer at §23.9 Q8 (:1934), close §23.4 Q8 (:1866), mark §23.5 B6 (:1891) closed and B3 (:1888) unreachable from credit, close §22.5 #6 (:1755) for credit, remove 'promo burn after lines' from §23.3 (:1851), drop test step (18) (:1909) and the 'codigo_promotor vacio' prerequisite in B7 (:1384).",
+    "Docs: MappingMetods\\FLUJO_CREDITO_LAN_VS_SAP.md:188 — add a note that the 2026-09-11 decision was reversed by the user's deprecation on 2026-09-26."
+   ]
+  },
+  "option_b_remove_all": {
+   "side_effects": [
+    "Everything in Option A, plus: GET order/validatecupon/{codigo} (Controllers\\OrderController.cs:102-120) returns 404. No caller in DMZ or Magento app\\code: grep 'validatecupon' in DMZ finds 0 hits, and the only Magento hit is a JS function named validateCupon that posts to /rest/V1/omnipro-credito/codigoPromocion (omnipro_pago_credito-method.js:785-791). Its contract also does not match what Magento expects: Magento wants the plain strings OK/Erroneo/Utilizado and calls .replace on the reply (credito-checkout-functions.js:271-287), while the route returns JSON {status: OK|NO_VALIDO|err} (OrderController.cs:114). Per the sweeps, only Hoppscotch collections and docs reference it (not spot-checked).",
+    "ServicioSAP no longer reads or writes VentasCupones at all (the only references are OrderMethods.cs:1044, :1098, :1147). The AWS catalog 'Código de promotor' (:1069 is its only reader) and AS_GET_ZQBP_AGENTE (:1111) are no longer called from ServicioSAP.",
+    "Removes the only ServicioSAP code the migration docs map to E-46 credit/codigoPromocion (docs sweep: CHECKLIST_DEV3_NOSAP_NOINTELISIS.md:311-334, _ALCANCE_MIGRACION_LAN_a_SAP.md:149; not spot-checked). If only the credit-flow burn is deprecated and not the whole feature, a codigoPromocion replacement would have to be built from scratch before LAN is retired.",
+    "B3, B6 and the three Console-only catches (:1084, :1141, :1170) go away with the code.",
+    "The build breaks if HandlePromoCodeAsync is deleted while OrderController.cs:113 or OrderMethods.cs:708 still call it.",
+    "Magento and DMZ runtime are unchanged: neither ever called ServicioSAP for coupons (DMZ CreditController.cs:135 -> Curl.Post to URL_INTELISIS, Helper\\Curl.cs:22, :106)."
+   ],
+   "code_changes": [
+    "Apply Option A first (OrderMethods.cs:705-709).",
+    "\\\\172.16.214.58\\sap\\ServicioSAP\\ServicioSap\\ServicioSap\\Controllers\\OrderController.cs:102-120 — delete the ValidateCupon action (route validatecupon/{codigo}).",
+    "\\\\172.16.214.58\\sap\\ServicioSAP\\ServicioSap\\ServicioSap\\Methods\\Order\\OrderMethods.cs:1028-1173 — delete the summary comment and HandlePromoCodeAsync.",
+    "\\\\172.16.214.58\\sap\\ServicioSAP\\ServicioSap\\ServicioSap\\Models\\SAP\\Order\\CouponModels.cs — delete (already dead: PersonalResponse, AgenteResponse, SucursalS4Response and the rest are referenced only inside this file), and remove the `<Compile Include=\"Models\\SAP\\Order\\CouponModels.cs\" />` at ServicioSap.csproj:393.",
+    "Keep the _productMethods field (OrderMethods.cs:35, :81), which is still used by GetStockAsync at :2046. Keep every helper listed in must_keep.",
+    "Update test assets and docs: Hoppscotch collections that call validatecupon, the E-46/E-15 status in the checklists, and close W1/Q7 in PLAN_EJECUCION_SP_CREDITO_A_CODIGO.md (:1865, :1821, §18.8 coupon half at :1429).",
+    "Build could not be run (read-only task). After deleting, compile to catch unused-using or reference errors."
+   ],
+   "must_coordinate_with": [
+    "Business owner of promoter attribution, commissions or payroll: confirm nobody reads SigMavi VentasCupones or IntelisisTmp.VTASCVentaCupon (FechaUtilizacion/IdEcommerce/Agente). No code reader was found, and the SP states its purpose as 'Identificar origen ventas cupon' (SpVTASVentaCupon.sql:13). This applies to Option A too.",
+    "Magento team: the checkout still offers 'Código de promotor' and only places the order on an exact \"OK\" (credito-checkout-functions.js:236-249, :256-287; omnipro_pago_credito-method.js:618-624, :785-801). Credilana and ClientCredit still send 'Elimina' (Mavi\\CreditMigration\\Model\\CredilanaManagement.php:533-535, :737-739; ClientCreditManagement.php:143), and ProductosMX still sends the promoter in data[72] (CreditMxManagement.php:459). A full deprecation means removing these in Magento.",
+    "DMZ owners: credit/codigoPromocion (DMZ Controllers\\CreditController.cs:126-138) relays to URL_INTELISIS. In the working copy that is https://localhost:44399/ (DMZ Web.config:17), which is ServicioSAP's IIS Express port (ServicioSap.csproj:21, :503), and ServicioSAP has no credit/codigoPromocion route (grep: 0 hits). With that value, Curl.Post returns the exception text (Curl.cs:108-111) and customers who tick the promoter box are blocked. This happens independently of A/B.",
+    "SIGMAVI (W1/Q7): the coupon half of the question can be withdrawn.",
+    "QA: Hoppscotch collections that reference order/validatecupon.",
+    "Migration-doc owners: E-46 status, and the ODS decision VTASCVentaCupon -> SIGMAVI 'Confirmado' (docs sweep: _DECISIONES_ODS.md:175; not spot-checked)."
+   ]
+  },
+  "must_keep": [
+   "SigMavi connection obtenerConexionSigMaviAsync (Helpers\\ConexionDB\\ConexionSQL.cs:72). The credit flow itself uses it for line pricing: GetCondicionAsync (OrderMethods.cs:875 -> :3338, CondicionesCredVtaLinea). Also used by StorePickupMethods.cs:31ff, ProductMethods.cs:426ff, Credit\\CreditMethods.cs:22 and Customer\\CustomerMethods.cs:33.",
+   "URL_BP_API appSetting: the credit header's validated-phone lookup (Methods\\Credit\\SolicitudCreditoWebMethods.cs:487-491) and BusinessPartnerMethods.cs:204.",
+   "GetSuccessFactorEmployeeAsync (BusinessPartnerMethods.cs:342) and URL_ANDROID_API: route in BusinessPartnerController.cs:175.",
+   "GetConfiguracionCatalogoAsync (ProductMethods.cs:708): credit header catalog check (SolicitudCreditoWebMethods.cs:528), ProductController.cs:251, ProductMethods.cs:745/:753/:761.",
+   "AccountMethods.GetSucursalAsync (AccountMethods.cs:185): AccountController.cs:52.",
+   "The _productMethods field (OrderMethods.cs:35, :81): GetStockAsync at :2046.",
+   "Top-level OrderRequest.Agente (Models\\SAP\\Order\\OrderRequest.cs:51): not the coupon. It feeds sDatosPedido[35] (:287, :1852), SAP partner Z1 (:2367-2369) and BP Zusuariopos (:2790) on the cash path. Magento fills it with the same promoter code on credit orders (OrderManagement.php:510-512, :729), but ServicioSAP ignores it there.",
+   "Credit header columns Agente/Codigo/CodigoRecomendador in the 59-column INSERT (SolicitudCreditoWebMethods.cs:85, :145, :215, :287, :292-293): they go in as NULL today; do not remove them from the INSERT.",
+   "CodigoRecomendador is a separate concept (the user already declared it deprecated) and is not linked to codigo_promotor: Magento sends the recomendador in data[69] and the promotor in data[72]/data[14] (Mavi\\ProductosMX\\Model\\CreditMxManagement.php:454, :457, :459). LAN reads the recomendador from CREDIDCodigoRecomendador (LAN CreditMethods.cs:1118, :1153).",
+   "Legacy coupon path outside ServicioSAP, still live while LAN lives: Magento CreditoManagement::codigoPromocion (CreditoManagement.php:589-610), DMZ credit/codigoPromocion (CreditController.cs:126-138), LAN CreditMethods.CodigoPromocion (:392-463) + SpVTASVentaCupon. Used by Credilana (CredilanaManagement.php:533, :737), ClientCredit (:143) and checkout validation. Neither option touches it.",
+   "LAN cash SPs that also write VTASCVentaCupon ('Contado' rows: SP_eCommerceNuevoPed.sql:638-648, SPVTASPedidosMagento.sql:545-555). ServicioSAP's cash path never ported this, and neither option changes that."
+  ],
+  "closes": [
+   "Q8 (PLAN §23.4 :1866): burn rules, LAN TOP(1) newest free row + always regenerate (SpVTASVentaCupon.sql:118-135) vs ServicioSAP gate + all free rows (OrderMethods.cs:1094, :1098). Moot once the burn is removed (Option A).",
+   "B6 (PLAN §23.5 :1891): result discarded at OrderMethods.cs:708. Closed by Option A.",
+   "B3 (PLAN §23.5 :1888): burn UPDATE committed before an unguarded agent lookup. Unreachable after Option A, because OrderMethods.cs:708 is the only caller passing 'Elimina'. Deleted by Option B.",
+   "Root cause #6 (PLAN §22.5 :1755) and its pending adversarial check (§22.8 'Pending work'): closed for the credit flow by Option A, fully by Option B.",
+   "W1 / Q7 (PLAN :1821, :1865; §18.8 SIGMAVI coupon half :1429): moot for credit under Option A. Fully closed only by Option B, because GET validatecupon still reads VentasCupones (:1044).",
+   "§18.9 'equivalencia del codigo promotor' (PLAN :1435).",
+   "§18.5 #11 / §20.1 #11 burn placement (PLAN :1363, :1483): moot.",
+   "Test step (18) promo (PLAN :1909) and the 'codigo_promotor vacio' prerequisite in B7 (PLAN :1384).",
+   "Parity claim 'promo burn after lines' (PLAN §23.3 :1851): becomes 'intentionally dropped'.",
+   "Per the docs sweep, not spot-checked: MATRIZ_REGLAS_CREDITO_WEB_LAN_VS_SAP.md G5-06/07/08 (:204-206) and the coupon clauses of G5-02/G4-24/G2-39/G4-13, credit_parity DEF-B/DEF-C, and the E-46 defects (Option B only)."
+  ],
+  "recommendation": "Do Option A now. Delete OrderMethods.cs:705-709. It is a strict simplification: no change to flow control, response or logging, fewer external calls per order, B3/B6 out of the credit path, and Q8 closed by removal instead of by porting LAN's TOP(1) rule. Record the user's answer in PLAN §23.9 Q8 (:1934) as a deliberate divergence from LAN (LAN CreditMethods.cs:203-206) that reverses the 2026-09-11 decision (FLUJO_CREDITO_LAN_VS_SAP.md:188). The one open question is business-side: ask whether promoter commissions or reports read VentasCupones/VTASCVentaCupon. That is the only way A could have a real impact, and it cannot be settled from code. Hold Option B until the deprecation is confirmed end to end, meaning Magento removes the checkbox, the ValidarCupon gate and the Credilana/ClientCredit 'Elimina' calls. B breaks no live caller today, so it is safe to do then. Deleting it now would throw away the only ServicioSAP code planned for E-46 if only the credit burn turns out to be deprecated. CouponModels.cs (+ csproj:393) is already dead and can go at any time. Keep every shared helper listed in must_keep. Separately, raise this with Magento/DMZ whatever option is chosen: the checkout only places promoter-coded orders on an exact \"OK\" from DMZ credit/codigoPromocion. The working-copy DMZ points that at ServicioSAP (Web.config:17), which has no such route, so customers who tick the box would be blocked. It must be fixed before LAN is retired.",
+  "contradictions": [
+   "magento-dmz sweep said the promoter 'still reaches SAP as partner Z1 and Zusuariopos after either option'. REJECTED for credit orders: the credit branch returns at OrderMethods.cs:1809-1814, before ResolvePartnerNumberForOrderAsync (:1840 -> BuildBpClientFromOrder :2621 -> Zusuariopos :2790) and before BuildSapOrderAsync (:1855; Z1 :2367-2369). This only happens on cash orders. The serviciosap and lan-data sweeps were correct: order.Agente is ignored on credit.",
+   "lan-data sweep said DMZ credit/codigoPromocion 'forwards to LAN (Web.config:17)'. REJECTED for the working copy: DMZ Web.config:17 is https://localhost:44399/ (ServicioSAP IIS Express, ServicioSap.csproj:21, :503), and the LAN URL is commented out at :16. ServicioSAP has no credit/codigoPromocion route (grep: 0 hits). The production value is unknown. The magento-dmz and serviciosap sweeps were correct.",
+   "lan-data sweep said 'up to five external calls'; the others said up to 4. The code has 4 HTTP call sites (OrderMethods.cs:1062, :1069, :1114, :1133) and 3 SigMavi connections (:1042, :1096, :1145).",
+   "serviciosap sweep said 'HttpClient with no timeout set'; the docs sweep said '100 s'. Both are right: no Timeout is set at :1112 or BusinessPartnerMethods.cs:352, so the .NET default of 100 s applies.",
+   "docs sweep flagged FLUJO_CREDITO_LAN_VS_SAP.md:143 ('HandlePromoCodeAsync es código inalcanzable') as stale. It is not an error: it sits in §4.2, headed 'CORREGIDO (2026-09-11)' (:138), and describes the state before the fix shown at :146-151.",
+   "Prior decision vs the user's statement: FLUJO_CREDITO_LAN_VS_SAP.md:188 ('la quema del cupón se queda en el flujo de la orden', 2026-09-11) and PLAN §23.3 :1851 count the burn as required parity. The user now says it is deprecated. No doc records the deprecation yet (PLAN :1934 shows the analysis as running).",
+   "Runbook references have drifted from the code: §22.5 #6 (PLAN :1755) cites OrderMethods.cs :1028/:1039/:1095/:1081, but the code is now at :1031/:1044/:1098/:1084. PLAN :102 cites ':1112' and says 'LAN consulta VentasCupones', but LAN's SP uses VTASCVentaCupon (SpVTASVentaCupon.sql:67, :121)."
+  ],
+  "unverified": [
+   "NO EVIDENCE of any reader (commissions, payroll, BI, SIGMAVI/Intelisis jobs) of SigMavi VentasCupones or IntelisisTmp.VTASCVentaCupon outside HandlePromoCodeAsync and SpVTASVentaCupon. None found in ServicioSAP, LAN, DMZ, SPsOrden or Magento app\\code; external systems not checkable.",
+   "NO EVIDENCE of the deployed DMZ URL_INTELISIS (the working copy says ServicioSAP localhost:44399 at Web.config:17) or of the Magento config omnipro_intelisisintegration/mavi_credito/cupon_promotion, which is DB-only (Helper\\Data.php:41-43).",
+   "NO EVIDENCE of whether ServicioSAP's credit path is in production, and so whether VentasCupones has ever received rows from it (docs claim 'ya en produccion', not verified).",
+   "NO EVIDENCE that SigMavi has VentasCupones with columns Codigo/FechaUtilizacion/IdEcommerce/Agente/FechaEnvio/BP/Centro (Q7). No SQL was run, per the rules.",
+   "NO EVIDENCE of a written deprecation decision. The only source is the user's statement.",
+   "NO EVIDENCE of whether any client outside the scanned repos calls GET order/validatecupon/{codigo}. No IIS or access logs were available.",
+   "NO EVIDENCE that the deployed SpVTASVentaCupon matches the skill copy scripted 17/06/2026. The conclusion that 'Utilizado' is unreachable depends on it.",
+   "NO EVIDENCE of whether the future SAP credit sales order (liberador, root cause #3; OrderMethods.cs:719-757 commented out) will carry Agente/Z1 and so restore promoter attribution in SAP.",
+   "How often a non-empty codigo_promotor occurs in production. Per the sweeps only CRED511270 ('E016881') carries one, and CRED515773/CRED515848 carry ''. I did not spot-check these payloads.",
+   "Hoppscotch collection references to validatecupon and the E-46 checklist lines: cited by the sweeps, not spot-checked by the synthesizer."
+  ]
+ },
+ "sweeps": [
+  {
+   "key": "serviciosap",
+   "summary": "Short answer: removing only the \"Elimina\" call from the credit flow (Option A) changes nothing that Magento or the rest of the flow can see. The same credit header and line rows get written, Magento gets the same response and errors are handled the same way. The side effects are data only, plus less work per order.\n\n(1) Flow control is unchanged. The call at SAP Methods\\Order\\OrderMethods.cs:705-709 discards its result. HandlePromoCodeAsync can never throw: its whole body is inside try/catch (:1033/:1168-1172) and it returns \"err\" on failure. So the catch at :711-717 only ever catches InsertCreditArticlesAsync failures. The response (:759, :1809-1814, Controllers\\OrderController.cs:28-35) has no promo field.\n\n(2) Data change. ServicioSAP stops marking coupons used (FechaUtilizacion, IdEcommerce = incrementId) and stops creating a new free coupon in SigMavi VentasCupones (:1098, :1147). That UPDATE is the only place ServicioSAP records the promoter against a credit order:\n- The credit header columns Agente, Codigo and CodigoRecomendador are never filled (OrderMethods.cs:803-840 into SolicitudCreditoWebMethods.cs:287/292/293).\n- The top-level order.Agente, which Magento fills with the same promoter code on credit orders (Magento OrderManagement.php:510-512, :728-729; captured CRED511270 has Agente = codigo_promotor = \"E016881\"), is ignored in the credit branch (:1792-1815).\n- LAN was the same: its SP call passes no @Agente (LAN CreditMethods.cs:150-188), so LAN also recorded the promoter only in VTASCVentaCupon.\n- No reader of either coupon table was found in any repo.\n\n(3) Less work per promoter order. Removing the call drops up to 3 SigMavi connections and up to 4 synchronous HTTP calls from order/new: SuccessFactors, the AWS catalog, URL_BP_API AS_GET_ZQBP_AGENTE and S4 ZAPI_SUCURSALES_SRV. Some of these use a plain `new HttpClient()` with no timeout set. Runbook bugs B3 and B6 also disappear from the credit path. No sap.log lines are lost, because this path only writes to Console.\n\n(4) This is a deliberate divergence from LAN, which ran the same step (LAN CreditMethods.cs:203-206). Given the \"same as LAN\" rule (runbook §22.7), it should be recorded as a deprecation decision.\n\nOption B (delete HandlePromoCodeAsync entirely):\n- OrderController.ValidateCupon, route GET /order/validatecupon/{codigo}, must go too, or the build breaks. No caller was found. DMZ forwards POST credit/codigoPromocion through Curl.Post to URL_INTELISIS. Magento posts {codigo, opcion, idMagento} to its own configured URL and expects \"OK\"/\"Erroneo\"/\"Utilizado\", which is not the shape this route uses.\n- Models\\SAP\\Order\\CouponModels.cs is already dead code (zero references). It can go with its csproj entry at :393.\n- These must all stay because other code uses them: the SigMavi connection (GetCondicionAsync reads CondicionesCredVtaLinea for credit line pricing, :875/:3338), URL_BP_API (credit header phone check, SolicitudCreditoWebMethods.cs:487), URL_ANDROID_API and GetSuccessFactorEmployeeAsync (route partner/successfactor/employee/{userId}), GetConfiguracionCatalogoAsync, AccountMethods.GetSucursalAsync, and the _productMethods field.\n- InfoClienteRequest.codigo_promotor has no reader left after either option. Keeping or deleting it is safe, since no global MissingMemberHandling is configured.\n\nStill open: Magento still has the promoter field at checkout, validates guest codes, and sends codigoPromocion \"Elimina\" from the Credilana/ClientCredit flows. All of that goes to a configured URL (DMZ, then LAN), not to ServicioSAP. If only the credit-flow part is deprecated, Option B deletes the only ServicioSAP code that the migration docs list for E-46 credit/codigoPromocion.\n\nCodigo promotor and codigo recomendador are separate. codigo_promotor never feeds the CodigoRecomendador column, in ServicioSAP or in LAN. The recomendador uses its own CREDIDCodigoRecomendador table and SP in LAN.",
+   "findings": [
+    {
+     "consumer": "ServicioSAP credit flow: ProcessCreditPaymentAsync (the only caller in the credit flow)",
+     "where": "SAP Methods\\Order\\OrderMethods.cs:701-717 (call at :705-709); HandlePromoCodeAsync try/catch at :1033 and :1168-1172",
+     "dependency": "Reads order.infoCliente.codigo_promotor. When it is not blank, awaits HandlePromoCodeAsync(codigo, order.incrementId, \"Elimina\") inside the same try as InsertCreditArticlesAsync (:703) and discards the result.",
+     "effect_if_removed_from_credit_flow": "No change to flow control. HandlePromoCodeAsync catches every exception and returns \"err\" (:1168-1172), so it never reached the catch at :711-717; that catch stays for InsertCreditArticlesAsync. The return value (:759), the SetOrderAsync credit response (:1809-1814) and the order/new body (OrderController.cs:28-35) carry no promo field. If the article insert fails, the promo call was already skipped, so that case is unchanged too.",
+     "effect_if_removed_entirely": "Same as Option A for the credit flow. The call site must be deleted before the method, or the build breaks.",
+     "severity": "harmless"
+    },
+    {
+     "consumer": "SigMavi table VentasCupones (promoter attribution / coupon ledger)",
+     "where": "SAP Methods\\Order\\OrderMethods.cs:1044 (SELECT), :1098 (UPDATE FechaUtilizacion, IdEcommerce), :1147-1159 (INSERT Codigo, Agente, FechaEnvio, BP, Centro)",
+     "dependency": "On Elimina with a valid code: marks every free row of the code with FechaUtilizacion = GETDATE() and IdEcommerce = incrementId, then inserts a new free row (Codigo = Agente = the promoter code). This is the only place ServicioSAP records which promoter a credit order belongs to. Header Agente, Codigo and CodigoRecomendador are left null (CrearSolicitudCreditoAsync :803-840 never sets them; SolicitudCreditoWebMethods.cs:287, :292-293, :209, :214-215). order.Agente is not read in the credit branch (:1792-1815).",
+     "effect_if_removed_from_credit_flow": "Data change: promoter-assisted credit orders leave no row in VentasCupones (no used-row stamp, no regenerated free row), and ServicioSAP keeps the promoter nowhere else. LAN recorded it only in IntelisisTmp VTASCVentaCupon too (SpVTASVentaCupon.sql:115-136; LAN CreditMethods.cs:150-188 passes no @Agente), so whoever relied on that ledger loses it for credit orders. No reader of VentasCupones or VTASCVentaCupon was found in ServicioSAP, LAN, DMZ, Magento app\\code, businesspartner-dev or salesanddistribution-dev.",
+     "effect_if_removed_entirely": "Same data change. ServicioSAP then never reads or writes VentasCupones (the only references are :1044, :1098, :1147).",
+     "severity": "data-change"
+    },
+    {
+     "consumer": "External services called only by the coupon code: SuccessFactors (android-api), AWS catalog 'Código de promotor', businesspartner-api agent lookup, S4 ZAPI_SUCURSALES_SRV",
+     "where": "SAP Methods\\Order\\OrderMethods.cs:1059-1085 (SuccessFactors + catalog), :1108-1125 (URL_BP_API AS_GET_ZQBP_AGENTE with new HttpClient()), :1127-1143 (GetSucursalAsync); BusinessPartnerMethods.cs:342-374; ProductMethods.cs:708-735; AccountMethods.cs:185-190",
+     "dependency": "SuccessFactors and the catalog are called only when there is no free coupon row. The agent and branch lookups run only on Elimina with a valid code. All run synchronously inside order/new before the response goes back to Magento. HttpClients are created without a timeout (OrderMethods.cs:1112; BusinessPartnerMethods.cs:352).",
+     "effect_if_removed_from_credit_flow": "For promoter orders, up to 3 SigMavi connections and up to 4 HTTP calls leave the order/new path: lower latency and fewer failure points. The AWS catalog entry 'Código de promotor' is read nowhere else (:1069 is the only reader). The GET validatecupon route still makes the SuccessFactors and catalog calls.",
+     "effect_if_removed_entirely": "Same as Option A. The catalog and agent-lookup calls disappear from ServicioSAP entirely. SuccessFactors is still reachable through partner/successfactor/employee/{userId}.",
+     "severity": "harmless"
+    },
+    {
+     "consumer": "Error handling and logging; runbook bugs B3 and B6",
+     "where": "SAP Methods\\Order\\OrderMethods.cs:1094-1106 (UPDATE committed first), :1109-1125 (unguarded agent lookup = B3), :708 (result discarded = B6), :1084/:1141/:1170 (Console only); runbook PLAN_EJECUCION_SP_CREDITO_A_CODIGO.md:1888, :1891",
+     "dependency": "If URL_BP_API is missing or the agent lookup fails after the UPDATE commits, the regeneration INSERT never runs and the error only goes to Console. The \"OK\"/\"NO_VALIDO\"/\"err\" result is thrown away.",
+     "effect_if_removed_from_credit_flow": "B3 and B6 no longer affect the credit path. No sap.log lines are lost, because the promo path never calls Logger.SAP.",
+     "effect_if_removed_entirely": "B3 and B6 are deleted along with the code.",
+     "severity": "harmless"
+    },
+    {
+     "consumer": "OrderController.ValidateCupon, route GET /order/validatecupon/{codigo} (checkout validation)",
+     "where": "SAP Controllers\\OrderController.cs:12-13 ([Authorize], RoutePrefix order), :102-120 (call at :113); OrderMethods.cs:1088-1091",
+     "dependency": "Calls HandlePromoCodeAsync(codigo, null, \"ValidarCupon\"). Read-only: it returns before any write. Responses: 200 {status: \"OK\"|\"NO_VALIDO\"|\"err\"}; 400 \"Código vacío\" for a blank code; the catch at :116-119 cannot fire in practice.",
+     "effect_if_removed_from_credit_flow": "Not affected. The route keeps working exactly as today.",
+     "effect_if_removed_entirely": "Build error unless this action is deleted too, and the route disappears. No caller found: 'validatecupon' appears nowhere in DMZ or Magento app\\code. DMZ forwards POST credit/codigoPromocion through Curl.Post to URL_INTELISIS (DMZ Controllers\\CreditController.cs:126-138; Helper\\Curl.cs:22, :106). Magento posts JSON {codigo, opcion, idMagento} to its configured URL (Omnipro\\MaviCredito\\Model\\CreditoManagement.php:589-603; Helper\\Data.php:41-43) and expects plain \"OK\"/\"Erroneo\"/\"Utilizado\" (omnipro_pago_credito-method.js:785-801). That shape does not match this GET route. Only Hoppscotch collections and docs reference it.",
+     "severity": "harmless"
+    },
+    {
+     "consumer": "Magento order/new payload fields codigo_promotor and Agente",
+     "where": "Magento248\\Magento248\\app\\code\\Omnipro\\PlaceOrder\\Model\\OrderManagement.php:461-468, :505-513, :710-718, :728-729; SAP Models\\SAP\\Order\\InfoClienteRequest.cs:49-56; Resources\\magento_payloads.md:26, :55; MappingMetods\\Manual Tecnico Peticiones Hoppscotch 01092026.md:879",
+     "dependency": "Magento keeps sending infoCliente.codigo_promotor and, on credit orders, a top-level Agente filled with the same promoter code. CRED511270 carries both as \"E016881\"; CRED515773 and CRED515848 carry both as \"\".",
+     "effect_if_removed_from_credit_flow": "The request still binds. codigo_promotor loses its only reader (:705), so the property is dead but harmless. It can also be deleted: no global MissingMemberHandling is configured (App_Start\\WebApiConfig.cs:11-23), so the extra JSON member is ignored. Magento keeps sending it.",
+     "effect_if_removed_entirely": "Same as Option A.",
+     "severity": "harmless"
+    },
+    {
+     "consumer": "Credit header row CRED_SOLICITUD_WEB_DATOS_TEMP (columns codigo, CodigoRecomendador, Agente, OrigenIdMagento)",
+     "where": "SAP Methods\\Credit\\SolicitudCreditoWebMethods.cs:79-89, :209, :214-215, :219, :287, :292-293, :300; OrderMethods.cs:803-840 (OrigenIdMagento at :837); LAN Metodos\\CreditMethods.cs:150-188",
+     "dependency": "Only OrigenIdMagento is filled, from infoCliente.OrigenIdMagento. Codigo, CodigoRecomendador and Agente are never set, so they go in as NULL. codigo_promotor never reaches this row. LAN did not pass @Agente, @codigo or @CodigoRecomendador for web credit either.",
+     "effect_if_removed_from_credit_flow": "None. The header row is unchanged.",
+     "effect_if_removed_entirely": "None.",
+     "severity": "harmless"
+    },
+    {
+     "consumer": "Cash branch and SAP sales order / BP payload (agent fields)",
+     "where": "SAP Methods\\Order\\OrderMethods.cs:287 and :1852 (sDatosPedido[35]), :2364-2369 (BuildSapOrderAsync Z1 PartnNumb = order.Agente), :2785-2790 (BuildBpClientFromOrder Zusuariopos = order.Agente); credit early return :1809-1814",
+     "dependency": "These use top-level order.Agente, never codigo_promotor or the coupon code, and credit orders never reach them. On cash orders Magento fills Agente with the quote's employee id (OrderManagement.php:505-508).",
+     "effect_if_removed_from_credit_flow": "None.",
+     "effect_if_removed_entirely": "None. Side note: LAN's cash SP also wrote VTASCVentaCupon ('Contado', @Agente, @IdMag) at SP_eCommerceNuevoPed.sql:631-655. ServicioSAP's cash path does not replicate this, and neither option changes that.",
+     "severity": "harmless"
+    },
+    {
+     "consumer": "setCAccount webhook to DMZ",
+     "where": "SAP Methods\\Order\\OrderMethods.cs:1288-1351 (payload at :1330), call at :1948-1952",
+     "dependency": "Payload is {incrementId, cAccount}, and the webhook fires only on the cash path after SAP answers. No promoter data.",
+     "effect_if_removed_from_credit_flow": "None.",
+     "effect_if_removed_entirely": "None.",
+     "severity": "harmless"
+    },
+    {
+     "consumer": "Liberador + Magento authorization callback block",
+     "where": "SAP Methods\\Order\\OrderMethods.cs:719-757 (commented out); LAN Metodos\\CreditMethods.cs:208-241",
+     "dependency": "No promoter or coupon reference in either the ServicioSAP or the LAN version.",
+     "effect_if_removed_from_credit_flow": "None.",
+     "effect_if_removed_entirely": "None.",
+     "severity": "harmless"
+    },
+    {
+     "consumer": "Shared code that HandlePromoCodeAsync uses",
+     "where": "SAP OrderMethods.cs:35/:81/:2046 (_productMethods); BusinessPartnerController.cs:14-15, :168-182 (GetSuccessFactorEmployeeAsync); BusinessPartnerMethods.cs:344 and Web.config:28 (URL_ANDROID_API); SolicitudCreditoWebMethods.cs:487, BusinessPartnerMethods.cs:204, Web.config:29 (URL_BP_API); SolicitudCreditoWebMethods.cs:528, ProductController.cs:251 (GetConfiguracionCatalogoAsync); AccountController.cs:52 (GetSucursalAsync)",
+     "dependency": "Every helper and config key the coupon code uses also has other callers.",
+     "effect_if_removed_from_credit_flow": "None.",
+     "effect_if_removed_entirely": "All must stay. None of them becomes dead or removable when HandlePromoCodeAsync is deleted. URL_BP_API in particular drives the credit header phone validation. No coupon-only Web.config key exists.",
+     "severity": "harmless"
+    },
+    {
+     "consumer": "SigMavi database connection (obtenerConexionSigMaviAsync)",
+     "where": "SAP Helpers\\ConexionDB\\ConexionSQL.cs:72-98; OrderMethods.cs:3332-3364 (GetCondicionAsync on CondicionesCredVtaLinea), called by the credit flow at :875 (throws at :877-880 if unresolved); ProductMethods.cs:426ff, StorePickupMethods.cs:31ff, Credit\\CreditMethods.cs:22, Customer\\CustomerMethods.cs:33",
+     "dependency": "HandlePromoCodeAsync opens it 3 times, but credit line pricing (payment-condition lookup) and many other features use the same connection.",
+     "effect_if_removed_from_credit_flow": "The connection stays in use by the credit flow through GetCondicionAsync.",
+     "effect_if_removed_entirely": "Must stay. Deleting the method is safe; removing the SigMavi connection or its Conexion alias would break credit line pricing and the other callers.",
+     "severity": "harmless"
+    },
+    {
+     "consumer": "Models\\SAP\\Order\\CouponModels.cs (PersonalResponse, PersonalData, AgenteResponse*, AgenteData, SucursalS4*)",
+     "where": "SAP Models\\SAP\\Order\\CouponModels.cs:6-60; ServicioSap.csproj:393",
+     "dependency": "No references anywhere except inside the file itself. HandlePromoCodeAsync uses JObject (:1118) and SuccessFactorEmployee instead, so this file is already dead code.",
+     "effect_if_removed_from_credit_flow": "None.",
+     "effect_if_removed_entirely": "Can be deleted along with it; remove the Compile Include at csproj:393 as well. Deleting it has no other effect.",
+     "severity": "harmless"
+    },
+    {
+     "consumer": "Legacy endpoint credit/codigoPromocion and the Magento flows that call it (guest checkout validation; Credilana/ClientCredit 'Elimina')",
+     "where": "Magento Omnipro\\MaviCredito\\...\\omnipro_pago_credito-method.js:618-624, :785-801; Mavi\\CreditMigration\\Model\\CredilanaManagement.php:531-537, :735-741; ClientCreditManagement.php:142-143; DMZ Web.config:16-17; ServicioSap.csproj:503; MappingMetods\\_NUESTROS_ENDPOINTS\\CHECKLIST_MIGRACION_LAN_A_SAP.md:243; _ALCANCE_MIGRACION_LAN_a_SAP.md:149",
+     "dependency": "Magento validates guest promoter codes before placing the order and sends 'Elimina' from other credit products, through its configured URL (DMZ, then LAN SpVTASVentaCupon), not through ServicioSAP order/new. The migration docs list HandlePromoCode as ServicioSAP's partial implementation of E-46. The working-copy DMZ has URL_INTELISIS = https://localhost:44399/ (ServicioSAP IIS Express), but ServicioSAP has no credit/codigoPromocion route today, with or without these changes.",
+     "effect_if_removed_from_credit_flow": "None on these flows.",
+     "effect_if_removed_entirely": "These flows are not broken today, because they don't call ServicioSAP. But the only ServicioSAP code planned for E-46 goes away. If only the credit-flow part is deprecated and Magento keeps the field and the Credilana 'Elimina', that endpoint would have to be rebuilt later. If the whole feature is deprecated, the Magento field, validation and calls need cleanup on the Magento side.",
+     "severity": "unknown"
+    },
+    {
+     "consumer": "Runbook open items tied to promo",
+     "where": "PLAN_EJECUCION_SP_CREDITO_A_CODIGO.md:1384 (§18.6 B7), :1429 (§18.8 SIGMAVI), :1755 (§22.5 #6), :1821 (§22.8), :1865-1866 (§23.4 Q7/Q8), :1888/:1891 (§23.5 B3/B6), :1909 (§23.7 step 18)",
+     "dependency": "Open decisions and test steps about which coupon table is the source of truth, the marking rules, and promo testing.",
+     "effect_if_removed_from_credit_flow": "Q8, B3, B6, test step (18) and the 'codigo_promotor empty' test prerequisite no longer matter for credit. Q7 and the §18.8/§22.8 SIGMAVI question only matter if the GET validatecupon route is kept and wired. Record the deprecation as a decision that diverges from LAN (LAN CreditMethods.cs:203-206).",
+     "effect_if_removed_entirely": "All of the above no longer matter, and E-46 must be re-scoped in the checklists.",
+     "severity": "harmless"
+    }
+   ],
+   "no_evidence": [
+    "Any downstream reader (commissions, reports, SIGMAVI or Intelisis jobs) of VentasCupones or VTASCVentaCupon FechaUtilizacion/IdEcommerce: none found in ServicioSAP, LAN, DMZ, Magento248 app\\code, businesspartner-dev or salesanddistribution-dev.",
+    "The value of Magento config mavi_credito/cupon_promotion (where Magento's codigoPromocion calls actually go): it is admin/DB config, not in code.",
+    "Whether any client outside the scanned repos calls GET /order/validatecupon/{codigo}: no IIS or access logs were available.",
+    "Whether the future SAP credit sales order (liberador flow, blocked, root cause #3) will carry the promoter or agent.",
+    "Whether Magento will stop sending codigo_promotor and Agente on credit orders, or remove the checkout promoter field and the Credilana/ClientCredit 'Elimina' calls.",
+    "The production value of DMZ URL_INTELISIS: the working copy points to https://localhost:44399/ (ServicioSAP), and the commented-out value is the LAN host.",
+    "A written deprecation decision: the only source is the user's statement; no doc in the skill folder records the promoter coupon as deprecated.",
+    "Whether VentasCupones exists in SIGMavi with the columns the code uses (Q7): moot for credit once the call is removed."
+   ]
+  },
+  {
+   "key": "magento-dmz",
+   "summary": "Magento/DMZ sweep: neither option breaks Magento or the DMZ. The customer-facing problem is the checkout, which still enforces the promoter code, and that does not depend on either option.\n\n(1) Yes, Magento still sends infoCliente.codigo_promotor. registerCreditQuote always sets the key (OrderManagement.php:710-718), and registerOrder sets it for non-guest credit orders (:461-468). The value comes from the payment field promoCodeN (credito-checkout-functions.js:319-326, omnipro_pago_credito-method.js:607-615, DataAssignObserver.php:45-55). If that is empty, it falls back to quote.bank, which the validation call writes (CreditoManagement.php:601). The two captured credit payloads carry \"codigo_promotor\":\"\" (magento_payloads.md:26,55). The same code is also sent as body.Agente (OrderManagement.php:505-513, 728-729). ServicioSAP uses Agente on its own path, as SAP partner Z1 and Zusuariopos (OrderMethods.cs:2364-2370, 2786-2790), so the promoter still reaches SAP after either option. The DMZ passes both fields through unchanged: infoCliente is a Dictionary<string,string> (DMZ Models/OrderRequest.cs:24,32) and goes to ServicioSAP order/new through PostSAP (OrdersController.cs:196).\n\n(2) Yes, the checkout calls a validation. It posts to Magento's own REST route /rest/V1/omnipro-credito/codigoPromocion with opcion 'ValidarCupon' from three copies of the code (credito-checkout-functions.js:256-295, the muebles_america checkout-data-resolver.js:256-295, and the guest renderer omnipro_pago_credito-method.js:785-805). The Magento backend then posts {codigo, opcion, idMagento} to the configured URL cupon_promotion (CreditoManagement.php:589-610). That URL's value is only in the database. The checkout does block. When the customer ticks 'Código de promotor', only the exact string \"OK\" lets the order through. \"Erroneo\" and \"Utilizado\" show an error. Any other string, null or a JSON object (which makes the `.replace` call throw) leaves the order blocked: the dedicated checkout shows 'Código inválido' when the SMS is validated, and the guest path does nothing and shows nothing. Unticking the box lets the order go through.\n\n(3) The DMZ has exactly one coupon route: credit/codigoPromocion (CreditController.cs:126-138). It relays to URL_INTELISIS with curl.Post. On errors, curl.Post returns the exception text, and the route still answers HTTP 200 (Curl.cs:93-113). In the DMZ Web.config on disk, URL_INTELISIS is https://localhost:44399/ (Web.config:17), which is ServicioSAP's IIS Express port (ServicioSap.csproj:21,503). The LAN production URL is commented out (Web.config:16). ServicioSAP has no credit/codigoPromocion route; LAN has one (LAN CreditController.cs:124-141). No DMZ or Magento code calls ServicioSAP's GET order/validatecupon/{codigo}. Its reply is {status: OK|NO_VALIDO|err}, which does not match what Magento expects anyway.\n\n(4) Option A (remove the \"Elimina\" call from the credit flow): no visible change in Magento or the DMZ. The call's result is already thrown away, all its exceptions are caught (OrderMethods.cs:701-717, 1168-1172), and the order response does not depend on it. Removing it only saves time on each credit order. It also changes no checkout message. LAN validation runs SpVTASVentaCupon on MAVICUBOS/IntelisisTmp (LAN Connection.cs:26), while ServicioSAP's burn writes SIGMavi on DEVMAVI (ConexionSQL.cs:79, Web.config:159-161). And in the SP copy we have, ValidarCupon only ever returns 0 or 1 (SpVTASVentaCupon.sql:60-113), so \"Utilizado\" never comes back. Nothing in Magento or the DMZ reads the coupon table. Option B (also remove HandlePromoCodeAsync and order/validatecupon): no Magento or DMZ caller, so nothing breaks there. Only the Hoppscotch collections that call that route would get 404.\n\nThe real side effect of calling this \"deprecated\": the Magento checkout still enforces the promoter code and depends on the DMZ credit/codigoPromocion path. If that path points at ServicioSAP (as in the Web.config on disk), or LAN is retired, anyone who ticks the box cannot finish the order. To really deprecate it, Magento has to change (hide the checkbox and remove validatePromoCode/validateCupon), or some backend has to keep answering \"OK\". Codigo promotor and codigo recomendador are separate in the code: ProductosMX sends them in data[72] and data[69] (CreditMxManagement.php:457,459).",
+   "findings": [
+    {
+     "consumer": "Magento Omnipro_PlaceOrder: builds the credit order payload",
+     "where": "Magento248/app/code/Omnipro/PlaceOrder/Model/OrderManagement.php:710-718 (registerCreditQuote, called from Mavi/CreditoCheckout/Model/CreditoOrderManagement.php:51); :461-468 (registerOrder, non-guest credit only)",
+     "dependency": "Sends body.infoCliente.codigo_promotor, taken from payment additional_information promoCodeN and falling back to quote.bank. The key is always present, often as \"\" (captured payloads CRED515773 and CRED515848: .agents/skills/lan-sap-migration/Resources/magento_payloads.md:26,55).",
+     "effect_if_removed_from_credit_flow": "Harmless. Magento keeps sending the field and ServicioSAP ignores it. OrderMethods.cs:705 is the only code that reads it. If the codigo_promotor property is also deleted from Models/SAP/Order/InfoClienteRequest.cs:56, the unknown key is ignored, because ServicioSAP does not override Json.NET MissingMemberHandling (grep: 0 hits).",
+     "effect_if_removed_entirely": "Harmless, same as option A. Magento does not read any coupon result from the order/new response.",
+     "severity": "harmless"
+    },
+    {
+     "consumer": "Magento checkout JS, all three copies: the source of promoCodeN",
+     "where": "Mavi/CreditoCheckout/view/frontend/web/js/credito-checkout-functions.js:319-326 and :901-906; Omnipro/MaviCredito/view/frontend/web/js/view/payment/method-renderer/omnipro_pago_credito-method.js:607-615; Omnipro/MaviCredito/Observer/DataAssignObserver.php:45-55",
+     "dependency": "placeOrder always sends promoCodeN = promoCodeS, whether the box is ticked or not (:324). The field is cleared only when the box is ticked on (:902-906), not when it is unticked. OrderManagement.php:466/715 also fall back to quote.bank, which validation writes (CreditoManagement.php:601). A code the customer typed and then unticked therefore still goes out as codigo_promotor and Agente.",
+     "effect_if_removed_from_credit_flow": "Data change, and a better one: ServicioSAP stops trying to burn codes the customer opted out of. Nothing changes in Magento.",
+     "effect_if_removed_entirely": "Same as option A.",
+     "severity": "data-change"
+    },
+    {
+     "consumer": "Magento: the same code sent as body.Agente, which ServicioSAP uses on its own path",
+     "where": "Magento248/app/code/Omnipro/PlaceOrder/Model/OrderManagement.php:505-513, 728-729; ServicioSap/Methods/Order/OrderMethods.cs:2364-2370 (SAP partner Z1), :2786-2790 (Zusuariopos); DMZ WebApiMagento/Models/OrderRequest.cs:32",
+     "dependency": "Agente = promoCode if set, otherwise promoCodeN, which is the promoter code (in the SP, Codigo = Agente = employee number: SpVTASVentaCupon.sql:146-157).",
+     "effect_if_removed_from_credit_flow": "Harmless. The promoter still reaches SAP as partner Z1 and Zusuariopos, so SAP attribution does not depend on the coupon burn.",
+     "effect_if_removed_entirely": "Harmless. HandlePromoCodeAsync is not involved.",
+     "severity": "harmless"
+    },
+    {
+     "consumer": "DMZ OrdersController.setOrder: passes the order through",
+     "where": "DMZ/WebApiMagento/Controllers/OrdersController.cs:108-109, 196; Models/OrderRequest.cs:24 (infoCliente is Dictionary<string,string>); Helper/Curl.cs:23, 115-127 (PostSAP to URL_SAP)",
+     "dependency": "Sends codigo_promotor and Agente on to ServicioSAP order/new without reading them. The DMZ has no typed field named codigo_promotor (grep: 0 hits). The legacy relay to LAN order/setOrder is commented out (:132-183).",
+     "effect_if_removed_from_credit_flow": "Harmless. No DMZ change is needed.",
+     "effect_if_removed_entirely": "Harmless.",
+     "severity": "harmless"
+    },
+    {
+     "consumer": "Magento dedicated credit checkout (Mavi_CreditoCheckout): promoter code validation",
+     "where": "Mavi/CreditoCheckout/view/frontend/web/js/credito-checkout-functions.js:256-295 (validatePromoCode), :921-940 (runs on every change), :236-249 and :948-951 (gate); template credito-checkout-template.html:61-87 (checkbox checkCode, field maxlength 10); wired at templates/index.phtml:24",
+     "dependency": "POST /rest/V1/omnipro-credito/codigoPromocion {codigo, opcion:'ValidarCupon', idMagento:''}. When the box is ticked, the order goes through only on the exact string \"OK\" (:280-287). \"Erroneo\" shows 'Código inválido' and \"Utilizado\" shows 'ya fue utilizado', both with the button disabled (:272-279). Any other string leaves promoCodeSuccess empty, so validateSms shows 'Código inválido' and never calls placeOrder (:238-242). An AJAX failure shows a generic error (:289-294). A null or object response makes response.replace throw (:271), so nothing happens. Unticking the box lets the order go through (:247-248).",
+     "effect_if_removed_from_credit_flow": "Harmless. This validation never reaches ServicioSAP's HandlePromoCodeAsync; it goes through Magento, then the cupon_promotion URL, then DMZ credit/codigoPromocion.",
+     "effect_if_removed_entirely": "Harmless for this change, because Magento never calls order/validatecupon. Separate risk: the gate still depends on the DMZ/LAN path answering \"OK\". If that path is gone or points at ServicioSAP, customers who tick the box are blocked.",
+     "severity": "harmless"
+    },
+    {
+     "consumer": "Magento standard checkout payment renderer (Omnipro_MaviCredito, guest path)",
+     "where": "Omnipro/MaviCredito/view/frontend/web/js/view/payment/method-renderer/omnipro_pago_credito-method.js:618-624 (placeOrderCredito), :785-805 (validateCupon); form template overridden at Mavi/LeyendaClienteNuevo/view/frontend/requirejs-config.js:4-5 and omnipro_pago_credito-form.html:150-175",
+     "dependency": "Same REST call. Guests who ticked hasPromoCode: \"Erroneo\" or \"Utilizado\" show an error and no order; \"OK\" places the order; any other string does nothing and shows nothing (:793-801); an AJAX failure shows a generic error (:802-804).",
+     "effect_if_removed_from_credit_flow": "Harmless. The call does not go to ServicioSAP.",
+     "effect_if_removed_entirely": "Harmless for this change. The same risk applies: a guest who ticks the box gets stuck with no message whenever the backend does not return exactly \"OK\".",
+     "severity": "harmless"
+    },
+    {
+     "consumer": "Magento theme override (muebles_america), a copy of the CreditoCheckout validation",
+     "where": "Magento248/app/design/frontend/Omni/muebles_america/Mageplaza_Osc/web/js/model/checkout-data-resolver.js:256-295, :236-249, :863-882, :890",
+     "dependency": "Identical call and gate on /rest/V1/omnipro-credito/codigoPromocion.",
+     "effect_if_removed_from_credit_flow": "Harmless.",
+     "effect_if_removed_entirely": "Harmless for this change. A Magento cleanup has to include this file as well.",
+     "severity": "harmless"
+    },
+    {
+     "consumer": "Magento backend CreditoManagement::codigoPromocion, the REST route the checkout calls",
+     "where": "Omnipro/MaviCredito/etc/webapi.xml:39-44 (anonymous); Model/CreditoManagement.php:589-610; Helper/Data.php:41-43 (config omnipro_intelisisintegration/mavi_credito/cupon_promotion, XML_PATH from Omnipro/IntelisisIntegration/Helper/Data.php:10); Omnipro/IntelisisIntegration/Model/Adapter.php:32-43",
+     "dependency": "Posts {codigo, opcion, idMagento} to the configured URL. It returns the raw body whatever the HTTP status, or null on failure. It saves quote.bank = code whatever the result (:601), and quote.bank is the fallback for codigo_promotor (OrderManagement.php:466, 715) and ProductosMX (CreditMxManagement.php:406). The URL value is not in any file.",
+     "effect_if_removed_from_credit_flow": "Harmless. It does not touch ServicioSAP.",
+     "effect_if_removed_entirely": "Harmless. The configured URL is not ServicioSAP's order/validatecupon: the verb (POST vs GET) and body do not match, and grep found no caller of validatecupon.",
+     "severity": "harmless"
+    },
+    {
+     "consumer": "DMZ CreditController.codigoPromocion: the only coupon relay in the DMZ",
+     "where": "DMZ/WebApiMagento/Controllers/CreditController.cs:126-138; Models/CreditRequest.cs:83-88; Helper/Curl.cs:22, 80-84, 93-113; Web.config:16-17",
+     "dependency": "curl.Post(\"credit/codigoPromocion\") to URL_INTELISIS. It always answers Ok(response). On an exception, Curl.Post returns e.ToString(), so Magento gets HTTP 200 with the exception text. URL_INTELISIS in the on-disk Web.config is https://localhost:44399/ (:17), which is ServicioSAP's IIS Express port (ServicioSap.csproj:21, 503); the LAN URL is commented out (:16). ServicioSAP has no credit/codigoPromocion route (grep: 0 hits); LAN has one (LAN Controllers/CreditController.cs:124-141, then Metodos/CreditMethods.cs:392-463).",
+     "effect_if_removed_from_credit_flow": "No change. This relay never reached HandlePromoCodeAsync.",
+     "effect_if_removed_entirely": "No change. Removing order/validatecupon does not touch this relay. It stays broken or working exactly as the deployed URL_INTELISIS makes it today: with the on-disk value it returns a 404 exception text, and a promoter-coded checkout is blocked no matter which option is chosen.",
+     "severity": "unknown"
+    },
+    {
+     "consumer": "ServicioSAP GET order/validatecupon/{codigo} (option B target), from the Magento/DMZ side",
+     "where": "ServicioSap/Controllers/OrderController.cs:102-120",
+     "dependency": "Returns JSON {status: OK|NO_VALIDO|err}. Magento expects the plain strings OK/Erroneo/Utilizado and calls .replace on the response (credito-checkout-functions.js:271-283), so this route could not serve Magento as-is. A grep for 'validatecupon' across the share finds only this controller, skill docs and Hoppscotch collections (MappingMetods/ServicioSapHoppscotch_Mejorado.json:1991; 'Servicios SAP y Middleware (Unificado).json':1411; 'collectionhoppscotch 15092026.json':5815).",
+     "effect_if_removed_from_credit_flow": "Route stays; no effect.",
+     "effect_if_removed_entirely": "Harmless for Magento and the DMZ, since neither calls it. Only the Hoppscotch test collections would get 404.",
+     "severity": "harmless"
+    },
+    {
+     "consumer": "Magento Credilana/ProductosMX flows: burn the promoter code through Magento, DMZ and LAN, not ServicioSAP",
+     "where": "Mavi/CreditMigration/Model/CredilanaManagement.php:531-538, 735-741; Mavi/CreditMigration/Model/ClientCreditManagement.php:129, 142-143; Mavi/ProductosMX/Model/CreditMxManagement.php:406, 454, 459 (data[14], data[72]; recomendador is separate at :457 data[69]); DMZ CreditController.cs:169-181, 404-414; LAN Metodos/CreditMethods.cs:205, 480-483",
+     "dependency": "Magento calls CreditoManagement::codigoPromocion('Elimina') (result ignored), or sends the code in data arrays to DMZ credit/CreditoWeb_* routes. The DMZ relays those to URL_INTELISIS (curl.Post), where LAN burns through SpVTASVentaCupon.",
+     "effect_if_removed_from_credit_flow": "Harmless. These flows do not use ServicioSAP's HandlePromoCodeAsync.",
+     "effect_if_removed_entirely": "Harmless for this change. These are LAN-side burns that stay until LAN is retired.",
+     "severity": "harmless"
+    },
+    {
+     "consumer": "Magento /V1/credito/codigoPromocion (Mavi_CreditMigration, strict variant)",
+     "where": "Mavi/CreditMigration/etc/webapi.xml:112-113; Model/CredilanaManagement.php:865-883",
+     "dependency": "Wraps CreditoManagement::codigoPromocion. It throws '*Código de promotor inválido' for anything other than \"OK\". No caller found in app/code or app/design/frontend.",
+     "effect_if_removed_from_credit_flow": "Harmless. It does not go to ServicioSAP.",
+     "effect_if_removed_entirely": "Harmless. It does not go to ServicioSAP.",
+     "severity": "harmless"
+    },
+    {
+     "consumer": "Magento analytics and invoice data ('asistencia')",
+     "where": "Omnipro/TagManager/Helper/Info.php:231, 243, 267, 279; Mavi/SendInvoiceData/etc/db_schema.xml:13; Mavi/SendInvoiceData/Observer/InvoicedObserver.php:60; Mavi/InvoiceDataAnalysis/Cron/CheckForInvoices.php:124, 188",
+     "dependency": "GTM 'asistencia' reads the checkout session CodePromoter, which Magento sets itself. The invoice cron reads Agente from the backend order status, not from the coupon table.",
+     "effect_if_removed_from_credit_flow": "Harmless.",
+     "effect_if_removed_entirely": "Harmless.",
+     "severity": "harmless"
+    },
+    {
+     "consumer": "Checkout 'Utilizado' message vs the coupon burn: whether burning affects what the customer sees",
+     "where": "LAN Conn/Connection.cs:26 and Metodos/CreditMethods.cs:396-403, 430-452; .agents/skills/lan-sap-migration/SPsOrden/SpVTASVentaCupon.sql:60-113; ServicioSap/Helpers/ConexionDB/ConexionSQL.cs:79; ServicioSap/Web.config:159-161; OrderMethods.cs:1042, 1096",
+     "dependency": "Checkout validation (LAN) runs SpVTASVentaCupon against MAVICUBOS/IntelisisTmp.VTASCVentaCupon. ValidarCupon counts ANY row of the code and returns only Conteo 0 or 1, so LAN's 'Utilizado' branch (Conteo=2) never fires. ServicioSAP's burn writes VentasCupones in SIGMavi on DEVMAVI. Nothing in Magento or the DMZ reads either table (grep VentaCupon/VentasCupones/FechaUtilizacion: 0 hits).",
+     "effect_if_removed_from_credit_flow": "Harmless for Magento: no checkout message changes, because the burn never fed the validation. The only loss is the per-order promoter ledger row, which is a ServicioSAP-side data change.",
+     "effect_if_removed_entirely": "Harmless for Magento and the DMZ, for the same reason.",
+     "severity": "harmless"
+    }
+   ],
+   "no_evidence": [
+    "Deployed value of Magento config omnipro_intelisisintegration/mavi_credito/cupon_promotion, the URL codigoPromocion posts to. It is not in any system.xml, config.xml or app/etc, so it is DB-only. That it targets DMZ credit/codigoPromocion is inferred from the matching body shape (CreditoManagement.php:596-598 vs DMZ CreditRequest.cs:83-88).",
+    "Deployed value of Magento setorder_endpoint (Omnipro/PlaceOrder/Helper/Data.php:32-33). DMZ order/setOrder is the likely target but is not proven.",
+    "Whether the deployed DMZ URL_INTELISIS is LAN (/api/, commented out at Web.config:16) or ServicioSAP (localhost:44399 at Web.config:17). There is no Web.Release.config transform for it.",
+    "Whether LAN accepts the ServicioSAP token that DMZ Curl now sends on every curl.Post (Curl.cs:80-84). The on-disk JWT settings in LAN and ServicioSAP Web.config are identical (compared by hash, values not shown); the deployed ones are unknown.",
+    "Caller of Magento /V1/credito/codigoPromocion (Mavi/CreditMigration/etc/webapi.xml:112). None in app/code or app/design/frontend; it may be a headless or mobile client.",
+    "Source of payment additional_data 'promoCode' (DataAssignObserver.php:45), which takes priority for Agente. No JS in the repo sends it.",
+    "Which credit checkout UI is live in production. Both the Mavi_CreditoCheckout page (index.phtml:24) and the Omnipro_MaviCredito renderer (omnipro_pago_credito.js:14) are enabled (app/etc/config.php:802, 843, 893).",
+    "Any real payload with a non-empty codigo_promotor. Both captured credit payloads have \"\" (magento_payloads.md:26,55), and ServicioSap/Logs/sap.log has 0 occurrences.",
+    "Whether the SpVTASVentaCupon.sql copy in the skill folder (scripted 17/06/2026) matches the deployed SP. The 'Utilizado is unreachable' conclusion depends on it.",
+    "Whether any system outside Magento/DMZ (reports, commissions) reads the VTASCVentaCupon or VentasCupones ledger. Out of this sweep's scope."
+   ]
+  },
+  {
+   "key": "lan-data",
+   "summary": "Short answer: removing the promoter-coupon \"Elimina\" call from the ServicioSAP credit flow does not change how the flow works. It changes data in one table, SIGMAVI VentasCupones. The code has no reader of that table, but readers outside the code (Intelisis or SIGMAVI reports, commissions, payroll) could not be checked.\n\nPath roots used below: SAP = \\\\172.16.214.58\\sap\\ServicioSAP\\ServicioSap\\ServicioSap, LAN = \\\\172.16.214.58\\sap\\LAN\\WebApiMagento, DMZ = \\\\172.16.214.58\\sap\\DMZ\\WebApiMagento, MAG = \\\\172.16.214.58\\sap\\Magento248\\Magento248\\app\\code, SPS = \\\\172.16.214.58\\sap\\.agents\\skills\\lan-sap-migration\\SPsOrden, DOC = \\\\172.16.214.58\\sap\\.agents\\skills\\lan-sap-migration.\n\n(A) Removing only the call at SAP Methods/Order/OrderMethods.cs:705-709:\n- The flow ignores the call's result (:708), and HandlePromoCodeAsync never throws because its outer catch returns \"err\" (:1168-1172).\n- The request insert (CrearSolicitudCreditoAsync :803-840) and the article lines (:703) do not use it. The reply to Magento stays the same (:1809-1814).\n- The promoter code is written nowhere else in the credit path: there is no Agente in the credit request (SAP :803-840; LAN Metodos/CreditMethods.cs:150-188), and the credit path returns before order.Agente is used (SAP :1792-1815 vs :1852; LAN Metodos/OrderMethods.cs:623-649 vs :652).\n- The only effect: credit orders stop stamping FechaUtilizacion/IdEcommerce in SIGMAVI VentasCupones (:1098) and stop inserting a new row for the same code (:1147-1148). That removes the only record tying a credit web order to a promoter.\n- Removing it also drops up to five external calls per promo order, and the bugs B3/B6 and root cause #6 stop applying to the credit flow.\n\n(B) Removing HandlePromoCodeAsync and the GET order/validatecupon/{codigo} route (SAP Controllers/OrderController.cs:102-120):\n- Also safe at runtime. Nothing in MAG app/code, DMZ or LAN calls the route; only the Hoppscotch collections and planning docs mention it.\n- Magento checks the code at checkout through its own REST call. That call goes to the configured URL `cupon_promotion`, whose value is not in the code. DMZ credit/codigoPromocion forwards to LAN (DMZ CreditController.cs:126-138, Helper/Curl.cs:22,93, Web.config:17). The contract is also different: POST returning OK/Erroneo/Utilizado, versus ServicioSAP's GET returning {status: OK/NO_VALIDO/err}.\n- Helpers that stay in use: GetSuccessFactorEmployeeAsync (BusinessPartnerController.cs:175), GetSucursalAsync (AccountController.cs:52), URL_BP_API (BusinessPartnerMethods.cs:204). Models/SAP/Order/CouponModels.cs is already dead code.\n\nHow the coupon works in LAN:\n- The coupon code is the employee number itself (Codigo = Agente, SPS SpVTASVentaCupon.sql:153-155; captured payload CRED511270: codigo_promotor = Agente = \"E016881\", DOC MappingMetods/Manual Tecnico Peticiones Hoppscotch 01092026.md:879).\n- \"Elimina\" stamps the newest free row, then always inserts a new free row (SP:115-136). ValidarCupon only ever returns 0 or 1 (SP:62-113), so the \"Utilizado\" answer LAN checks for (CreditMethods.cs:442-445) can never happen.\n- So marking a coupon used never limited reuse. It is only a log of which order used which employee's code.\n\nThe feature is not switched off anywhere in code:\n- The ServicioSAP call is live with no flag.\n- LAN calls it (CreditMethods.cs:203-206, 480-483).\n- Magento still shows the checkbox, validates the code, and burns coupons through LAN in the Credilana, ClientCredit and ProductosMX flows.\n- The SPs were still being changed in Oct 2025 and Jan 2026 (SPVTASPedidosMagento.sql:28-29, SpVTASVentaCupon.sql:48-49).\n- No doc declares it deprecated. On 2026-09-11 it was explicitly decided to keep the burn in the order flow (DOC MappingMetods/FLUJO_CREDITO_LAN_VS_SAP.md:188); that decision and PLAN §22.5 #6, Q7/Q8 and B3/B6 would need updating.\n\nReal risk: when LAN is retired, whether or not A/B is done, Magento's checkout and Credilana coupon calls get a null or error answer unless the Magento field is removed first. MAG Omnipro/MaviCredito/Model/CreditoManagement.php:576-609 swallows the error and returns null, and the JS calls response.replace on it without a null check (omnipro_pago_credito-method.js:794, credito-checkout-functions.js:271).\n\n\"Codigo promotor\" and \"codigo recomendador\" are separate things in the code (MAG Mavi/ProductosMX/Model/CreditMxManagement.php:457 vs :459; LAN Metodos/Credit/Methods.cs:134).",
+   "findings": [
+    {
+     "consumer": "ServicioSAP credit flow (ProcessCreditPaymentAsync), the only runtime caller of the burn",
+     "where": "SAP Methods/Order/OrderMethods.cs:705-709 (call), :1168-1172 (outer catch returns \"err\"), :1809-1814 (response to Magento)",
+     "dependency": "Reads infoCliente.codigo_promotor and calls HandlePromoCodeAsync(codigo, incrementId, \"Elimina\"); result discarded; runs inside the same try as InsertCreditArticlesAsync (:701-717)",
+     "effect_if_removed_from_credit_flow": "The request header, article lines and the 'Concluido' answer to Magento do not change, and no exception path changes because the method never throws. Removes up to 3 SIGMAVI connections plus the SuccessFactors call (:1062), the AWS catalog call (:1069) and the businesspartner-api AS_GET_ZQBP_AGENTE call (:1111-1125, new HttpClient with the default timeout). Bugs B3/B6 stop applying to this path (PLAN §23.5).",
+     "effect_if_removed_entirely": "Same as A for the credit flow.",
+     "severity": "harmless"
+    },
+    {
+     "consumer": "SIGMAVI table VentasCupones (the data ServicioSAP writes)",
+     "where": "SAP Methods/Order/OrderMethods.cs:1044 (SELECT), :1098 (UPDATE FechaUtilizacion, IdEcommerce), :1147-1148 (INSERT Codigo, Agente, FechaEnvio, BP, Centro); connection SIGMavi at SAP Helpers/ConexionDB/ConexionSQL.cs:72-79",
+     "dependency": "Per credit order with a promoter code: stamps every free row of the code with GETDATE() and IdEcommerce = incrementId, then inserts a new free row (Centro from AS_GET_ZQBP_AGENTE Werks + GetSucursalAsync)",
+     "effect_if_removed_from_credit_flow": "Credit web orders no longer leave a row linking incrementId to the promoter (FechaUtilizacion/IdEcommerce), and no new row is inserted. Nothing else in ServicioSAP writes this table, so from then on ServicioSAP never writes to it. No reader other than HandlePromoCodeAsync was found (see the readers finding).",
+     "effect_if_removed_entirely": "ServicioSAP neither reads nor writes VentasCupones at all.",
+     "severity": "data-change"
+    },
+    {
+     "consumer": "Readers of the coupon tables (IntelisisTmp.VTASCVentaCupon / SIGMAVI VentasCupones / planned VentaCupon), such as commissions, payroll, reports, the liberador or SIGMAVI jobs",
+     "where": "Grep over SPS (only SpVTASVentaCupon.sql:64-69,118-124 reads; SPVTASPedidosMagento.sql:545 and SP_eCommerceNuevoPed.sql:638 only INSERT; spNomina.sql has no reference), LAN (only Metodos/CreditMethods.cs:403), DMZ (none), SAP (only OrderMethods.cs:1044-1148), businesspartner-dev and salesanddistribution-dev (none), MAG app/code (none), DOC RSG (none); liberador LAN Metodos/LiberadorCreditoMethods.cs and SAP Methods/Credit/LiberadorCreditoMethods.cs have no coupon or agent references",
+     "dependency": "Would read FechaUtilizacion/IdEcommerce/Agente to credit a sale to a promoter. The SP header states the purpose as 'Identificar origen ventas cupon' (SpVTASVentaCupon.sql:13), and a doc claims the sale is credited to the promoter (DOC MappingMetods/FLUJO_CREDITO_LAN_VS_SAP.md:144), but no code reader exists in the available repos",
+     "effect_if_removed_from_credit_flow": "No reader found in code. If an Intelisis/SIGMAVI report or commission process reads this table outside these repos, credit web orders would be missing from it. Note that IntelisisTmp already stops getting credit stamps at cutover, because ServicioSAP writes SIGMAVI, not Intelisis.",
+     "effect_if_removed_entirely": "Same as A.",
+     "severity": "unknown"
+    },
+    {
+     "consumer": "ServicioSAP's own ValidarCupon (the only code reader of VentasCupones) and its route GET order/validatecupon/{codigo}",
+     "where": "SAP Controllers/OrderController.cs:13 (RoutePrefix order), :102-120; SAP Methods/Order/OrderMethods.cs:1041-1091",
+     "dependency": "Counts free rows of the code in VentasCupones; if there are none, falls back to SuccessFactors Department/Title matched against the AWS catalog 'Código de promotor'. Returns {status: OK | NO_VALIDO | err}",
+     "effect_if_removed_from_credit_flow": "Validation results stay the same in practice: Elimina always re-inserts a free row (:1147), and without Elimina free rows are simply never used up. One detail: an employee who validates only through SuccessFactors never gets a table row, so every validation keeps depending on SuccessFactors (on an outage it answers NO_VALIDO, :1082-1085). No caller of the route exists, so this has no runtime effect.",
+     "effect_if_removed_entirely": "The route returns 404. No caller was found in MAG app/code, DMZ or LAN. It is referenced only in Hoppscotch collections/manuals and planning docs (DOC MappingMetods/_ANALISIS_PREVIO/DMZ-Backlog-Migracion-SAP.md:72,137,334; DOC Checklists/CHECKLIST_DEV3_NOSAP_NOINTELISIS.md:315; DOC MappingMetods/_NUESTROS_ENDPOINTS/CHECKLIST_MIGRACION_LAN_A_SAP.md:243). Those docs count it as the 'built' replacement for credit/codigoPromocion, although its contract is not drop-in.",
+     "severity": "harmless"
+    },
+    {
+     "consumer": "Magento checkout promoter-code validation (credit guest form and CreditoCheckout)",
+     "where": "MAG Omnipro/MaviCredito/view/frontend/web/js/view/payment/method-renderer/omnipro_pago_credito-method.js:618-626, :785-805; MAG Mavi/CreditoCheckout/view/frontend/web/js/credito-checkout-functions.js:236-249, :256-288; MAG Omnipro/MaviCredito/Model/CreditoManagement.php:576-609 (config cupon_promotion via Helper/Data.php:41-43; also stores the code in quote->setBank at :601); DMZ Controllers/CreditController.cs:126-138 -> Helper/Curl.cs:22,93 -> URL_INTELISIS (DMZ Web.config:17) -> LAN Controllers/CreditController.cs:124-141 -> LAN Metodos/CreditMethods.cs:392-463",
+     "dependency": "POST {codigo, opcion:'ValidarCupon', idMagento:''} expecting the strings 'OK' / 'Erroneo' / 'Utilizado' from LAN's SpVTASVentaCupon ValidarCupon (IntelisisTmp)",
+     "effect_if_removed_from_credit_flow": "None: Magento validates through DMZ to LAN, not ServicioSAP. The Magento feature stays live (optional checkbox, 'Código de promotor *').",
+     "effect_if_removed_entirely": "None today (it never calls ServicioSAP). When LAN is retired, independent of A/B: CreditoManagement.php:576-609 swallows errors and returns null, and the JS calls response.replace without a null check (omnipro_pago_credito-method.js:794, credito-checkout-functions.js:271). Only 'OK' lets the order proceed, so users who tick the promo box would be stuck unless Magento removes the field first.",
+     "severity": "harmless"
+    },
+    {
+     "consumer": "Magento order payload builder (source of codigo_promotor and Agente)",
+     "where": "MAG Omnipro/PlaceOrder/Model/OrderManagement.php:461-468, :505-513, :710-718, :728-729; SAP Models/SAP/Order/InfoClienteRequest.cs:49-56",
+     "dependency": "infoCliente.codigo_promotor = promoCodeN or the quote bank (the code validated at checkout). For credit orders body.Agente = promoCode/promoCodeN, the same value (captured CRED511270: both 'E016881', DOC MappingMetods/Manual Tecnico Peticiones Hoppscotch 01092026.md:879)",
+     "effect_if_removed_from_credit_flow": "Magento keeps sending the field. InfoClienteRequest.codigo_promotor becomes unread and can stay; no global MissingMemberHandling override was found in SAP, so removing it would also deserialize fine. Agente is already ignored in the credit path (SAP OrderMethods.cs:1792-1815 returns before :1852).",
+     "effect_if_removed_entirely": "Same as A.",
+     "severity": "harmless"
+    },
+    {
+     "consumer": "LAN legacy credit flow (what LAN wrote)",
+     "where": "LAN Metodos/OrderMethods.cs:623-647 (passes infoCliente codigo_promotor as data[6]); LAN Metodos/CreditMethods.cs:99-105, :199-206 (after CreditoWeb_InsertArticulo), :392-463; SPS SpVTASVentaCupon.sql:1 (USE IntelisisTmp), :115-165; connection LAN Conn/Connection.cs:26 (MAVICUBOS / IntelisisTmp)",
+     "dependency": "'Elimina': UPDATE TOP(1) newest free VTASCVentaCupon row SET FechaUtilizacion = GETDATE(), IdEcommerce = incrementId (SP:118-128), then always NUEVO: INSERT Codigo = Agente = code, FechaEnvio, Cliente NULL, Sucursal from Agente JOIN Sucursal (SP:139-159). LAN's ValidarCupon (SP:60-113) also inserts the first free row for a valid employee not yet in the table (Comercializadora.dbo.Personal + TablaStD 'Código de promotor')",
+     "effect_if_removed_from_credit_flow": "No effect on IntelisisTmp: ServicioSAP never wrote VTASCVentaCupon. Credit web orders stop reaching that table at the LAN-to-ServicioSAP cutover whether or not A is done.",
+     "effect_if_removed_entirely": "Same as A.",
+     "severity": "harmless"
+    },
+    {
+     "consumer": "Other Magento flows that burn coupons through LAN (Credilana, client credit, ProductosMX pre-application)",
+     "where": "MAG Mavi/CreditMigration/Model/CredilanaManagement.php:531-538, :735-741, :865-882; MAG Mavi/CreditMigration/Model/ClientCreditManagement.php:142-143; MAG Mavi/ProductosMX/Model/CreditMxManagement.php:406, :459 -> LAN Metodos/CreditMethods.cs:480-483",
+     "dependency": "codigoPromocion(code, 'Elimina', 'PW'+id or incrementId) to LAN SpVTASVentaCupon",
+     "effect_if_removed_from_credit_flow": "Not affected. These flows keep writing IntelisisTmp.VTASCVentaCupon while LAN lives.",
+     "effect_if_removed_entirely": "Not affected.",
+     "severity": "harmless"
+    },
+    {
+     "consumer": "Cash-flow promoter/agent attribution (LAN SPs and ServicioSAP SAP order)",
+     "where": "SPS SPVTASPedidosMagento.sql:28-29, :246-260 (Venta.Agente), :538-563 (VTASCVentaCupon row Codigo='Contado', Agente, FechaUtilizacion, IDEcommerce); SPS SP_eCommerceNuevoPed.sql:61, :631-656; LAN Metodos/OrderMethods.cs:652; MAG OrderManagement.php:505-508 (cash Agente = quote employeeId); SAP OrderMethods.cs:2364-2369 (partner Z1), :2785-2790 (Zusuariopos)",
+     "dependency": "The cash order's Agente, not HandlePromoCodeAsync. ServicioSAP never ported the 'Contado' coupon row (VentasCupones is written only in HandlePromoCodeAsync)",
+     "effect_if_removed_from_credit_flow": "Not affected.",
+     "effect_if_removed_entirely": "Not affected.",
+     "severity": "harmless"
+    },
+    {
+     "consumer": "Credit application table Agente / CodigoRecomendador columns",
+     "where": "SPS SP_CREDITO_WEB_DATOS.sql:57, :61, :151, :272-273, :333-334; LAN Metodos/CreditMethods.cs:150-188 (no @Agente passed); SAP OrderMethods.cs:803-840 (no Agente/CodigoRecomendador set); SAP Methods/Credit/SolicitudCreditoWebMethods.cs:215, :292-293",
+     "dependency": "Both columns exist, but neither the LAN nor the ServicioSAP e-commerce credit path fills Agente with the promoter code",
+     "effect_if_removed_from_credit_flow": "No change. The promoter code was never persisted in the credit application.",
+     "effect_if_removed_entirely": "No change.",
+     "severity": "harmless"
+    },
+    {
+     "consumer": "Magento invoice webhook 'asistencia' (InvoiceDataAnalysis cron -> SendInvoiceData)",
+     "where": "MAG Mavi/InvoiceDataAnalysis/Cron/CheckForInvoices.php:120-128, :176-194; MAG Mavi/SendInvoiceData/Observer/InvoicedObserver.php:60, :72; MAG Mavi/SendInvoiceData/etc/db_schema.xml:13; LAN Metodos/OrderMethods.cs:303",
+     "dependency": "Reads venta.Agente from Intelisis (SELECT ... Agente FROM venta), not the coupon table",
+     "effect_if_removed_from_credit_flow": "No effect from the coupon removal. How venta.Agente is filled for credit sales created later (liberador/Intelisis) could not be established.",
+     "effect_if_removed_entirely": "Same as A.",
+     "severity": "harmless"
+    },
+    {
+     "consumer": "Magento Google Tag Manager purchase event 'asistencia'",
+     "where": "MAG Omnipro/TagManager/Helper/Info.php:231, :243, :267, :279",
+     "dependency": "checkoutSession CodePromoter (the same code as codigo_promotor), front-end analytics only",
+     "effect_if_removed_from_credit_flow": "Not affected.",
+     "effect_if_removed_entirely": "Not affected.",
+     "severity": "harmless"
+    },
+    {
+     "consumer": "LAN pre-application path (Insert_2, superseded per §17) where the promoter code also leaks into codigo_postal",
+     "where": "MAG Mavi/ProductosMX/Model/CreditMxManagement.php:427 then :454 (data[14] overwritten with the promoter code), :457 (CodigoRecomendador = data[69]), :459 (promoter = data[72]); LAN Metodos/Credit/Methods.cs:94 (@codigo_postal = data[14]), :134 (@CodigoRecomendador = data[69]); DOC MappingMetods/PLAN_EJECUCION_SP_CREDITO_A_CODIGO.md:329, :387",
+     "dependency": "A Magento bug puts the promoter code into @codigo_postal. The promoter and recommender codes are separate fields",
+     "effect_if_removed_from_credit_flow": "Not affected (different path, out of scope since §17).",
+     "effect_if_removed_entirely": "Not affected.",
+     "severity": "harmless"
+    },
+    {
+     "consumer": "Migration docs and prior decisions",
+     "where": "DOC MappingMetods/FLUJO_CREDITO_LAN_VS_SAP.md:138-144, :188 (decision 2026-09-11: 'la quema del cupón se queda en el flujo de la orden'); DOC MappingMetods/PLAN_EJECUCION_SP_CREDITO_A_CODIGO.md:102, :867, :1363, :1483, :1755 (§22.5 #6), :1821, :1865-1866 (Q7/Q8), §23.5 B3/B6; DOC MappingMetods/MATRIZ_REGLAS_CREDITO_WEB_LAN_VS_SAP.md:249; DOC Checklists/CHECKLIST_DEV3_NOSAP_NOINTELISIS.md:311-317; DOC Resources/lan_tables_to_sap_master.md:33 ('En Evaluación')",
+     "dependency": "Record the burn as required for parity and list open questions Q7/Q8 about it",
+     "effect_if_removed_from_credit_flow": "Reverses the 2026-09-11 decision. Root cause #6, Q7/Q8 and B3/B6 become moot for the credit flow and should be closed as 'deprecated by the user'. Tests already keep codigo_promotor empty (PLAN :1384, :1865), so no test evidence is lost.",
+     "effect_if_removed_entirely": "The E-46/E-49 'built' status in the checklists and the DMZ backlog item for credit/codigoPromocion must be re-scoped (drop or re-plan).",
+     "severity": "harmless"
+    }
+   ],
+   "no_evidence": [
+    "The value of Magento config mavi_credito/cupon_promotion (Omnipro/MaviCredito/Helper/Data.php:41-43), i.e. where Magento's coupon validation and burn requests actually go. It is stored in core_config_data, not in code. DMZ exposes the matching route and forwards it to LAN.",
+    "Any reader of IntelisisTmp.VTASCVentaCupon or SIGMAVI VentasCupones/VentaCupon other than SpVTASVentaCupon and HandlePromoCodeAsync (Intelisis reports, promoter commissions, payroll, SIGMAVI jobs). None found in SPsOrden, LAN, DMZ, ServicioSAP, businesspartner-dev, salesanddistribution-dev, Magento app/code or the RSG folder.",
+    "Whether SIGMAVI actually has a table named VentasCupones, or only VentaCupon, and whether it is the same data as IntelisisTmp.VTASCVentaCupon (PLAN Q7, still open).",
+    "How venta.Agente is set for credit sales created after approval (liberador/Intelisis), and whether anything derives it from the coupon table by IdEcommerce.",
+    "Any business or technical document declaring the promoter coupon deprecated. Only the user's statement exists; the docs call it 'En Evaluación' / 'Por Definir, SAP Promotions' (the latter from the stale _GLOBAL_MASTER_DB.csv).",
+    "How often codigo_promotor is used in production. Only one captured credit payload carries a code (CRED511270, 'E016881'); CRED515773 and CRED515848 carry ''.",
+    "Whether a Magento flag hides the promoter checkbox in production. In code it is a user-toggled observable (hasPromoCode / hasCodeS), not a config switch."
+   ]
+  },
+  {
+   "key": "docs",
+   "summary": "Docs sweep, read-only. Nothing in the skill docs, runbook, RSG, checklists, mapping CSVs or memory says the promoter coupon (\"codigo promotor\", SpVTASVentaCupon / VTASCVentaCupon -> VentasCupones) is deprecated. Every record either keeps it or leaves it open:\n- 2026-08-03 ODS: VTASCVentaCupon -> SIGMAVI VentaCupon, \"Confirmado\" (_DECISIONES_ODS.md:175, README.md:66). It was moved from \"Fuera de alcance\" to Mixto/ours (README.md:49).\n- 2026-08-12: E-46 is recorded as \"ya construido ... ya en produccion\" with open defects (CHECKLIST_DEV3:315, :327-334). Gantt slots are still planned (PLAN_MAESTRO_GANTT_POR_DEV.md:92, :188, :281). _CONTROL_MIGRACION.csv:22 (E-15) says \"Listo\".\n- 2026-09-11 decision: \"la quema del cupon se queda en el flujo de la orden\" (FLUJO_CREDITO_LAN_VS_SAP.md:188). codigo_promotor was added to InfoClienteRequest \"justificado por el contrato\" (:186).\n- 2026-09-24/25/26: the runbook keeps it as an open parity item: §18.5 #11 (fixed in §20.1), §18.8 SIGMAVI question (W1), §18.9, §22.5 #6 \"Open\", §22.8 waiting on SIGMAVI, §23.4 Q7/Q8, §23.5 B3/B6, and the §23.6 correction.\n- The LAN SP was still being changed on 08/Enero/2026 (SpVTASVentaCupon.sql:49-50).\n\nThe only deprecation on record is \"codigo recomendador\" (D8 / D8.4, FLUJO_SP_CREDITO_WEB_DATOS_A_CODIGO.md:895-906; workflow_credit_parity_2026-09-26.js:34; memory sap-migration-sp-credito-alcance.md:20). The docs keep the two concepts apart everywhere:\n- reuso.md:99 says so explicitly.\n- They sit in different array slots: data[69] vs data[72] (PLAN:384 vs :387).\n- They hit different tables: VTASCVentaCupon with Personal/Agente (employee) vs CREDIDCodigoRecomendador joined to Cte (customer referral) (resumen_dudas.md:12-13).\n- Magento sends them as separate fields (collectionhoppscotch 15092026.json:14259).\nOne trap: the recomendador program also says \"cupon\" (\"Vigencia de cupon Recomienda y Gana\", RecomenderController/Post_SetCodes_Mapping.md:35).\n\nSide effects the docs point to:\n1. The coupon row's IdEcommerce is the only link between a credit order and its promoter. SP_CREDITO_WEB_DATOS @Agente is not passed on either side (credit_parity_2026-09-26.json promo step 15). The SP header gives its purpose as \"Identificar origen ventas cupon\" (SpVTASVentaCupon.sql:13), and FLUJO_CREDITO:145 says that without the burn \"no se le acredita la venta\". Removing it stops that attribution for credit orders. No doc names anyone who reads the table.\n2. Magento's checkout validation is not affected. It goes Magento -> DMZ credit/codigoPromocion -> LAN (parity step 14), and LAN ValidarCupon counts any row, used or not (SpVTASVentaCupon.sql:64-70). So the burn never changes its answer.\n3. Removing it reverses the 2026-09-11 decision and conflicts with the ODS/E-46 records. SKILL.md rules 1 and 5 (:41, :45) say to consult before retiring a coupon SP whose table went to SigMavi. The user's statement should be written down as the decision.\n4. In LAN the same table is also written by the cash order SPs, with Codigo='Contado' whenever @Agente is set (SP_eCommerceNuevoPed.sql:630-655; SPVTASPedidosMagento.sql:538-563). ServicioSAP touches VentasCupones only inside HandlePromoCodeAsync (grep: OrderMethods.cs:1044, :1098, :1147).\n\nNo RSG item covers promoter coupons. SD23 \"Promociones\" (Arquitectura_POS_Credito_MAVI_v060325.md:888, :1118) is pricing promotions, and the SD01 partner roles Z1/Z3 (sd01_enviar_pedido.md:48-51, :102-105) are not linked to codigo_promotor in any doc. The mapping entries that do cover it:\n- IDs E-46 / E-15 / E-17 / E-51 / S7-03 / F4d.\n- Old CSVs: \"Por Definir, SAP Promotions\" (_GLOBAL_MASTER_DB.csv:5-7, marked unusable in FLUJO_SP:1374).\n- dm07_sucursales listed as \"Validacion de Tienda / Promotor\" (master_migration_summary_unified.md:117).\n- Dependencies: SuccessFactors via android-api, the AWS catalog \"Codigo de promotor\", businesspartner-api AS_GET_ZQBP_AGENTE, and ZAPI_SUCURSALES_SRV.\n\nWhat removing it would close:\n- Option A (only the \"Elimina\" call): Q8, §22.5 #6, W1 and §18.8's coupon half as far as the credit flow goes, §18.9 \"equivalencia del codigo promotor\", B3, B6, DEF-A..DEF-D for the burn, MATRIZ G5-06/07/08 and the coupon parts of G5-02/G4-24/G2-39/G4-13, test step (18) and the \"codigo_promotor vacio\" requirement in B7, plus the extra latency (up to 4 HTTP calls). Q7 stays half open while order/validatecupon still reads VentasCupones.\n- Option B (method and route removed too): also Q7 in full, the E-46 defects, INVENTARIO_LOGS_SERVICIOSAP.csv:97-99, and the \"BLOQUEADO POR CATALOGOS\" note in Manual 26082026:292-293.\n- In either option the shared helpers must stay: GetSuccessFactorEmployeeAsync (BusinessPartnerController.cs:175), GetConfiguracionCatalogoAsync (ProductMethods.cs:745/753/761, SolicitudCreditoWebMethods.cs:528, ProductController.cs:251) and GetSucursalAsync (AccountController.cs:52).\n\nStale docs to fix at the same time:\n- _ALCANCE_MIGRACION_LAN_a_SAP.md:149 and DMZ-Backlog-Migracion-SAP.md:72/:137 say only ValidarCupon exists. Elimina is at OrderMethods.cs:1094.\n- COMPARATIVA_SETORDER D-04 says codigo_promotor is missing. It is at InfoClienteRequest.cs:56.\n- FLUJO_CREDITO:143 calls the method unreachable. It is called at :708.\n- CHECKLIST_DEV3:330 says sap-client=050. AccountMethods.cs:190 uses 110.\n- PLAN:102 says \"LAN consulta VentasCupones\". LAN uses VTASCVentaCupon.",
+   "findings": [
+    {
+     "consumer": "Business process: promoter sales attribution (who gets credit for an assisted credit sale)",
+     "where": "credit_parity_2026-09-26.json promo step 15; FLUJO_CREDITO_LAN_VS_SAP.md:145; SpVTASVentaCupon.sql:13, :115-164",
+     "dependency": "UPDATE of the free VentasCupones row with FechaUtilizacion + IdEcommerce = incrementId (OrderMethods.cs:1098) and regeneration INSERT (:1147). Per docs this row is the ONLY order-to-promoter link: SP_CREDITO_WEB_DATOS @Agente is not passed by LAN (CreditMethods.cs:150-188) nor by ServicioSAP (SolicitudCreditoWebMethods.cs:212/290 writes NULL)",
+     "effect_if_removed_from_credit_flow": "Credit orders that carry codigo_promotor no longer stamp or regenerate a coupon row, so the order is attributed to no promoter anywhere. The order itself is unchanged: it still answers 'Concluido' (parity step 13). No doc identifies any reader of VentasCupones/VTASCVentaCupon (commissions, reports), so business impact depends on that answer",
+     "effect_if_removed_entirely": "Same as Option A. In addition nothing in ServicioSAP reads or writes VentasCupones any more",
+     "severity": "data-change"
+    },
+    {
+     "consumer": "Magento credit checkout validation of the promoter code",
+     "where": "credit_parity_2026-09-26.json promo step 14 (cites Magento credito-checkout-functions.js:236-283, DMZ CreditController.cs:135 -> Curl.cs:106 URL_INTELISIS; not spot-checked by the synthesizer); SpVTASVentaCupon.sql:60-110",
+     "dependency": "Magento requires 'OK' from ValidarCupon before placing the order. Per docs that call goes DMZ credit/codigoPromocion -> LAN SpVTASVentaCupon, which counts ANY row of the code, used or not (SP:64-70)",
+     "effect_if_removed_from_credit_flow": "None per docs. Validation does not go through ServicioSAP, and LAN's answer does not depend on burn state. The ServicioSAP burn writes SIGMavi, not IntelisisTmp, today anyway",
+     "effect_if_removed_entirely": "None per docs, as long as Magento/DMZ keep pointing at LAN. Magento still sends codigo_promotor (OrderManagement.php:461-468 per parity step 1); an undeclared field is dropped silently on deserialization (FLUJO_CREDITO:175)",
+     "severity": "harmless"
+    },
+    {
+     "consumer": "ServicioSAP route GET order/validatecupon/{codigo} and its documented users",
+     "where": "Controllers/OrderController.cs:102-120 (call at :113); Manual Tecnico Peticiones Hoppscotch 01092026.md:2114-2127 ('GetCupones'); master_migration_summary_unified.md:336, :3872-3873; Manual Tecnico Servicio SAP 26082026.md:292-293",
+     "dependency": "HandlePromoCodeAsync(codigo, null, 'ValidarCupon'): COUNT of free rows (OrderMethods.cs:1044) plus the SuccessFactors/catalog gate (:1057-1086); returns at :1088-1091",
+     "effect_if_removed_from_credit_flow": "Route keeps working. With no burn, rows are never stamped, so once a free row exists the route keeps returning OK",
+     "effect_if_removed_entirely": "The route disappears. Parity step 14 says no DMZ route calls it and its JSON {status} does not match what Magento expects ('OK'/'Erroneo'/'Utilizado'); not spot-checked. Only the Hoppscotch test request and the manuals reference it",
+     "severity": "harmless"
+    },
+    {
+     "consumer": "Past decision log: keep the burn in the order flow",
+     "where": "FLUJO_CREDITO_LAN_VS_SAP.md:182-188 (decision 2026-09-11); PLAN_EJECUCION_SP_CREDITO_A_CODIGO.md:1483, :1489 (§20.1 #11), :1851 (§23.3 'promo burn after lines' counted as parity)",
+     "dependency": "Recorded decision that 'la quema del cupon se queda en el flujo de la orden'. codigo_promotor was added to InfoClienteRequest 'justificado por el contrato'",
+     "effect_if_removed_from_credit_flow": "Reverses the 2026-09-11 decision and the §20.1 #11 fix. The runbook parity verdict in §23.3 must be updated to say the promo step is intentionally dropped",
+     "effect_if_removed_entirely": "Same. FLUJO_CREDITO §4.2 and the §20.1 notes become historical",
+     "severity": "harmless"
+    },
+    {
+     "consumer": "Migration scope records that treat the feature as required",
+     "where": "_NUESTROS_ENDPOINTS/_DECISIONES_ODS.md:163, :175; _NUESTROS_ENDPOINTS/README.md:49, :66; Checklists/CHECKLIST_DEV3_NOSAP_NOINTELISIS.md:311-334; _NUESTROS_ENDPOINTS/_CONTROL_MIGRACION.csv:22; PLAN_MAESTRO_GANTT_POR_DEV.md:47, :92, :188, :281; Resources/lan_tables_to_sap_master.md:33",
+     "dependency": "ODS decision VTASCVentaCupon -> SIGMAVI VentaCupon 'Confirmado' (2026-08-03). E-46 marked built and 'ya en produccion' (2026-08-12). Gantt still plans codigoPromocion work (20 and 14 days)",
+     "effect_if_removed_from_credit_flow": "Contradicts these records. Nothing records the deprecation: who decided it and when is not in any doc",
+     "effect_if_removed_entirely": "Same. E-46/E-15, the Gantt slots and the SIGMAVI table request become obsolete and should be marked retired",
+     "severity": "unknown"
+    },
+    {
+     "consumer": "Skill rules for retiring legacy coupon logic",
+     "where": "SKILL.md:41 (Rule 1), SKILL.md:45 (Rule 5 'Delegacion de Zonas Grises: Para Cupones...')",
+     "dependency": "Before eliminating a legacy SP whose table moved to SigMavi, you must CONSULT. Coupons are named as a grey zone",
+     "effect_if_removed_from_credit_flow": "Process requirement: record the user's deprecation statement as the decision (runbook §23.4 / §22.8) so the rule is satisfied",
+     "effect_if_removed_entirely": "Same",
+     "severity": "harmless"
+    },
+    {
+     "consumer": "Open questions and decisions in the runbook and the parity analysis",
+     "where": "PLAN_EJECUCION_SP_CREDITO_A_CODIGO.md:1429 (§18.8 SIGMAVI, coupon half), :1435 (§18.9), :1755 (§22.5 #6), :1821 (§22.8 W1), :1827 (adversarial check of #6), :1865 (Q7), :1866 (Q8), :1899 (§23.6), :1909 (test step 18), :1384 (B7 'codigo_promotor vacio'); credit_parity_2026-09-26.json promo DEF-A..DEF-D",
+     "dependency": "All ask about coupon source of truth, burn rules or promoter code format",
+     "effect_if_removed_from_credit_flow": "Closes Q8, §22.5 #6 and its pending adversarial check, §18.9, test step 18, the B7 empty-code requirement, and DEF-B/DEF-C. W1/Q7/DEF-A stay half open only because the validatecupon route still reads VentasCupones. DEF-D (code format) stays open only for that route",
+     "effect_if_removed_entirely": "Closes all of them, including W1/Q7/DEF-A/DEF-D. §18.8 keeps only its CondicionesCredVtaLinea and RegionSku questions",
+     "severity": "harmless"
+    },
+    {
+     "consumer": "Known bugs on the promo path",
+     "where": "PLAN_EJECUCION_SP_CREDITO_A_CODIGO.md:1888 (B3), :1891 (B6); INVENTARIO_LOGS_SERVICIOSAP.csv:97-99; CHECKLIST_DEV3_NOSAP_NOINTELISIS.md:329-334",
+     "dependency": "B3: burn UPDATE commits before an unguarded agent lookup, so regeneration can be lost (code now at OrderMethods.cs:1094-1147). B6: result discarded at :708. Three Console.WriteLine catches. E-46 defects: 'Aplica' missing, empty code returns OK, INSERT columns BP/Centro vs Cliente/Sucursal",
+     "effect_if_removed_from_credit_flow": "B6 closed. B3 becomes unreachable: the Elimina branch has no other caller (grep: only :708 passes 'Elimina'). The Console catches at :1084 (SuccessFactors) and the outer catch stay reachable through validatecupon",
+     "effect_if_removed_entirely": "All closed, including the three Console catches and the E-46 defects. CHECKLIST_DEV3:330 (sap-client=050) is already stale: AccountMethods.cs:190 uses 110",
+     "severity": "harmless"
+    },
+    {
+     "consumer": "LAN-vs-SAP rule matrix and SetOrder comparison entries",
+     "where": "MATRIZ_REGLAS_CREDITO_WEB_LAN_VS_SAP.md:204-206 (G5-06/07/08), :200 (G5-02), :178 (G4-24), :126 (G2-39), :167 (G4-13), :245-249; COMPARATIVA_SETORDER_LAN_VS_SAP.md:46, :74 (D-04), :135 (E-21), :168 (P-25)",
+     "dependency": "Parity rules and test cases for the promoter burn",
+     "effect_if_removed_from_credit_flow": "G5-06/07/08 become 'intentionally dropped'. The coupon clauses of G5-02 ('each retry burns another coupon'), G4-24, G2-39 and G4-13 go away. E-21/P-25 test cases are dropped. D-04 is already stale (codigo_promotor exists at InfoClienteRequest.cs:56)",
+     "effect_if_removed_entirely": "Same",
+     "severity": "harmless"
+    },
+    {
+     "consumer": "Credit order latency and external calls",
+     "where": "credit_parity_2026-09-26.json promo step 16",
+     "dependency": "Up to 3 SQL connections and up to 4 HTTP calls (SuccessFactors 100 s, AWS 60 s, businesspartner-api 100 s, SucursalesSet 60 s) before 'Concluido' when codigo_promotor is set",
+     "effect_if_removed_from_credit_flow": "Removed from order/new. This is an improvement",
+     "effect_if_removed_entirely": "Same",
+     "severity": "harmless"
+    },
+    {
+     "consumer": "Shared helpers used by HandlePromoCodeAsync",
+     "where": "BusinessPartnerMethods.cs:342 (also BusinessPartnerController.cs:169-175); ProductMethods.cs:708 (also :745/:753/:761, SolicitudCreditoWebMethods.cs:528, ProductController.cs:251); AccountMethods.cs:185 (also AccountController.cs:52)",
+     "dependency": "GetSuccessFactorEmployeeAsync, GetConfiguracionCatalogoAsync, GetSucursalAsync",
+     "effect_if_removed_from_credit_flow": "None",
+     "effect_if_removed_entirely": "Only HandlePromoCodeAsync and the route may go. These helpers have other callers and must stay, or other routes and the credit phone validation (SolicitudCreditoWebMethods.cs:528) break",
+     "severity": "harmless"
+    },
+    {
+     "consumer": "LAN agent-sales ledger (context: the same table is written outside the coupon SP)",
+     "where": "SPsOrden/SP_eCommerceNuevoPed.sql:630-655; SPsOrden/SPVTASPedidosMagento.sql:538-563",
+     "dependency": "LAN cash order SPs INSERT VTASCVentaCupon (Codigo='Contado', Agente, IDEcommerce, Cliente, Sucursal) whenever @Agente is set, so the table is a general agent-attribution ledger",
+     "effect_if_removed_from_credit_flow": "No change to cash. ServicioSAP's cash path already writes no VentasCupones row (grep finds VentasCupones only at OrderMethods.cs:1044/:1098/:1147). After the removal ServicioSAP writes no attribution rows at all",
+     "effect_if_removed_entirely": "Same",
+     "severity": "unknown"
+    }
+   ],
+   "no_evidence": [
+    "Any business, HR or product record that the promoter coupon is deprecated. It is not in the runbook, the ODS decisions, the checklists, the RSG or memory, so the date and owner of the decision are unknown.",
+    "Anyone who reads VTASCVentaCupon / VentasCupones / VentaCupon downstream (commission reports, liberador, BI). No doc names one.",
+    "An answer from SIGMAVI to W1 (which table exists: VentaCupon or VentasCupones, its DDL, migration of open rows).",
+    "An answer from SAP to correo_dudas_sap.md:28-29 (whether Magento or SAP Promotions validates coupons).",
+    "Whether SD23 'Promociones' or the SD01 partner roles Z1/Z3 (Agente / Agente de Comision) are meant to replace promoter attribution. No doc links codigo_promotor to them.",
+    "Whether any DMZ route or Magento call reaches ServicioSAP order/validatecupon. Parity JSON step 14 says none does, but the synthesizer did not spot-check it.",
+    "Whether ServicioSAP's credit path is really in production. CHECKLIST_DEV3:327 says 'ya en produccion' (2026-08-12); not verified.",
+    "How Magento Mavi\\RegisterSeller employee_id (FLUJO_SP_CREDITO_WEB_DATOS_A_CODIGO.md:981) relates to infoCliente.codigo_promotor.",
+    "Which promoter code format Magento will send after migration: Intelisis E-code (captured CRED511270 'E016881') or SAP personnel number (DEF-D)."
+   ]
+  }
+ ]
+}

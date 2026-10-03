@@ -1,4 +1,5 @@
 # Master Migration Summary Unified: LAN a SAP (Estado Global y Arquitectura)
+> 2026-10-01: cómo funciona ServicioSAP hoy está en [[Business Rules Ecommerce]] (fuente única). Este documento queda como historia; si contradice a esa fuente, gana la fuente.
 
 > [!info] Documento Maestro Unificado (Single Source of Truth)
 > **Proyecto:** Migración LAN (Intelisis) a SAP S/4HANA (Módulo Órdenes, E-Commerce, Crédito y Servicios)
@@ -7,7 +8,6 @@
 > **Última Sincronización:** 25 de Agosto de 2026
 
 ---
-
 ## 📊 Resumen Visual del Estado Global de Endpoints (149 Total)
 
 ```mermaid

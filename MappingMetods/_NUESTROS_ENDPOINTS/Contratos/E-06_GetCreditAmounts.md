@@ -3,8 +3,8 @@ tags: [contrato, endpoint, migracion, ola-3]
 partida: E-06
 actualizado: 2026-08-19
 ---
-
 # E-06 — `credit/GetCreditAmounts`
+> 2026-10-01: cómo funciona ServicioSAP hoy está en [[Business Rules Ecommerce]] (fuente única). Este documento queda como historia; si contradice a esa fuente, gana la fuente.
 
 Devuelve los montos de crédito de Credilana cacheados para una combinación de artículo y UEN.
 

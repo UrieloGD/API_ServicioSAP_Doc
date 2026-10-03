@@ -1,11 +1,11 @@
 # Comparativa de creación de cliente: `ClientToIntelisis` (LAN) vs `partner/client` (ServicioSAP)
+> 2026-10-01: cómo funciona ServicioSAP hoy está en [[Business Rules Ecommerce]] (fuente única). Este documento queda como análisis; si contradice a esa fuente, gana la fuente.
 
 > Documento de análisis + plantilla de verificación de paridad funcional del flujo de Business Partner.
 > Base analizada: `\\CATECINF214058D\Migracion SAP` — solo lectura, sin cambios aplicados.
 > Fecha de análisis: 2026-09-07
 
 ---
-
 ## 0. Respuesta corta: ¿la ruta ya quedó conectada?
 
 **Sí, la ruta está conectada de extremo a extremo.** El DMZ ya no llama a Intelisis:

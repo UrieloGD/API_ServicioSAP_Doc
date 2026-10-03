@@ -1,11 +1,11 @@
 # Comparativa de Lógica y Origen de Datos: SP_eCommerceExportaMA vs Arquitectura C#
+> 2026-10-01: cómo funciona ServicioSAP hoy está en [[Business Rules Ecommerce]] (fuente única). Este documento queda como análisis; si contradice a esa fuente, gana la fuente.
 
 El siguiente documento detalla cómo se ha migrado el antiguo Stored Procedure (`SP_eCommerceExportaMA.sql`) de Intelisis a la nueva arquitectura en C# (`EcommerceMethods.cs`). 
 
 Tras una revisión profunda de los métodos internos y cadenas de conexión, se valida que el proceso está **completamente migrado de Intelisis**. La lógica monolítica del SP fue diseccionada y enrutada correctamente hacia las dos nuevas fuentes de verdad: **APIs de SAP S/4HANA** (para el ERP/Core) y la base de datos **SIGMAVI** (como middleware para reglas específicas de catálogo web que no existen nativamente en SAP).
 
 ---
-
 ## 1. Tablas Temporales vs. Modelos de Memoria (Carga Inicial)
 **Lógica en SP (`/***************CSV para MA*************************/`)**: 
 Agrupaba datos en tablas masivas (`#temp_eComerceExportaArt`, `#articulos`, `art`, `ArtDisponible`).

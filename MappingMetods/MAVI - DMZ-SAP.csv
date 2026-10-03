@@ -1,4 +1,4 @@
-﻿Origin Controller,Ruta DMZ,HTTP Method,Ruta ServicioSAP,HTTP Method SAP,Programador,Conectado,Generado,Notas
+Origin Controller,Ruta DMZ,HTTP Method,Ruta ServicioSAP,HTTP Method SAP,Programador,Conectado,Generado,Notas
 CreditController,credit/getClienteFactura/{cliente}/{factura},GET→POST,credit/getClienteFactura/{cliente}/{factura},POST,Marcos,Si,Si,TZ01 - Migrado
 CreditController,credit/getClienteSaldo/{cliente},GET,To Do,GET,Marcos,No,No,SD33 - WALLET
 CreditController,credit/MonederoSaldoCredito,POST,To Do,GET,Javier,No,No,SD33 - WALLET
@@ -33,7 +33,7 @@ CustomersController,customer/setCustomer,POST,partner/client,POST,Marcos,Si,Si,B
 CustomersController,customer/setCustomerList,POST,customer/setCustomerList,POST,Diego,SI,Si,SIGMAVI + SAP - Endpoint SAP existe
 CustomersController,customer/getCustomerList,GET,customer/getCustomerList,POST,Diego,SI,Si,SIGMAVI + SAP - Endpoint SAP existe
 CustomersController,customer/deleteCustomerList,POST,customer/deleteCustomerList,POST,Diego,SI,Si,SIGMAVI + SAP - Endpoint SAP existe
-CustomersController,customer/cashCustomerReport,POST,customer/cashCustomerReport,POST,Diego,No,No,
+CustomersController,customer/cashCustomerReport,POST,To Do,POST,Diego,Si,Si,OTRO - Archivo en red
 CustomerServiceController,customerService/GetAccountDebts,POST,credit/GetAccountDebts,POST,Marcos,Si,Si,EX01 - Migrado
 CustomerServiceController,customerService/ApplyPaymentNeko,POST,credit/ApplyPaymentNeko,POST,Marcos,No,No,ZAPI_REFERENCIAS_BANCARIAS - Estructura SAP existe falta lógica ABAP
 CustomerServiceController,customerService/UpdateStatusPaymentNeko,POST,credit/UpdateStatusPaymentNeko,POST,Marcos,No,No,ZAPI_REFERENCIAS_BANCARIAS - Estructura SAP existe falta lógica ABAP
@@ -46,8 +46,8 @@ CustomerServiceController,customerService/nombreCliente,POST,partner/client/ma/{
 CustomerServiceController,customerService/bitacoraAtencionClientes,POST,To Do,POST,Diego,No,No,ANDROID - No requiere SAP
 CustomerServiceController,customerService/validarCoberturaPorCP,POST,To Do,GET,Javier,No,No,SEPOMEX - Endpoint SAP existe
 CustomerServiceController,customerService/obtenerVentanaConfirmacion,POST,To Do,GET,Javier,No,No,BP05 + SD36 + ADDRCHANGE - Requiere desarrollo (3 APIs)
-CustomerServiceController,customerService/obtenerCreditos,POST,To Do,GET,Javier,No,No,SD36 + DM01 + tarjetaSerie - Requiere desarrollo
-CustomerServiceController,customerService/obtenerQuejas,POST,customerService/obtenerQuejas,GET,Diego,No,No,
+CustomerServiceController,customerService/obtenerCreditos,POST,To Do,GET,Javier,Si,Si,SD36 + DM01 + tarjetaSerie - Requiere desarrollo
+CustomerServiceController,customerService/obtenerQuejas,POST,To Do,GET,Diego,Si,Si,ANDROID - No requiere SAP
 CustomerServiceController,customerService/ObtenerEstatusEmbarque,POST,To Do,GET,Javier,No,No,BLOQUEADO - Pendiente desarrollo ABAP
 CustomerServiceController,customerService/LoginClienteCredito,POST,customerService/LoginClienteCredito,GET,Javier,Si,Si,BP05 - Login por datos BP
 CustomerServiceController,customerService/LoginClienteCreditoFechaN,POST,customerService/LoginClienteCreditoFechaN,GET,Javier,Si,Si,BP05 - Login por fecha nacimiento
@@ -55,25 +55,25 @@ CustomerServiceController,customerService/GetSTPAccount,POST,To Do,POST,Marcos,N
 CustomerServiceController,customerService/GetSalesChannelsSTP,POST,To Do,GET,Javier,No,No,CteEnviarA  → salesanddistribution-api.mavi.fun/AS_GET_PartnerAddress?SdDoc=0000007844&PartnRole=WE
 CustomerServiceController,customerService/ValidateSTPAccount,GET,To Do,GET,Marcos,No,No,Tabla Z nueva en SAP - Requiere desarrollo
 CustomerServiceController,customerService/bbvaKeyNeko,POST,N/A,N/A,Deprecado,N/A,N/A,DEPRECADO
-CustomerServiceController,customerService/bbvaKeyAdvanced,POST,customerService/bbvaKeyAdvanced,GET,Diego,No,No,
+CustomerServiceController,customerService/bbvaKeyAdvanced,POST,To Do,GET,Diego,Si,Si,Herramienta EXT BBVA
 CustomerServiceController,customerService/GetEmpleadoByNomina,POST,partner/successfactor/employee/{userId},GET,Javier,No,No,SuccessFactor - Endpoint SAP existe
 CustomerServiceController,customerService/ActualizarCamposConfigurables,POST,N/A,N/A,Deprecado,N/A,N/A,DEPRECADO
 CustomerServiceController,customerService/InsertarDesdeTablerateNativo,POST,N/A,N/A,Deprecado,N/A,N/A,DEPRECADO
 CustomerServiceController,customerService/InsertarDesdeTablerateCustom,POST,N/A,N/A,Deprecado,N/A,N/A,DEPRECADO
 LoginController,login/authenticate,POST,login/auth,POST,Deprecado,N/A,N/A,JWT local - Endpoint SAP existe
-MagentoController,magento/attributes,GET,N/A (MAGENTO directo),N/A,Diego,No,No,DMZ→Magento directo
-MagentoController,magento/general/attributes,GET,N/A (MAGENTO directo),N/A,Diego,No,No,DMZ→Magento directo
-MagentoController,magento/attributeSets,GET,N/A (MAGENTO directo),N/A,Diego,No,No,DMZ→Magento directo
-MagentoController,magento/attributeSetChildren/{id},GET,N/A (MAGENTO directo),N/A,Diego,No,No,DMZ→Magento directo
-MagentoController,magento/categories,GET,N/A (MAGENTO directo),N/A,Diego,No,No,DMZ→Magento directo
-MagentoController,magento/children/{page}/{size}/{store},GET,N/A (MAGENTO directo),N/A,Diego,No,No,DMZ→Magento directo
-MagentoController,magento/noImagenProduct/{store},GET,N/A (MAGENTO directo),N/A,Diego,No,No,DMZ→Magento directo
-MagentoController,magento/productWithWebsites/{page}/{size},GET,N/A (MAGENTO directo),N/A,Diego,No,No,DMZ→Magento directo
-MagentoController,magento/getOrderId/{incrementId},GET,N/A (MAGENTO directo),N/A,Diego,No,No,DMZ→Magento directo
-MagentoController,magento/deletePromociones,GET,N/A (MAGENTO directo),N/A,Diego,No,No,DMZ→Magento directo
-MagentoController,magento/deleteReservations,GET,N/A (MAGENTO directo),N/A,Diego,No,No,DMZ→Magento directo
-MagentoController,magento/getCuenta,POST,N/A (MAGENTO directo),N/A,Diego,No,No,DMZ→Magento directo
-MagentoController,magento/setCuenta,POST,N/A (MAGENTO directo),N/A,Diego,No,No,DMZ→Magento directo
+MagentoController,magento/attributes,GET,N/A (MAGENTO directo),N/A,Diego,Si,Si,DMZ→Magento directo
+MagentoController,magento/general/attributes,GET,N/A (MAGENTO directo),N/A,Diego,Si,Si,DMZ→Magento directo
+MagentoController,magento/attributeSets,GET,N/A (MAGENTO directo),N/A,Diego,Si,Si,DMZ→Magento directo
+MagentoController,magento/attributeSetChildren/{id},GET,N/A (MAGENTO directo),N/A,Diego,Si,Si,DMZ→Magento directo
+MagentoController,magento/categories,GET,N/A (MAGENTO directo),N/A,Diego,Si,Si,DMZ→Magento directo
+MagentoController,magento/children/{page}/{size}/{store},GET,N/A (MAGENTO directo),N/A,Diego,Si,Si,DMZ→Magento directo
+MagentoController,magento/noImagenProduct/{store},GET,N/A (MAGENTO directo),N/A,Deprecado,N/A,N/A,DMZ→Magento directo
+MagentoController,magento/productWithWebsites/{page}/{size},GET,N/A (MAGENTO directo),N/A,Diego,Si,Si,DMZ→Magento directo
+MagentoController,magento/getOrderId/{incrementId},GET,N/A (MAGENTO directo),N/A,Deprecado,N/A,N/A,DMZ→Magento directo
+MagentoController,magento/deletePromociones,GET,N/A (MAGENTO directo),N/A,Diego,Si,Si,DMZ→Magento directo
+MagentoController,magento/deleteReservations,GET,N/A (MAGENTO directo),N/A,Diego,Si,Si,DMZ→Magento directo
+MagentoController,magento/getCuenta,POST,N/A (MAGENTO directo),N/A,Diego,Si,Si,DMZ→Magento directo
+MagentoController,magento/setCuenta,POST,N/A (MAGENTO directo),N/A,Diego,Si,Si,DMZ→Magento directo
 OrdersController,order/setOrder,POST,order/new,POST,Marcos,Si,Si,SD01 - Migrado
 OrdersController,order/cancelOrder,POST,order/cancelOrder,POST,Javier,Si,Si,SD46 - Endpoint SAP existe faltan escenarios delivery
 OrdersController,order/returnOrder,POST,order/setreturn,POST,Marcos,Si,Si,SD09 - Migrado
@@ -113,11 +113,11 @@ WalletCustomerController,customer/wallet/getCuentaC/{ordenCompra},GET,To Do,GET,
 WalletCustomerController,customer/wallet/getMinimumCostToRedeem,POST,customer/wallet/getMinimumCostToRedeem,POST,Javier,Si,Si,SD18 + TablaRangoSt ( AI_GET_CatalogoConfiguracion ) – Requiere desarrollo
 WholesaleCustomerController,company/wholesale-customer/{wholesaleAccount},GET,company/wholesale-customer/{wholesaleAccount},GET,Javier,Si,Si,BP05MA
 WholesaleCustomerController,company/negotiable-quote/create,POST,To Do,POST,Javier,No,No,"Insert Venta (SD01) Insert VentaD (SD01 Seccion de detalles) los inserts tiene valores fijos (revisar codigo metodo InsertTableVenta, InsertTableVentaD)"
-CustomersController (LAN-only),customer/getCuenta,POST,N/A (MAGENTO),POST,Diego,No,No,LAN-only - No tiene ruta DMZ
-CustomersController (LAN-only),customer/setCuenta,POST,N/A (MAGENTO),POST,Diego,No,No,LAN-only - No tiene ruta DMZ
+CustomersController (LAN-only),customer/getCuenta,POST,N/A (MAGENTO),POST,Diego,Si,Si,LAN-only - No tiene ruta DMZ
+CustomersController (LAN-only),customer/setCuenta,POST,N/A (MAGENTO),POST,Diego,Si,Si,LAN-only - No tiene ruta DMZ
 CreditController (LAN-only),credit/SaveCredilanaInfo,POST,N/A (SQLlite),POST,Diego,No,No,LAN-only - SQLite
-OrdersController (LAN-only),order/createStorepickupCode/{idE}/{idO},POST,To Do,POST,Javier,No,No,"Migrar GenerarIdRecogerEnSucursal() a SAP, SD36 (venta), BP05MA (cte), VentaEntrega (api par domicilios de entrega ) EcommerceDetPedidos (Pendiente de creacion)"
-OrdersController (LAN-only),order/generateNewStorepickupCode/{idE},POST,To Do,POST,Javier,No,No,DEPRECADO por metodo crearPrimerCodigoRecogerSucbanktransfer
+OrdersController (LAN-only),order/createStorepickupCode/{idE}/{idO},POST,order/createStorepickupCode/{idE}/{idO},POST,Javier,Si,Si,"Migrar GenerarIdRecogerEnSucursal() a SAP, SD36 (venta), BP05MA (cte), VentaEntrega (api par domicilios de entrega ) EcommerceDetPedidos (Pendiente de creacion)"
+OrdersController (LAN-only),order/generateNewStorepickupCode/{idE},POST,order/generateNewStorepickupCode/{id,POST,Javier,Si,Si,DEPRECADO por metodo crearPrimerCodigoRecogerSucbanktransfer
 OrdersController (LAN-only),order/getOrderId/{idEcommerce},POST,N/A (MAGENTO),GET,Javier,No,No,LAN-only – Magento
 OrdersController (LAN-only),order/getOrderInfoAndSet/{incrementId},POST,N/A (MAGENTO) Y SAP,N/A,Javier,No,No,LAN-only - Magento + SD36 + SD01
 OrdersController (LAN-only),order/checkOpenpay,POST,N/A (SQLITE),POST,Javier,No,No,"LAN-only Ejecuta obtenerEstatusVenta (SD36), SPAFectar, SQLITE"
@@ -129,7 +129,7 @@ ProductsController (LAN-only),product/updateStockMavi,POST,product/stock,GET,Jav
 ProductsController (LAN-only),product/updateStock,POST,product/stock,GET,Javier,No,No,LAN-only - Job ImportApp
 ProductsController (LAN-only),product/getStockByStore,POST,product/stock/filter/{filter},GET,Javier,No,No,LAN-only - Job ImportApp
 ProductsController (LAN-only),product/existenciasAlmacenArt,POST,product/stock/filter/{filter},GET,Javier,No,No,LAN-only - Job ImportApp
-ProductsController (LAN-only),product/obtenerImagen,POST,ma/imagenes/optimizadas,GET,Javier,No,Si,LAN-only - product_images
+ProductsController (LAN-only),product/obtenerImagen,POST,ma/imagenes/optimizadas,GET,Diego,Si,Si,LAN-only - product_images
 MercanciaController,mercancias/getAbonos,POST,credit/GetAccountDebts,POST,Deprecado,N/A,N/A,DEPRECADO - EX01/TZ01
 MercanciaController,mercancias/getProximosPagos,POST,credit/GetAccountDebts,POST,Deprecado,N/A,N/A,DEPRECADO - EX01
 MercanciaController,mercancias/getSaldoVencido,POST,credit/GetAccountDebts,POST,Deprecado,N/A,N/A,DEPRECADO - EX01
@@ -139,24 +139,24 @@ MercanciaController,mercancias/ValidarTelefono,POST,partneraddress/partner/phone
 ,,,,,,,,
 ,,,,,,,,
 Programador,Rutas Totales,Completadas,Generados,Conectado * Dev,Generado * Dev,Avance * Dev,,
-Javier,44,8,12,18.18%,27.27%,22.73%,,
-Diego,57,7,20,12.28%,35.09%,23.68%,,
+Javier,43,11,14,25.58%,32.56%,29.07%,,
+Diego,56,24,37,42.86%,66.07%,54.46%,,
 Marcos,17,8,8,47.06%,47.06%,47.06%,,
-Deprecado,18,18,18,100.00%,100.00%,100.00%,,
-Total,136,23,40,25.84%,36.47%,31.16%,,
-Total sin Deprecadas,118,41,58,44.38%,52.35%,48.37%,,
+Deprecado,20,20,20,100.00%,100.00%,100.00%,,
+Total,136,43,59,38.50%,48.56%,43.53%,,
+Total sin Deprecadas,116,63,79,53.87%,61.42%,57.65%,,
 ,,,,,,,,
 ,,,,,,,,
 ,,,,,,136,,Totales
-,,,,,,118,,Totales sin Deprecados
-,,,,,,95,78,Faltantes
-,,,,,,41,58,Realizados
-,,,,,,23,,Conectados
+,,,,,,116,,Totales sin Deprecados
+,,,,,,73,57,Faltantes
+,,,,,,63,79,Realizados
+,,,,,,43,,Conectados
 ,,,,,,% Realizado Total,% Conectado Total,
-,,,,,,30.15%,16.91%,
+,,,,,,46.32%,31.62%,
 ,,,,,,Promedio Total,,
-,,,,,,23.53%,,
+,,,,,,38.97%,,
 ,,,,,,% Realizado s/D,% Conectado s/D,
-,,,,,,34.75%,19.49%,
+,,,,,,54.31%,37.07%,
 ,,,,,,Promedio Total s/Deprecados,,
-,,,,,,27.12%,,
+,,,,,,45.69%,,

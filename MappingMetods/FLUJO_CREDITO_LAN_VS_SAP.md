@@ -3,9 +3,10 @@ tags: [migracion, sap, credito, flujo, orden]
 fecha: 2026-09-11
 estado: vigente
 ---
-
 # Flujo de Crédito en la creación de orden — LAN vs ServicioSAP
+> 2026-10-01: cómo funciona ServicioSAP hoy está en [[Business Rules Ecommerce]] (fuente única). Este documento queda como historia; si contradice a esa fuente, gana la fuente.
 
+**2026-09-30 — Lectura principal del crédito web:** [[CREDITO_WEB_ANALISIS_COMPLETO_Y_PLAN_FINAL]] (todas las reglas G1-G5, decisiones DU1-DU10, plan final y tutorial de Fable). Este documento queda como historia y detalle; sus afirmaciones desactualizadas están en la §7.2 de ese documento. (Línea agregada sin mover la numeración.)
 > [!abstract] Alcance
 > Compara el bloque de crédito de la creación de orden en los dos proyectos, desde el punto de entrada exacto:
 >
@@ -18,11 +19,18 @@ estado: vigente
 >
 > Complementa a [[GUIA_MIGRACION_FABLE]] (reglas generales) y a los documentos de negocio en `Resources\`: [[Flujo_Orden_Credito]], [[Flujo_Cliente_Casa]], [[Flujo_Apertura_Cuenta_Mercancia]], [[Flujo_Apertura_Cuenta_Sin_Mercancia]], [[Flujo_Credilana]].
 
+> [!warning] Nota 2026-09-29: parte de este documento ya es historia
+> El análisis es del 2026-09-11 y se conserva como estaba, con las líneas de ServicioSAP de esa fecha. Qué quedó superado: [[PLAN_EJECUCION_SP_CREDITO_A_CODIGO]] §24.6 y §25, y [[CAMBIOS_PARIDAD_CREDITO_2026-09-29]]. Lo principal, con el working copy del 2026-09-29 (sin commit):
+> - **§3.2.** El bloque de crédito hoy empieza en `OrderMethods.cs:1762`.
+> - **§4.5 y §4.6.** Ya no existe `esClienteNuevo`. Por D6 (usuario, 2026-09-28/29), solo un BP existente llega al punto del liberador. Por D2, esa es la misma población que la regla `'C'` de LAN. El bloque sigue comentado (`OrderMethods.cs:685-721`).
+> - **§5.1.** No hay chequeo de saldo: se decidió paridad con LAN (PLAN §16.5, §23.3; Q21 en §24.7).
+> - **§6.** `rfc`, `sexo`, `fecha_nacimiento` y `estado_civil` salen del BP (BP05MA). `sucursal` es 504/505, `sucursalDestino` y `RedimirMonedero` vienen de la orden, y `origen` es `infoCliente.origen ?? 'PRODUCTOS MX'` (D7). El SP ya no se llama: se ejecuta un INSERT igual al suyo (D8, `SolicitudCreditoWebMethods.cs:38-160`).
+> - **§5.2 y §7.** Un error responde HTTP 200 `Error, …` (`OrderController.cs:45-46`), no 400. Con cuenta vacía o inexistente, el texto es `sin cuenta`.
+
 > [!warning] Base de evidencia
 > 12 agentes (6 de análisis + 6 refutadores adversariales). **231 veredictos emitidos, 8 hallazgos refutados.** Cada afirmación de aquí lleva `archivo:línea`. Lo que no se pudo probar está marcado como ⚠️ pendiente, no como hecho.
 
 ---
-
 ## 1. La idea que hay que entender antes de migrar nada
 
 > [!important] El flujo de crédito NO crea un pedido. Crea una SOLICITUD y delega.
@@ -186,6 +194,10 @@ y lo consume en `CreditMethods.cs:203-206` con **`data[6]`**. ServicioSAP lee `d
 > `codigo_promotor` se agregó a `InfoClienteRequest` **justificado por el contrato, no por el legacy**: llega en los payloads reales `CRED515773` y `CRED515848` de `Resources/magento_payloads.md`, **solo** en crédito. Es **opcional** — únicamente cuando un promotor asistió la compra — así que el flujo tolera vacío y ausente.
 >
 > **Decisión (2026-09-11):** la quema del cupón **se queda en el flujo de la orden**. No se mueve a un controlador propio: solo se está usando el método que lo valida/consulta.
+>
+> **Nota (2026-09-29):** el **2026-09-26 el usuario indicó que los cupones de promotor están deprecados** ([[PLAN_EJECUCION_SP_CREDITO_A_CODIGO]] §23.9 y §24.3 Q8; efectos de quitarlos en `_IMPLEMENTACION_SP_CREDITO\promo_removal_2026-09-26.json`). **Alcance por confirmar:** quitar solo la quema del flujo de crédito (opción A) o toda la funcionalidad (opción B: también `HandlePromoCodeAsync` y `GET order/validatecupon`), y si algún proceso de comisiones o reportes lee `VentasCupones`. Mientras no se confirme, la quema sigue en el flujo de la orden (hoy `OrderMethods.cs:671-675`, working copy del 2026-09-29).
+>
+> **D9 (usuario, 2026-09-28/29):** `SIGMavi.VentasCupones` es la misma tabla que `IntelisisTmp.VTASCVentaCupon` (renombrada); solo difieren las reglas (MATRIZ G5-07/G5-08). Ver [[PLAN_EJECUCION_SP_CREDITO_A_CODIGO]] §25.
 
 ### 4.3 ✅ CORREGIDO (2026-09-11) — El precio del artículo a crédito salía en 0
 

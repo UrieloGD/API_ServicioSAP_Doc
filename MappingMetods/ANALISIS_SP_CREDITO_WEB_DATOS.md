@@ -5,7 +5,7 @@ estado: analisis completo · verificacion adversarial NO concluida
 ---
 
 # SP_CREDITO_WEB_DATOS y sus satélites — mapa de la lógica
-
+**2026-09-30 — Lectura principal del crédito web:** [[CREDITO_WEB_ANALISIS_COMPLETO_Y_PLAN_FINAL]] (todas las reglas G1-G5, decisiones DU1-DU10, plan final y tutorial de Fable). Este documento queda como historia y detalle; sus afirmaciones desactualizadas están en la §7.2 de ese documento. (Línea agregada sin mover la numeración.)
 > [!abstract] Qué es esto y por qué hacía falta
 > El SP existe en `SPsOrden\` desde el 2026-09-08, pero **nunca se había abierto**. Todo lo publicado sobre su interior venía de `_EXCLUIDOS_Intelisis.md` — una fuente que [[GUIA_MIGRACION_FABLE]] §9 declara **retirada** — y se propagó sin re-verificar a seis documentos.
 >

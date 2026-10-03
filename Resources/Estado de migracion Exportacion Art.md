@@ -1,7 +1,7 @@
 # Reporte de Estado de Migración a C# (Exportación de Artículos)
+> 2026-10-01: cómo funciona ServicioSAP hoy está en [[Business Rules Ecommerce]] (fuente única). Este documento queda como historia; si contradice a esa fuente, gana la fuente.
 
 Este documento resume el progreso de la migración del proceso de Exportación de Artículos (MA, MAVI, VIU) desde sus Stored Procedures heredados hacia la arquitectura en C# (`EcommerceMethods.cs`).
-
 ## Resumen Global
 
 El análisis exhaustivo de las tablas temporales y lógicas implementadas en el script original arroja los siguientes resultados para el flujo total:

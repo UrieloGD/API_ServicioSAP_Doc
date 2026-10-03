@@ -1,9 +1,9 @@
 # Catálogo de Condiciones de Pago (Magento a SAP)
+> 2026-10-01: cómo funciona ServicioSAP hoy está en [[Business Rules Ecommerce]] (fuente única). Este documento queda como historia; si contradice a esa fuente, gana la fuente.
 
 Este catálogo documenta la correspondencia exacta entre las cadenas de texto (`condicion`) enviadas desde Magento y el código técnico SAP esperado en el campo `Pmnttrms` de S/4HANA (OData SD01).
 
 Este documento sirve de respaldo conceptual para la clase `PaymentConditionCatalog.cs` implementada en el middleware en C#.
-
 ## Muebles América (MA)
 - `02 Q MA VAL P INM` -> `02QA`
 - `03 M MA P INM` -> `03IA`

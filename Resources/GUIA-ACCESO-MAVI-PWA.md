@@ -1,78 +1,112 @@
-# Guía: abrir `\\CATECINF214058D\Migracion SAP` en Claude Code
+# Guía: abrir `\\172.16.214.58\sap` en Claude Code
 
-_Fecha: 2026-09-17_
+_Creada: 2026-09-17 · Actualizada: 2026-09-26 — ruta cambiada a `\\172.16.214.58\sap`_
 
-Resumen de lo que hubo que hacer para poder trabajar sobre este recurso de red desde
-una sesión de Claude Code (Windows), y cómo revertirlo.
+Cómo acceder al proyecto de Migración SAP (en la máquina de `magalindo`) desde las máquinas de Claude Code, y cómo revertir lo que se configura.
+
+> **Usa siempre `\\172.16.214.58\sap`** — por IP y con el recurso `sap`.
+> Verificado el 2026-09-25 desde `CATECINF214119D` (172.16.214.119): lectura y escritura funcionan directamente, sin configurar nada más.
 
 ---
 
-## 1. El problema
+## 1. La ruta
 
-El resolver de carpetas de la app **no acepta rutas de red**. Fallan con
-`The requested directory could not be resolved.`:
+| Dónde | Cómo se escribe |
+|---|---|
+| Windows / PowerShell / Explorador | `\\172.16.214.58\sap` |
+| Bash | `"//172.16.214.58/sap"` — con barras normales y entre comillas |
 
-- `\\CATECINF214058D\Migracion SAP` (UNC con barras invertidas)
-- `//CATECINF214058D/Migracion SAP` (UNC con barras normales)
-- `M:\` (letra mapeada con `net use` al mismo recurso)
+El nombre del recurso (`sap`) no lleva espacios, a diferencia de la ruta anterior. Aun así, en Bash conviene entrecomillar siempre.
 
-En cambio el shell (Bash / PowerShell) **sí** lee la ruta sin problema, así que el
-bloqueo es sólo de la app, no del sistema.
+Comprobación rápida (PowerShell):
 
-## 2. Lo que sí funciona
+```bat
+Test-Path '\\172.16.214.58\sap'
+```
 
-**Cambiar la carpeta del workspace desde la propia UI de la app.** Es la vía directa
-y la que quedó aplicada: la sesión tiene ahora como raíz `\\CATECINF214058D\Migracion SAP`
-y las rutas relativas resuelven ahí.
+Debe devolver `True`. Si devuelve `False`, primero comprobar que la máquina esté encendida:
 
-Como alternativa, para **conceder acceso** sin mover la raíz de la sesión, sirve abrir
-el selector de carpetas nativo (Claude puede lanzarlo) y navegar al recurso; con eso se
-conceden tanto la letra mapeada como la ruta UNC.
+```bat
+ping -n 1 172.16.214.58
+```
+
+## 2. El resolver de carpetas de la app
+
+El resolver de carpetas de la app **no acepta rutas de red** (falla con `The requested directory could not be resolved.`). El shell (Bash / PowerShell) **sí** lee la ruta sin problema, así que el bloqueo es solo de la app.
+
+Para trabajar sobre el recurso: cambiar la carpeta del workspace desde la UI de la app, o conceder acceso con el selector de carpetas nativo (Claude puede lanzarlo) navegando al recurso.
 
 ## 3. Mapeo de unidad (opcional)
 
-Útil para trabajar cómodo desde una terminal, no es necesario para la app:
+No hace falta para acceder: la ruta funciona directamente. Solo es cómodo para trabajar desde una terminal:
 
 ```bat
-net use M: "\\CATECINF214058D\Migracion SAP" /user:CATECINF214058D\magalindo * /persistent:no
+net use Z: "\\172.16.214.58\sap" /persistent:no
 ```
 
-`/persistent:no` hace que desaparezca al cerrar sesión de Windows.
+**No usar `M:`**: en la máquina de Claude ya está ocupada por `\\CATECINF214230D\mavi-pwa`. `/persistent:no` hace que la unidad desaparezca al cerrar sesión de Windows.
 
-Para quitarlo antes:
+Para quitarla antes:
 
 ```bat
-net use M: /delete
+net use Z: /delete
 ```
 
 ## 4. Git: *dubious ownership*
 
-Git se niega a operar sobre repos en rutas de red hasta que se declaran seguras.
-Sin esto, cualquier comando devuelve
-`fatal: detected dubious ownership in repository at ...`:
+Git se niega a operar sobre repos en rutas de red hasta que se declaran seguras (`fatal: detected dubious ownership in repository at ...`). Se declara cada repo, uno por uno:
 
 ```bat
-git config --global --add safe.directory "%(prefix)///CATECINF214058D/Migracion SAP"
+git config --global --add safe.directory "%(prefix)///172.16.214.58/sap/ServicioSAP"
+git config --global --add safe.directory "%(prefix)///172.16.214.58/sap/DMZ"
+git config --global --add safe.directory "%(prefix)///172.16.214.58/sap/LAN"
+git config --global --add safe.directory "%(prefix)///172.16.214.58/sap/.agents/skills/lan-sap-migration"
 ```
 
-Ojo con la sintaxis: el prefijo `%(prefix)//` y **tres** barras antes del nombre del
-servidor. Es lo que git mismo sugiere en el mensaje de error.
+Detalles de sintaxis que importan: el prefijo `%(prefix)//` seguido de **tres** barras antes de la IP, y **barras normales** aunque sea una ruta de Windows.
 
-Para revertir, quitar esas líneas del `.gitconfig` global:
+Comprobar qué quedó declarado:
 
 ```bat
-git config --global --unset-all safe.directory
+git config --global --get-all safe.directory
 ```
-
-(o editar el archivo a mano si hay otras entradas que se quieran conservar).
 
 ## 5. Qué hay en el recurso
 
-El recurso compartido contiene los repositorios y archivos relacionados con el proyecto de Migración SAP alojados en la máquina de `magalindo`.
+Verificado el 2026-09-25 listando `\\172.16.214.58\sap`:
 
-## 6. Cambios hechos en la máquina
+| Carpeta | Qué es | Repo git |
+|---|---|---|
+| `ServicioSAP` | El servicio destino de la migración. C# .NET Framework 4.7.2, ASP.NET Web API 2 | sí — TFS `mavivstf01:8080/tfs/MaviNet/eCommerce TI/_git/ServicioSAP` |
+| `DMZ` | `WebApiMagento` de la DMZ: puente entre Magento y LAN/SAP | sí |
+| `LAN` | `WebApiMagento` heredado (Intelisis). Es de donde se migra | sí |
+| `Magento248` | Frontend Magento 2.4.8 | — |
+| `businesspartner-dev` | Python/FastAPI + Lambdas. Referencia de cómo se consumen las OData de BP | — |
+| `salesanddistribution-dev` | Ídem para el módulo SD | — |
+| `.agents\skills\lan-sap-migration` | La skill: `SKILL.md`, `SPsOrden\`, `MappingMetods\`, `RSG\`, `Resources\`, `Checklists\` | sí — `github.com/UrieloGD/API_ServicioSAP_Doc` |
+| `ExcelAnalyzer`, `ClaudeUsageReport` | Utilidades sueltas | — |
 
-Los dos son reversibles y están explicados arriba:
+No es un monorepo: cada carpeta con `.git` es un repo independiente. Por eso la lista de `safe.directory` de §4 lleva una entrada por repo.
 
-1. Unidad `M:` mapeada al recurso (no persistente).
-2. Entrada `safe.directory` en el `.gitconfig` global.
+## 6. No usar `\\CATECINF214058D\Migracion SAP`
+
+La ruta por nombre de máquina **falla desde las máquinas de Claude** y no hay que reintentarla:
+
+- Con la cuenta de dominio (`GRUPOMAVI\magalindo`) da **`Error de sistema 2240 — No se permite el inicio de sesión del usuario desde esta estación de trabajo`**. La cuenta tiene en Active Directory `Estaciones de trabajo autorizadas: CATECINF214058D` (verificado con `net user magalindo /domain`): solo puede autenticarse desde su propia máquina. No es un permiso de la carpeta, así que ningún cambio en la carpeta compartida lo resuelve.
+- Con cuenta local (`CATECINF214058D\magalindo`) da **`Error de sistema 86`**: esa cuenta local no existe, porque la máquina está en dominio.
+
+## 7. Consejos al trabajar desde Claude
+
+- **No diagnosticar SMB desde Bash.** Git Bash (MSYS) convierte `\\SERVIDOR\recurso` en `\SERVIDOR\recurso` al pasarlo a `net.exe` y produce un **`Error de sistema 67`** falso. Para `net use`, `Test-Path` y `robocopy`, usar **PowerShell**.
+- **Para compilar**, copiar el proyecto a local con `robocopy` desde PowerShell y mapear la carpeta con `subst` a una letra corta. La ruta temporal de Claude más las rutas de los paquetes NuGet superan los 260 caracteres (MAX_PATH) y MSBuild no puede importar los `.props`. Usar el MSBuild de Visual Studio 18 (`C:\Program Files\Microsoft Visual Studio\18\Community\MSBuild\Current\Bin\MSBuild.exe`).
+- La máquina espejo `\\CATECINF214034\Compartida` está apagada: no usarla.
+
+## 8. Cambios hechos en la máquina de Claude
+
+Todos son reversibles:
+
+1. Entradas `safe.directory` en el `.gitconfig` global, una por repo (§4). Para quitarlas, editar el `.gitconfig` a mano — `git config --global --unset-all safe.directory` borra también las que se quieran conservar.
+2. Unidad `Z:`, si se mapeó (§3). Se quita con `net use Z: /delete`.
+3. Letra de `subst` para compilar, si se usó (§7). Desaparece al reiniciar, o con `subst X: /d`.
+
+Ninguno toca el contenido del recurso.

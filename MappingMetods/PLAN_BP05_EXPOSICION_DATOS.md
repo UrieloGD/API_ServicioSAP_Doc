@@ -3,8 +3,8 @@ fecha: 2026-09-15
 alcance: los 25 endpoints BP que cubren la lógica de SP_CREDITO_WEB_DATOS
 fuera_de_alcance: Credilana
 ---
-
 # Plan BP05 — Exposición de datos y equivalencia con `SP_CREDITO_WEB_DATOS`
+> 2026-10-01: cómo funciona ServicioSAP hoy está en [[Business Rules Ecommerce]] (fuente única). Este documento queda como plan; si contradice a esa fuente, gana la fuente.
 
 > [!info] Cómo se levantó esto
 > 67 agentes en dos barridos: uno inventarió el contrato real de cada endpoint en
