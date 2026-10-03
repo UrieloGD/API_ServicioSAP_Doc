@@ -1,7 +1,7 @@
 ---
 tags: [pruebas, avance, migracion, estado]
 fuente: "CHECKLIST_MIGRACION_LAN_A_SAP.md"
-actualizado: 2026-09-09
+actualizado: 2026-09-28
 ---
 
 # Estado de pruebas y avance por endpoint
@@ -63,10 +63,10 @@ Para que el número signifique algo y no sea una impresión, cada partida se mid
 | E-13 | `customer/cashCustomerReport` | 6 | **80 %** | 🔶 Validación y escritura local verificadas el 25 ago. **La copia al share no es verificable desde desarrollo** | Se valida en QA |
 | E-14 | `product/obtenerImagen` | 6 | **55 %** ⁽⁵⁾ | 🔶 Solo el 401. **No es verificable desde desarrollo**: la impersonación falla antes de la copia | Se valida en QA |
 | E-15 | `order/GetPickUpCode` | 7 | **90 %** ⁽⁶⁾ | ✅ Probado el 14 sep: 200 con clave, 404 sin fila, 400 con body nulo (paridad) | Falta el cutover, que va con los tres escritores |
-| E-45    | `credit/SolicitudMercancia`           | 7   | 0 %      | —                       | Conexión a definir por equipo SAP |
-| E-46    | `credit/codigoPromocion`              | 8   | 0 %      | —                       | 🟠 Origen IntelisisTmp            |
-| E-47    | `credit/getPlazos`                    | 8   | 0 %      | —                       | 🟠 Origen IntelisisTmp            |
-| E-48    | `customerService/obtenerTipoGarantia` | 8   | 0 %      | —                       | 🔒 Estructura de Miguel Marín     |
+| E-44    | `credit/SolicitudMercancia`           | 9   | **65 %** | 🔶 Sin ejecutar. El 28 sep se corrigió la fecha de nacimiento y se acotó el riesgo del `estatus 7` | 🔴 El reloj de `mavicbosandroid` no cuadra; falta cuenta con domicilio completo |
+| E-45    | `credit/codigoPromocion`              | 9   | **90 %** | ✅ Los 6 casos verificados el 24 sep, incluida la escritura | Falta el cutover, que va con el de E-46 |
+| E-46    | `credit/getPlazos`                    | 9   | **90 %** | ✅ Probado el 23 sep: 200 con el contrato del legado | Falta el cutover, que va con el de E-45 |
+| E-47    | `customerService/obtenerTipoGarantia` | 8   | 0 %      | —                       | 🔒 Estructura de Miguel Marín     |
 | ➡️ | ~~`credit/GetUnificationWalletStatus`~~ | — | — | — | **Reasignado a Dev 2** el 12 ago |
 | ➡️ | ~~`credit/SetUnificationWalletData`~~ | — | — | — | **Reasignado a Dev 2** el 12 ago |
 
@@ -123,11 +123,11 @@ Es decir: si en QA falla, será porque el archivo no está en esa ruta o por per
 | | Partidas | Avance medio |
 |---|---|---|
 | Habilitadores (4) | **4 al 100 %** | **100 %** |
-| Endpoints en alcance (19) | 3 al 100 %, **7 al 90 %**, 4 al 80 %, 1 al 55 %, 4 sin iniciar | 68,7 % |
+| Endpoints en alcance (19) | 3 al 100 %, **9 al 90 %**, 4 al 80 %, 1 al 65 %, 1 al 55 %, 1 sin iniciar | 81,6 % |
 | Mixtos (15) | 2 al 25 %, 13 sin iniciar | 3,3 % |
-| **Subtotal partidas medibles (38)** | | **46,2 %** |
+| **Subtotal partidas medibles (38)** | | **52,6 %** |
 | Rutas de la Ola 8 (26) | **23 completas**, 3 pendientes | 88,5 % |
-| **Total (64)** | | **63,4 %** |
+| **Total (64)** | | **67,2 %** |
 
 > ⚙️ **Las rutas de la Ola 8 entran en el total desde el 9 sep.** Antes se reportaban aparte
 > porque se miden con otra vara —completa cuando su llamador queda resuelto, sin hitos de
@@ -1165,19 +1165,19 @@ para diagnosticar, no para reponer el archivo.**
 | E-23 `deletePromociones` | escrito, **sin ejecutar** | Vacía las categorías OUTLET en Magento |
 | E-24 `deleteReservations` | escrito, **sin ejecutar** | Vacía las reservas de inventario |
 | E-27 `setOrderStatus` | escrito, **payload verificado** | El helper compartido |
-| E-29 `setCAccount` | escrito, **payload verificado** | Modifica una orden real |
+| E-28 `setCAccount` | escrito, **payload verificado** | Modifica una orden real |
 
 Los dos primeros escriben en Magento y no son cargas de lectura, así que no se dispararon. Los
 dos últimos se verificaron **sin HTTP**: cargando el ensamblado compilado y comparando el JSON
 que producen contra las cadenas que el legado arma a mano. **Idéntico en los tres casos de
-E-27 y en el de E-29.**
+E-27 y en el de E-28.**
 
 #### Qué queda
 
 **`getOrderId`** (`getOrderId`) es el único llamador sin escribir: su llamador ejecuta
 `SpVTASeCommerceDetPedidos` en IntelisisTmp, mapeado en [[SP_VTASeCommerceDetPedidos]].
 
-Se dio de baja `magento/noImagenProduct` y la serie se reindexó: **68 entradas, hasta E-48**.
+Se dio de baja `magento/noImagenProduct` y la serie se reindexó: **68 entradas, hasta E-47**.
 
 #### Cómo se mide esta ola — 23 de 26
 
@@ -1190,7 +1190,7 @@ costado trabajo o no. Las cuatro bajas salen del denominador.
 |---|---|---|
 | 8.1 · catálogo | 7 | 6 — falta E-19 |
 | 8.2 · reenvíos | 5 | 4 — falta `getOrderId` |
-| 8.3 · órdenes | 3 | 2 — E-28 es de Dev 2 |
+| 8.3 · órdenes | 3 | 2 — `jsonOrders` es de Dev 2 |
 | 8.4 · importación | 8 | 8 |
 | 8.5 · sin llamador | 3 | 3 |
 | **Total** | **26** | **23 · 88 %** |
@@ -1444,9 +1444,9 @@ montos de préstamo **menores**, sin error ni aviso. Verificado en APIMagento
 
 | Tema | Bloquea | Quién decide |
 |---|---|---|
-| Equivalencia de `IntelisisTmp` | E-46, E-47 y los 12 mixtos | Arquitectura |
+| Equivalencia de `IntelisisTmp` | E-45, E-46 y los 12 mixtos | Arquitectura |
 | Convención de conexiones: fábricas estáticas del stash vs métodos de instancia de la Ola 0 | Integrar el stash del 29-jul (M-14, M-08) | Líder técnico |
-| Estructura de garantías | E-48 | Miguel Marín (PCP) |
+| Estructura de garantías | E-47 | Miguel Marín (PCP) |
 | ~~Definición de monedero~~ | ➡️ Dev 2 desde el 12 ago | — |
 | ~~¿Se elimina `ExistRFCAndPhoneCte`?~~ | — | ✅ Descartado el 11 ago |
 
@@ -1500,7 +1500,7 @@ cargas vacían la tabla antes de rellenarla. **El servidor no se tocó**: `SQLIT
 sobreescrito por `Web.local.config`.
 
 **No se ejecutaron** E-23 `deletePromociones` ni E-24 `deleteReservations` — escriben en Magento
-y esperan autorización expresa. Tampoco E-27 ni E-29, por lo mismo. `getOrderId` no tiene controller.
+y esperan autorización expresa. Tampoco E-27 ni E-28, por lo mismo. `getOrderId` no tiene controller.
 
 Los requests quedan en `ServicioSap\ServicioSap\Tests\ServicioSap.Ola8.http`.
 
@@ -1556,5 +1556,111 @@ inesperado en la posición 0"*.
 #### Lo que sigue sin probarse
 
 **E-19 `attributeSetChildren`** no se reejecutó tras el arreglo: `atributos_de_magento` sigue
-en 14 089 de 24 092. **E-23, E-24, E-27 y E-29** siguen sin ejecutar, esperando autorización:
+en 14 089 de 24 092. **E-23, E-24, E-27 y E-28** siguen sin ejecutar, esperando autorización:
 escriben en Magento.
+
+### Ola 9 — E-46 `credit/getPlazos`, 23 sep
+
+| Caso | Resultado |
+|---|---|
+| `GET credit/getPlazos` | **200** en 9,0 s |
+| Forma de la respuesta | idéntica al legado: `{Diferidos, Inmediatos}` de `{Days, StoreCode}` |
+| `StoreCode` | mayúsculas y espacio a guion bajo — `MUEBLES_AMERICA` |
+
+Devolvió 122 días para los diferidos de las dos tiendas y 0 para los inmediatos.
+
+**Ese cero se verificó**, porque el código inicializa `days = 0` y solo lo sobrescribe si
+encuentra la condición en SAP: un cero podía ser *"inmediato"* o *"no la encontré"*. Contra
+`credit/condicionespago`, `12DA` y `12DV` traen `Zdiasgracia = 122` y `12IA` y `12IV` traen
+`0`. El dato es real.
+
+⚠️ **Divergencia: el error deja de distinguirse.** El legado responde 200 con
+`{"Error": true, "Message": "…"}`; aquí la excepción se atrapa dentro de `GetPlazosAsync`, se
+registra y se devuelve 200 con las dos listas vacías. No rompe al consumidor —ninguno de los
+dos da 500— pero se pierde información. No se pudo provocar sin tumbar SIGMAVI.
+
+El endpoint lo escribió Dev 2. Falta **subir y desplegar el cutover**, que viaja en el mismo
+commit que el de E-45 y espera a que ese se pruebe. Ficha en [[E-46_getPlazos]].
+
+### Ola 9 — E-45 `credit/codigoPromocion`, 24 sep
+
+| Caso | Resultado |
+|---|---|
+| `ValidarCupon` con `99000001` | **200** `"OK"` |
+| `ValidarCupon` con `00000000` | **200** `"Erroneo"` |
+| Cuerpo nulo | **400** `{"Message":"Datos incompletos."}` |
+| `opcion = "Consulta"` | **500** `NotImplementedException` |
+| `Elimina` con `99000001` | **200** `""` — no `"Eliminado"` |
+| Efecto en base | ✅ `IdVentaCupon = 5` consumido con `IdEcommerce = MAG-E45-TEST`, y el `6` creado libre con el mismo código |
+| `ValidarCupon` después del `Elimina` | **200** `"OK"` — el cupón sigue vivo |
+
+No había con qué probarlo, así que se sembró el cupón `99000001` en `DEVMAVI` / `SIGMavi`
+con `SpVentasCupones @opcion = 'NUEVO'`. Sirve para corridas futuras: `Elimina` lo regenera.
+
+**`Elimina` no quema el cupón.** La rama marca `FechaUtilizacion` en la fila vigente y
+acto seguido encadena un `NUEVO` que inserta otra fila con el mismo código. Ya había
+evidencia de antes en la tabla —las dos filas de `30018095`, del 2 jul— y la corrida lo
+reprodujo. Esto despeja el bloqueo que tenía parada la prueba.
+
+⚠️ **Divergencia: `Elimina` responde `""` y no `"Eliminado"`.** Los dos lados preguntan lo
+mismo —¿el SP devolvió filas?— pero contra SPs distintos. El `NUEVO` encadenado de
+`SpVentasCupones` termina en `SELECT @Agente AS cupon`, así que siempre hay fila. Queda por
+confirmar con quien migró el SP si ese `SELECT` era intencional; la corrección, si toca,
+va del lado del SP.
+
+⚠️ **La fila renovada queda sin `Centro`.** El `NUEVO` encadenado recibe `@Sucursal` nulo
+porque el método manda solo tres parámetros — los mismos tres que manda el legado.
+
+Dos cosas que se dieron por ciertas y no lo eran: `"Utilizado"` es **inalcanzable** —el SP
+solo asigna `Conteo` 1 o 0, y el legado carga el mismo `else if` muerto—, y `ValidarCupon`
+**no filtra por `FechaUtilizacion`**, así que un cupón ya usado responde `OK`. Las dos son
+deuda heredada del SP. Ficha en [[E-45_codigoPromocion]].
+
+### Ola 9 — E-44 `credit/SolicitudMercancia`, 28 sep (preparación, sin ejecutar)
+
+No se llegó a llamar al endpoint. Lo que se hizo fue alistar la prueba, y de ahí salieron
+tres cosas.
+
+**Un defecto corregido: la fecha de nacimiento se iba en blanco.** SAP entrega las fechas
+como `/Date(888364800000)/` y `Partner.FechaNacimiento` es un `string`, así que el
+`DateTime.TryParse` del helper `FechaCorta` fallaba y devolvía `""`. Cada inserción habría
+dejado `fechaNacimiento` vacío. El legado no lo sufría porque leía un `datetime` de
+Intelisis y lo convertía con `CONVERT(VARCHAR(10), …, 120)`. Corregido para reconocer el
+formato OData, convirtiendo desde epoch **en UTC** — en hora local la fecha se corre un día
+hacia atrás.
+
+**Quién consume el `estatus 7`.** Un solo objeto en `ServicioAndroid`:
+`SpVTASMovimientosNIPCteSEV`, opción `ObtenerClienteCredi`, agregada el 5-oct-2023 "para
+obtener los datos del cliente para la consulta de buró":
+
+```sql
+WHERE confirmado = 1 AND estatus IN (0, 4, 7, 8)
+  AND resultado_buro IS NULL AND c.cliente = @Cliente
+```
+
+Filtra por cliente, así que **no es un proceso que recorra la tabla**: una fila de prueba
+solo aparecería si alguien consultara ese BP. La tabla no tiene triggers, los otros cuatro
+SPs que la mencionan la usan por `cliente` o por `id`, y `SP_CREDITO_WEB_DATOS` escribe la
+columna en vez de filtrarla. Ningún repo nuestro llama a `ObtenerClienteCredi`: el llamador
+está fuera. El `estatus 7` tiene 37,561 filas, o sea que es un estado corriente.
+
+Quedó un hueco: **los jobs del Agente no se pudieron revisar**, porque `msdb.dbo.sysjobs`
+negó el permiso de lectura.
+
+**El reloj del host no cuadra.** Aplicando la precaución que ya estaba escrita para ese
+servidor, `GETDATE()` en `mavicbosandroid.grupomavi.com` devolvió **3-sep-2026** con 25 días
+de atraso, y la tabla tiene filas fechadas hasta **marzo de 2027**. Con `maxId` 691,288 y
+493,304 filas. **Por esto se detuvo la prueba**: el `INSERT` escribe `fecha = GETDATE()`, y
+si además la conexión resuelve a una copia, ejecutar no probaría nada — es lo que pasó el
+5 ago con E-01.
+
+De paso: ya existe **una** fila con `origen = 'APP MERCANCIAS'`, la `691285`, del 24 sep,
+con cliente `C00000013` en formato `C%` — puesta por el legado. Trae
+`fechaNacimiento = 1955-09-20`, que es lo que confirmó el defecto de arriba, y tiene
+`Confirmado = 1` con `resultado_buro` nulo, la forma exacta que la consulta de buró busca.
+
+**Cuenta de prueba.** `1500008089` existe en SAP DEV y responde 200, pero de los 16 campos
+que el método consume solo trae 6: nombre, los dos apellidos, fecha de nacimiento, correo y
+`Region`. El domicilio viene vacío, así que **no ejerce el recorte de `Colonia1` a 30**, la
+única transformación de texto del método. Hace falta una cuenta con domicilio completo para
+esa parte.
