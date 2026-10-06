@@ -95,12 +95,12 @@ $o = "<SCRATCHPAD>\msbuild"
 | Ruta | Ruta DMZ | Ruta ServicioSAP | Programador | Conectado CSV → verificado | Generado CSV → verificado | Trabajo requerido | Reglas | Estado del paquete |
 |---|---|---|---|---|---|---|---|---|
 | 1.1 | `customer/setCustomer` POST (DCC:18-38) | `partner/client` POST (SBPC:34-54) | Marcos | Si → **Si** (DCC:30) | Si → **Parcial**: contrato roto, sin búsqueda ni actualización (SBPC:48, BPM:465) | **CORREGIR_PARIDAD** + **CONSTRUIR** (T1.1-03) | EQ 1 · EQ-R 5 · DIF 14 · FALTA 2 · PEND 1 · N/A 3 (26) | 2 LISTO (S1) · 9 DECISION (S4-S5) · E2E (S6) |
-| 1.2 | `customer/setCustomerList` POST (DCC:40-75) | `customer/setCustomerList` POST (SCC:15-55) | Diego | SI → **Si** (DCC:70) | Si → **Si** (SCC:15-55, SCUM:16-97, CSPROJ:224, :264) | **CORREGIR_PARIDAD**: R9 probado para `&`, `#`, `%`; el `+` necesita E2E | EQ 7 · EQ-R 5 · DIF 2 · FALTA 0 · PEND 8 · N/A 1 (23) | E2E (S6) · 3 DECISION (S3) · fuente del SP bloqueada (S7) |
-| 1.3 | `customer/getCustomerList` GET con body (DCC:77-93) | `customer/getCustomerList` POST (SCC:57-77) | Diego | SI → **Si** (DCC:88) | Si → **Si** | **CORREGIR_PARIDAD** según T1.L-02 (rama de error) | EQ 8 · EQ-R 5 · DIF 1 · FALTA 0 · PEND 2 · N/A 2 (18) | DECISION T1.L-02 (S3) · E2E (S6) |
-| 1.4 | `customer/deleteCustomerList` POST (DCC:95-111) | `customer/deleteCustomerList` POST (SCC:79-88) | Diego | SI → **Si** (DCC:106) | Si → **Si** | **CORREGIR_PARIDAD** según T1.L-02. Pasa a VERIFICAR_PARIDAD si el usuario acepta el silencio | EQ 11 · EQ-R 1 · DIF 1 · FALTA 0 · PEND 3 · N/A 2 (18) | DECISION T1.L-02 (S3) · E2E (S6) |
-| 1.5 | `customer/cashCustomerReport` POST (DCC:113-125) | CSV `To Do` → **`customer/cashCustomerReport`** POST (SCC:112-118) | Diego | Si → **Si** (DCC:120) | Si → **Si** (CRM:47-87, CSPROJ:245, :263, :369) | **VERIFICAR_PARIDAD** (+ riesgo de `Logger`, T1.5-04) | EQ 7 · EQ-R 8 · DIF 0 · FALTA 0 · PEND 0 · N/A 1 (16) | 1 LISTO (T1.H-01) · 2 DECISION (S3) · E2E en QA (S6) |
-| 1.6 | **sin ruta DMZ** (LAN-only: LCC:89-96) | CSV `N/A (MAGENTO)` → **`customer/getCuenta`** POST (SCC:90-98) | Diego | Si → **N/A**: no hay ruta DMZ que conectar | Si → **Si** (MAM:21-28, CSPROJ:224, :265, :369) | **VERIFICAR_PARIDAD** + T1.C-01 (rama de error) + corte del consumidor (T1.C-02) | EQ 19 · EQ-R 4 · DIF 4 · FALTA 0 · PEND 0 · N/A 1 (28) | DECISION (S3) · E2E (S6) · consumidor bloqueado (S7) |
-| 1.7 | **sin ruta DMZ** (LAN-only: LCC:98-105) | CSV `N/A (MAGENTO)` → **`customer/setCuenta`** POST (SCC:100-108) | Diego | Si → **N/A** | Si → **Si** (MAM:30-38) | **VERIFICAR_PARIDAD** + T1.C-01 + corte del consumidor (T1.C-02) | EQ 13 · EQ-R 4 · DIF 3 · FALTA 0 · PEND 2 · N/A 1 (23) | DECISION (S3) · E2E de escritura (S6) · consumidor bloqueado (S7) |
+| 1.2 | `customer/setCustomerList` POST (DCC:40-75) | `customer/setCustomerList` POST (SCC:15-55) | Diego | SI → **Si** (DCC:70) | Si → **Si** (SCC:15-55, SCUM:16-97, CSPROJ:224, :264) | **CORREGIR_PARIDAD** → corregido en S3 (T1.2-02, 2026-10-05, sin E2E: el valor del filtro BP05 va codificado). Pasa a VERIFICAR_PARIDAD cuando la E2E de S6 lo confirme | EQ 8 · EQ-R 6 · DIF 0 · FALTA 0 · PEND 8 · N/A 1 (23) | E2E (S6) · S3 hecha el 2026-10-05 (T1.2-02 código, T1.2-04 doc) · fuente del SP bloqueada (S7) |
+| 1.3 | `customer/getCustomerList` GET con body (DCC:77-93) | `customer/getCustomerList` POST (SCC:57-77) | Diego | SI → **Si** (DCC:88) | Si → **Si** | **CORREGIR_PARIDAD** → corregido en S3 (T1.L-02 = A, 2026-10-05, sin E2E). Pasa a VERIFICAR_PARIDAD con la E2E de S6 | EQ 8 · EQ-R 6 · DIF 0 · FALTA 0 · PEND 2 · N/A 2 (18) | T1.L-02 HECHO (S3, 2026-10-05, sin E2E) · E2E (S6) |
+| 1.4 | `customer/deleteCustomerList` POST (DCC:95-111) | `customer/deleteCustomerList` POST (SCC:79-88) | Diego | SI → **Si** (DCC:106) | Si → **Si** | **CORREGIR_PARIDAD** → corregido en S3 (T1.L-02 = A, 2026-10-05, sin E2E). Pasa a VERIFICAR_PARIDAD con la E2E de S6 | EQ 11 · EQ-R 2 · DIF 0 · FALTA 0 · PEND 3 · N/A 2 (18) | T1.L-02 HECHO (S3, 2026-10-05, sin E2E) · E2E (S6) |
+| 1.5 | `customer/cashCustomerReport` POST (DCC:113-125) | CSV `To Do` → **`customer/cashCustomerReport`** POST (SCC:112-118) | Diego | Si → **Si** (DCC:120) | Si → **Si** (CRM:47-87, CSPROJ:245, :263, :369) | **VERIFICAR_PARIDAD** (+ riesgo de `Logger`, T1.5-04) | EQ 7 · EQ-R 8 · DIF 0 · FALTA 0 · PEND 0 · N/A 1 (16) | T1.H-01 HECHO (S2) · T1.5-03 cerrada sin código (CQ20, 2026-10-05) · T1.5-04 pendiente de confirmar A (CQ21) · E2E en QA (S6) |
+| 1.6 | **sin ruta DMZ** (LAN-only: LCC:89-96) | CSV `N/A (MAGENTO)` → **`customer/getCuenta`** POST (SCC:90-98) | Diego | Si → **N/A**: no hay ruta DMZ que conectar | Si → **Si** (MAM:21-28, CSPROJ:224, :265, :369) | **VERIFICAR_PARIDAD** + T1.C-01 (rama de error) + corte del consumidor (T1.C-02) | EQ 19 · EQ-R 4 · DIF 4 · FALTA 0 · PEND 0 · N/A 1 (28) | DECISION T1.C-01 (CQ24 sin respuesta el 2026-10-05) · E2E (S6) · consumidor bloqueado (S7) |
+| 1.7 | **sin ruta DMZ** (LAN-only: LCC:98-105) | CSV `N/A (MAGENTO)` → **`customer/setCuenta`** POST (SCC:100-108) | Diego | Si → **N/A** | Si → **Si** (MAM:30-38) | **VERIFICAR_PARIDAD** + T1.C-01 + corte del consumidor (T1.C-02) | EQ 13 · EQ-R 4 · DIF 3 · FALTA 0 · PEND 2 · N/A 1 (23) | DECISION T1.C-01 (CQ24 sin respuesta el 2026-10-05) · E2E de escritura (S6) · consumidor bloqueado (S7) |
 
 **Sobre "Trabajo requerido" en 1.6 y 1.7.** No hay nada que construir ni que conectar (el DMZ no tiene la ruta, DCC:19, :41, :78, :96, :114). Lo abierto es una E2E y la decisión de la rama de error. Si el usuario elige replicar LAN en T1.C-01 (opción B), la clase pasa a CORREGIR_PARIDAD. Se les aplica el mismo criterio a las dos, que son gemelas (MAM:21-38).
 
@@ -131,36 +131,36 @@ El usuario pidió revisar si el proyecto tiene más o menos endpoints que el doc
 
 | Id | Ruta | Título | Estado | Clase | Dev | Sesión | Depende de |
 |---|---|---|---|---|---|---|---|
-| T1.1-01 | 1.1 | Devolver el número de BP en lugar del `Client` | **LISTO** | CORREGIR | Marcos | S1 | — |
-| T1.1-02 | 1.1 | `FiscalRegimen = "605"` como LAN | **LISTO** | CORREGIR | Marcos | S1 | — |
-| T1.1-01b | 1.1 | Dónde vive la guarda de `Partner` vacío | DECISION (CQ8) | CORREGIR | Marcos | S4 (A) / S5 (B) | T1.1-01 |
-| T1.1-03 | 1.1 | Buscar el BP existente antes de crear, y actualizarlo | DECISION (CQ2, CQ3) | **CONSTRUIR** | Marcos | S5 | T1.1-01b = B, T1.1-09 paso 0, T1.1-04 |
-| T1.1-04 | 1.1 | Orden de los nombres y mayúsculas | DECISION (CQ1, CQ10) | CORREGIR | Marcos | S4 | Captura del payload de Magento |
-| T1.1-05 | 1.1 | Helper `Sntz` heredado de LAN | DECISION (CQ7) | CORREGIR | Marcos | S4 | — |
-| T1.1-06 | 1.1 | Valores que LAN nunca guardó (dirección, teléfono, nacimiento, Region) | DECISION (CQ4) | CORREGIR | Marcos | S4 | `Marst` en CREDITO P14 |
-| T1.1-07 | 1.1 | `idMagento`/`storeCode` inválidos y resolvedor único de organización | DECISION (CQ5) | CORREGIR | Marcos | S4 | T1.1-08 |
-| T1.1-08 | 1.1 | Cuerpo y status de la falla | DECISION (CQ6) | CORREGIR | Marcos | S4 | — |
+| T1.1-01 | 1.1 | Devolver el número de BP en lugar del `Client` | **HECHO** (2026-10-05, sin E2E) | CORREGIR | Marcos | S1 | — |
+| T1.1-02 | 1.1 | `FiscalRegimen = "605"` como LAN | **DECISION** (aplicado y revertido el 2026-10-05: se mantiene `""` hasta que confirme el dueño fiscal de SAP; D-14 reabierta) | CORREGIR | Marcos | — | — |
+| T1.1-01b | 1.1 | Dónde vive la guarda de `Partner` vacío | **HECHO** (2026-10-05, S4, sin E2E: CQ8 se resolvió con la opción (d) de T1.1-08 en el controlador, SBPC:48-59, sin orquestador ni miembros nuevos; el orquestador `SetCustomerAsync` queda para S5 con T1.1-03 y la guarda se mueve ahí) | CORREGIR | Marcos | S4 | T1.1-01 |
+| T1.1-03 | 1.1 | Buscar el BP existente antes de crear, y actualizarlo | DECISION (CQ2, CQ3) | **CONSTRUIR** | Marcos | S5 | Orquestador `SetCustomerAsync` (la guarda de T1.1-01b ya está en SBPC:48-59 y se mueve ahí), T1.1-09 paso 0; T1.1-04 y T1.1-05 ya hechas (S4) |
+| T1.1-04 | 1.1 | Orden de los nombres y mayúsculas | **HECHO** (2026-10-05, S4, sin E2E: CQ1 = B; `ToUpperInvariant()` sobre nombre, apellidos y correo en BPM:394-397; orden conservado, confirmado por el payload de CQ10) | CORREGIR | Marcos | S4 | — |
+| T1.1-05 | 1.1 | Helper `Sntz` heredado de LAN | **HECHO** (2026-10-05, S4, sin E2E: `Methods\Utils\SntzMethods.cs` nuevo, con BOM y CRLF, registrado en CSPROJ:279; aplicado a los 7 campos de LAN en BPM:394-405) | CORREGIR | Marcos | S4 | — |
+| T1.1-06 | 1.1 | Valores que LAN nunca guardó (dirección, teléfono, nacimiento, Region) | **DECISION cerrada sin código** (2026-10-05, S4: CQ4 = B, se conservan los valores actuales; R11, R14, R15 quedan como DIF aceptada) | CORREGIR | Marcos | S4 | `Marst` en CREDITO P14 |
+| T1.1-07 | 1.1 | `idMagento`/`storeCode` inválidos y resolvedor único de organización | **HECHO en parte** (2026-10-05, S4, sin E2E: solo `idMagento`, `int.Parse` en BPM:404 y `ParseMagentoId` borrado; `storeCode`, `mavi` y el resolvedor único siguen **sin cambio** porque CQ5 no los contestó, R4 sigue DIF) | CORREGIR | Marcos | S4 | T1.1-08 |
+| T1.1-08 | 1.1 | Cuerpo y status de la falla | **HECHO** (2026-10-05, S4, sin E2E: opción (d), 200 `"Error, <Message de toReturn>"` cuando BP01 responde sin `Partner`, SBPC:48-59; las excepciones siguen por el catch SBPC:62-65) | CORREGIR | Marcos | S4 | — |
 | T1.1-09 | 1.1 | E2E de paridad (paso 0: filtrabilidad de BP05) | VERIFICACION | — | Marcos + usuario | paso 0 antes de S5; resto en S6 | T1.1-01 … -11 |
-| T1.1-10 | 1.1 | Código muerto del builder | DECISION (CQ9) | CORREGIR | Marcos | S4 | — |
-| T1.1-11 | 1.1 | Contacto tipo 20 que LAN no creaba | DECISION (CQ4) | CORREGIR | Marcos | S4 | — |
+| T1.1-10 | 1.1 | Código muerto del builder | **HECHO** (2026-10-05, S4: borrados `nombreCompleto`, `nacimientoOdata` + `FormatDateSapOData`, `mappedVkorgKnvp`, el bloque comentado de `EnableBpCombination` en `SubmitClientInfoAsync` y, por T1.1-07, `ParseMagentoId`; cada pieza buscada antes en todos los `.cs` de la solución: ningún otro uso. `EnableBpCombinationAsync` y `BpCombinationRequest` se conservan: los usa `partner/enablechanelorg`) | CORREGIR | Marcos | S4 | — |
+| T1.1-11 | 1.1 | Contacto tipo 20 que LAN no creaba | **DECISION cerrada sin código** (2026-10-05, S4: CQ4 = B, se conserva el contacto tipo 20; R25 queda como DIF aceptada) | CORREGIR | Marcos | S4 | — |
 | T1.2-01 | 1.2 | E2E por el DMZ con conteo de filas y fila guardada completa | VERIFICACION | — | Diego + usuario | S6 | T1.L-01 ayuda |
-| T1.2-02 | 1.2 | Correos con `+ & # %` en la validación contra BP05 | VERIFICACION → DECISION (CQ13) | CORREGIR | Diego | S2 prepara · S3 aplica | E2E previa |
+| T1.2-02 | 1.2 | Correos con `+ & # %` en la validación contra BP05 | **HECHO** (2026-10-05, S3; sin la E2E previa por decisión del usuario, CQ13; E2E en S6; compila el usuario) | CORREGIR | Diego | S3 | — |
 | T1.2-03 | 1.2 | Mayúsculas y espacios finales en el correo | VERIFICACION → DECISION (CQ14) | — | Diego | S6 | — |
-| T1.2-04 | 1.2 | Correo vacío | DECISION (CQ15) | doc | Diego | S3 | — |
+| T1.2-04 | 1.2 | Correo vacío | **HECHO** (2026-10-05, S3: CQ15 aceptada, 1.2-R11 → EQ-R; solo documento) | doc | Diego | S3 | — |
 | T1.3-01 | 1.3 | E2E por el DMZ | VERIFICACION | — | Diego + usuario | S6 | T1.L-02 para el caso de falla |
 | T1.4-01 | 1.4 | E2E por el DMZ | VERIFICACION | — | Diego + usuario | S6 | T1.L-02 para el caso de falla |
 | T1.L-01 | 1.2-1.4 | Fuente de `SpListaNBMagento` y DDL de las listas | BLOQUEADO_EQUIPO (CQ16) | VERIFICACION | Diego + DBA SIGMavi | S7 | — |
-| T1.L-02 | 1.3, 1.4 | Rama de error de `blackwhitelistAsync` | DECISION (CQ12) | CORREGIR | Diego | S3 | — |
+| T1.L-02 | 1.3, 1.4 | Rama de error de `blackwhitelistAsync` | **HECHO** (2026-10-05, S3: opción A, `throw;` en SCUM:68; sin E2E; compila el usuario) | CORREGIR | Diego | S3 | — |
 | T1.L-04 | 1.2-1.4 | Carga de producción de las listas en SIGMavi | PRERREQUISITO (CQ17) | — | DBA / Diego | pase | T1.L-01 (tamaños) |
 | T1.5-01 | 1.5 | E2E en QA con copia al share | VERIFICACION (CQ22) | — | Diego + usuario | S6 | T1.5-04 (a/b) |
 | T1.5-02 | 1.5 | LAN contra ServicioSAP, mismo payload | VERIFICACION | — | Diego + usuario | S6 | — |
-| T1.5-03 | 1.5 | Path traversal heredado | DECISION (CQ20) | CORREGIR | Diego | S3 | — |
-| T1.5-04 | 1.5 (transversal) | `Logger.SAP` puede romper la rama de error | DECISION (CQ21) | CORREGIR | Diego (+ dueño de `74d7c2f`) | S3 | — |
+| T1.5-03 | 1.5 | Path traversal heredado | **DECISION cerrada sin código** (CQ20, 2026-10-05: no se sanea; sigue como deuda en GUIA §8.1) | CORREGIR | Diego | S3 | — |
+| T1.5-04 | 1.5 (transversal) | `Logger.SAP` puede romper la rama de error | DECISION (CQ21 contestada el 2026-10-05 sin elegir A ni B; sin código en S3; pendiente confirmar A) | CORREGIR | Diego (+ dueño de `74d7c2f`) | S3 | — |
 | T1.6-01 | 1.6 | E2E lado a lado LAN y ServicioSAP (8 casos) | VERIFICACION (CQ25) | — | Diego + usuario | S6 | — |
 | T1.7-01 | 1.7 | E2E de escritura positiva | VERIFICACION (CQ25) | — | Diego + usuario | S6 | — |
-| T1.C-01 | 1.6, 1.7 | Rama de error de las cuentas | DECISION (CQ24) | CORREGIR | Diego | S3 | — |
+| T1.C-01 | 1.6, 1.7 | Rama de error de las cuentas | DECISION (CQ24 sin respuesta el 2026-10-05: el usuario pidió más explicación; no se aplicó en S3) | CORREGIR | Diego | S3 | — |
 | T1.C-02 | 1.6, 1.7 | Consumidor de las rutas LAN-only y su corte | BLOQUEADO_EQUIPO (CQ23) | — | Diego + infraestructura | S7 | — |
-| T1.H-01 | 1.2-1.7 | `ConfigureAwait(false)` en SCUM, CRM y MAM | **LISTO** (opcional) | higiene | Diego | S2 | — |
+| T1.H-01 | 1.2-1.7 | `ConfigureAwait(false)` en SCUM, CRM y MAM | **HECHO** (2026-10-05, S2; sin commit, compila el usuario) | higiene | Diego | S2 | — |
 | T1.0-DOC | todas | Correcciones del CSV y de documentos del vault | DECISION (CQ26) | doc | quien apruebe | cualquiera | — |
 | T1.0-DEP | todas | Fusión y despliegue de las ramas | BLOQUEADO_EQUIPO (CQ27) | — | Marcos, Diego e infraestructura | pase | — |
 
@@ -171,6 +171,8 @@ El usuario pidió revisar si el proyecto tiene más o menos endpoints que el doc
 - T1.1-04 va antes de T1.1-03, porque la búsqueda de invitados compara el correo con la misma forma de mayúsculas que el alta.
 - T1.L-02 y T1.H-01 tocan SCUM en líneas distintas: aplicar una, restaurar CRLF, y luego la otra.
 - T1.5-04 (B) toca SLOG, que tiene unos 95 llamadores: va sola y con el visto bueno del dueño.
+
+**Desplazamiento de líneas tras S4 (2026-10-05).** Las citas `BPM:` y `SBPC:` escritas antes de S4 (en §3.1.1, §3.1.2, §3.1.5 y los prompts de §4.5) se leen así sobre el código actual. **SBPC:** sin cambio hasta la 47; de la 48 en adelante, **+12** (`PATCH partner/client` SBPC:68-87; `GetFilterClients` :148-162). **BPM:** de la 5 a la 115, **+1** (`using ServicioSap.Methods.Utils` nuevo en la 5); de la 148 a la 421, **−31** (bloque comentado `EnableBpCombination` borrado: `SubmitClientInfoAsync` :75-125, `GetFilterClientsAsync` :218-260 y su URL en **:221**, `BuildClientFromCustomerRequest` :384-735); la 422-434 se reescribió como :391-405; de la 436 a la 454, **−29** (resolvedor de `storeCode` :407-425); de la 456 a la 766, **−30** (`Partner = ""` :435, `Marst` :456, `Fiscalregimen` :548, `ZidMagento` :579, `toCteCto` :643-668); de la 777 a la 813, **−40** (`MapGender` :737-758, `FormatDateSap` :760-773); de la 831 en adelante, **−56** (`LinkMagentoAccountAsync` :779-819).
 
 ---
 
@@ -268,30 +270,30 @@ No se editan sin aprobación (SKILL 23). La lista completa de ediciones está en
 | Id | Regla LAN | ServicioSAP hoy | Estado | Evidencia |
 |---|---|---|---|---|
 | 1.1-R1 | Body null: LAN no valida; el DMZ lo rechaza con 400 antes de llamar | También `BadRequest`; inalcanzable desde el DMZ | EQ | DCC:22-23; LCC:15-18; SBPC:38-41 |
-| 1.1-R2 | `sntz` quita `& ' : < > " / % ( ) = ?` de cada campo | Solo `Trim()`; no hay helper equivalente en SS | DIF | LCUM:74-94, :184-192; BPM:422-434 |
-| 1.1-R3 | `int.Parse(sntz(idMagento))`: vacío o texto → 500 → DMZ 400; mayor que int.MaxValue → OverflowException → 500; `1'2` se vuelve `12` | `ParseMagentoId` devuelve 0 en todos esos casos y crea el BP con `ZidMagento = 0` | DIF | LCUM:74; DCURL:108-111; DCC:34-35; BPM:432-433, :609, :767-775 |
-| 1.1-R4 | storeCode → UEN por igualdad **exacta y sensible a mayúsculas**: `muebles_america`=1, `viu`=2, `mavi`=3. Otro valor o vacío → `int.Parse('')` → 500. Null → NRE → 500. `VIU` o `Viu` fallan | Busca subcadenas con `IndexOf` sin distinguir mayúsculas: `viu` o `2` → 05; `muebles_america`, `1` o `''` → 04; cualquier otro → 04; `mavi` → 04. Es un tercer resolvedor de organización (SKILL 28) | DIF | LCUM:42-50, :43, :93; BPM:436-455, :440, :445, :532, :568; OM:340-351; GUIA §1.7 |
+| 1.1-R2 | `sntz` quita `& ' : < > " / % ( ) = ?` de cada campo | `SntzMethods.Sntz` (`Methods\Utils\SntzMethods.cs:14, :19-27`: misma regex, `Regex` estático compilado, null o vacío → `""`; CSPROJ:279) sobre los mismos 7 campos que LAN (`idMagento`, `name`, `lastName`, `lastName2`, `gender`, `email`, `phone`) y antes de `Trim` (BPM:391-405). `storeCode`, `address` y `dateBirth` sin sanear, como LAN | **EQ (HECHO sin E2E, S4 2026-10-05; CQ7)** | LCUM:74-94, :184-192; LOM:1367-1375; SntzMethods.cs:14, :19-27; BPM:394-405; CSPROJ:279 |
+| 1.1-R3 | `int.Parse(sntz(idMagento))`: vacío o texto → 500 → DMZ 400; mayor que int.MaxValue → OverflowException → 500; `1'2` se vuelve `12` | `int.Parse(idMagento)` sobre el valor ya pasado por `Sntz` (BPM:401, :404): vacío o texto → `FormatException`, desbordado → `OverflowException`; la excepción sale por el catch del controlador (SBPC:62-65) y no se crea el BP. `1'2` → 12 como LAN. `ParseMagentoId` se borró (T1.1-10). Lo que ve Magento en la falla es R22 | **EQ-R (HECHO sin E2E, S4 2026-10-05; CQ5)** | LCUM:74; DCURL:108-111; DCC:34-35; BPM:401, :404, :579; SBPC:62-65 |
+| 1.1-R4 | storeCode → UEN por igualdad **exacta y sensible a mayúsculas**: `muebles_america`=1, `viu`=2, `mavi`=3. Otro valor o vacío → `int.Parse('')` → 500. Null → NRE → 500. `VIU` o `Viu` fallan | Busca subcadenas con `IndexOf` sin distinguir mayúsculas: `viu` o `2` → 05; `muebles_america`, `1` o `''` → 04; cualquier otro → 04; `mavi` → 04. Es un tercer resolvedor de organización (SKILL 28). **Sin cambio en S4:** CQ5 (2026-10-05) solo contestó `idMagento`; `storeCode`, `mavi` y el resolvedor único siguen abiertos | DIF | LCUM:42-50, :43, :93; BPM:407-425, :411, :416, :502, :538; OM:340-351; GUIA §1.7 |
 | 1.1-R5 | Busca primero: `IdMagento=@Id AND eMail1=@email`, o `IdMagento=@Id` si `@Id>2` | Sin búsqueda (`Partner = ""`). BP05 expone `ZidMagento` y `Mail`, y `GetFilterClientsAsync` puede consultarlos, pero no está probado que el `$filter` los acepte | FALTA | CTN:62-68; BPM:465, :249-291; SS Models/SAP/BusinessPartner/Partner.cs:36, :189 |
 | 1.1-R6 | Cuenta `C…` nueva por MAX + 1, con reintento | BP01 asigna el número (`Partner`). DU2: sin mapeo de cuentas C | EQ-R | CTN:73-104; RSG_BP01:686-691; BPM:112-114 |
 | 1.1-R7 | Solo el canal CONTADO de la UEN en CteEnviarA | Un área de ventas: Vkorg 04/05, Vtweg 01, Spart 00 y KNVP `Parvw WE`. El canal de crédito (`EnableBpCombination`) está comentado, igual que LAN | EQ-R | CTN:88-97, :155-157; BPM:532-534, :568-571, :116-146 |
-| 1.1-R8 | `Cte.FiscalRegimen = '605'` | `Fiscalregimen = ""` (el campo existe en el modelo) | DIF | CTN:109, :114; BPM:578 |
-| 1.1-R9 | Nombres en MAYÚSCULAS: PersonalApellidoPaterno=name, PersonalApellidoMaterno=lastName, PersonalNombres=lastName2, Nombre=UPPER(name lastName lastName2) | `NameFirst=name`, `NameLast=lastName`, `NameLst2=lastName2`, sin mayúsculas. La ficha BP01 mapea Nombre1→NAME_FIRST, Apellido1→NAME_LAST, Apellido2→NAME_LST2 | DIF | LCUM:21-23, :75-77; CTN:45, :115-118; BPM:422-424, :477-479; RSG_BP01:85-89 |
-| 1.1-R10 | `eMail1 = UPPER(email)` | `SmtpAddr = email` tal cual | DIF | CTN:133; BPM:427, :514 |
-| 1.1-R11 | La dirección nunca sale del request: todo `''`, Poblacion = Delegacion = `''`, CP 0 | `Street` y `NameCo` = address; HouseNum1…StrSuppl3, City1, City2 y PostCode1 `''`; Country MX; Region `JAL` fija | DIF | LCUM:24-33, :86-89; CTN:119-128, :125; BPM:431, :460-461, :491-502 |
+| 1.1-R8 | `Cte.FiscalRegimen = '605'` | `Fiscalregimen = ""` (el campo existe en el modelo; `"605"` se aplicó y se revirtió el 2026-10-05) | DIF (pendiente del dueño fiscal) | CTN:109, :114; BPM:578 |
+| 1.1-R9 | Nombres en MAYÚSCULAS: PersonalApellidoPaterno=name, PersonalApellidoMaterno=lastName, PersonalNombres=lastName2, Nombre=UPPER(name lastName lastName2) | `NameFirst = UPPER(name)`, `NameLast = UPPER(lastName)`, `NameLst2 = UPPER(lastName2)` con `ToUpperInvariant()` tras `Sntz` y `Trim` (BPM:394-396, :447-449). El orden se conserva por decisión (CQ1 = B): el payload real de CQ10 trae `name` = nombre y `lastName` = apellido paterno, así que el mapeo de ServicioSAP es el correcto para la ficha BP01 (Nombre1→NAME_FIRST, Apellido1→NAME_LAST, Apellido2→NAME_LST2) y el comentario de LAN (LCUM:21-23) no describe lo que Magento manda | **EQ-R (HECHO sin E2E, S4 2026-10-05)** | LCUM:21-23, :75-77; CTN:45, :115-118; BPM:394-396, :447-449; RSG_BP01:85-89 |
+| 1.1-R10 | `eMail1 = UPPER(email)` | `SmtpAddr = UPPER(email)` con `ToUpperInvariant()` tras `Sntz` y `Trim` (BPM:397, :484) | **EQ (HECHO sin E2E, S4 2026-10-05; CQ1)** | CTN:133; BPM:397, :484 |
+| 1.1-R11 | La dirección nunca sale del request: todo `''`, Poblacion = Delegacion = `''`, CP 0 | `Street` y `NameCo` = address; HouseNum1…StrSuppl3, City1, City2 y PostCode1 `''`; Country MX; Region `JAL` fija. **Sin cambio:** diferencia aceptada por el usuario (CQ4 = B, 2026-10-05; SAP DEV ya aceptó estos valores) | DIF aceptada (CQ4 = B) | LCUM:24-33, :86-89; CTN:119-128, :125; BPM:400, :430-431, :461-472 |
 | 1.1-R12 | RFC `''` | `Stcd1` = RFC genérico del SAT, `Rfc = ''`, `Stkzn X` | EQ-R | LCUM:33, :90; CTN:129; BPM:515-516, :573 |
 | 1.1-R13 | `Sexo = UPPER(gender)`, crudo | `Gender = MapGender` (1 masculino, 2 femenino, otro 3, vacío 1). Decisión del usuario; el `1` por defecto es del 2026-09-26 (CREDITO §6.3.15) | EQ-R | CTN:132; BPM:482, :777-798 |
-| 1.1-R14 | `dateBirth` se ignora y se fija `FechaNacimiento = '1900-01-02'` | `Birthdt = dateBirth` en yyyyMMdd, o null (se omite) | DIF | LCUM:18-39; CTN:140; BPM:428, :488, :800-813, :83-86 |
-| 1.1-R15 | `phone` llega como `@TelefonoCTe` pero el SP no lo escribe | `TelNumber` y `TelnrLong` = phone; `toCteTel` con `ZtipoCte MOVIL`, `ZtelCte = phone`, `ZvalTel false` | DIF | LCUM:37, :94; CTN:48; BPM:430, :506, :513, :657-672 |
+| 1.1-R14 | `dateBirth` se ignora y se fija `FechaNacimiento = '1900-01-02'` | `Birthdt = dateBirth` en yyyyMMdd, o null (se omite). **Sin cambio:** diferencia aceptada (CQ4 = B, 2026-10-05) | DIF aceptada (CQ4 = B) | LCUM:18-39; CTN:140; BPM:398, :458, :760-773, :84-87 |
+| 1.1-R15 | `phone` llega como `@TelefonoCTe` pero el SP no lo escribe | `TelNumber` y `TelnrLong` = phone; `toCteTel` con `ZtipoCte MOVIL`, `ZtelCte = phone`, `ZvalTel false`. Desde S4 `phone` pasa por `Sntz` (R2). **Sin cambio en los campos:** diferencia aceptada (CQ4 = B, 2026-10-05) | DIF aceptada (CQ4 = B) | LCUM:37, :94; CTN:48; BPM:399, :476, :483, :627-642 |
 | 1.1-R16 | Tipo `Cliente`, Estatus `ALTA`, monedas `Pesos`, `OCCIDENTE`, Alta GETDATE() | BuGroup CLIE, Ktokd 0110, Bukrs 5510, Waers MXN, Aland MX / Tatyp TMX1 / Taxkd 1; la fecha la pone SAP | EQ-R | CTN:130-137; BPM:467, :519, :523, :549, :565-567 |
 | 1.1-R17 | `SeEnviaBuroCreditoMavi` (Cte y CteEnviarA) de la fila CONTADO | No se manda: `Katr1` no está en el modelo `Client` y el valor de la fila CONTADO se desconoce | PENDIENTE | CTN:90, :138, :157; CHK_BP:553-566; SS Models/SAP/BusinessPartner/Client.cs |
 | 1.1-R18 | EstadoCivil fuera del INSERT → default de la columna | `Marst = "1"` fijo. **Se decide en CREDITO P14 (§6.3.15)**, no aquí | DIF | CTN:109-111; BPM:486; MATRIZ:220 |
 | 1.1-R19 | El cliente existente se actualiza (paso 13), incluida la dirección a `''` / 0. Con Id ≤ 2 solo Nombre y dirección. Nunca EntreCalles, Poblacion ni Pais | Sin actualización. BP01 modifica cuando `Partner <> ''`, pero el builder manda ~190 campos `''` que vaciarían el BP: haría falta un payload parcial | FALTA | CTN:172-201, :181-187, :189, :193-199; RSG_BP01:18-19, :101-102; CHK_BP:248-272 |
-| 1.1-R20 | Éxito: `SELECT @Clave` → `Ok(string)`: cadena JSON `"C0XXXXXXX"`. Siempre hay cuenta | `Ok(Client)`, el objeto completo. El `Trim` del DMZ no hace nada y Magento recibe 200 con una cadena JSON que contiene el Client serializado. El equivalente SAP es `Client.Partner`. Si BP01 responde 2xx sin Partner, hoy sale un Client con Partner vacío | DIF | CTN:205-206; LCUM:104-117; LCC:20; SBPC:46-48; BPM:112-114, :148; DCC:30, :37; GUIA:363 |
+| 1.1-R20 | Éxito: `SELECT @Clave` → `Ok(string)`: cadena JSON `"C0XXXXXXX"`. Siempre hay cuenta | `Ok(result.Partner.Trim())` desde el 2026-10-05 (T1.1-01): cadena JSON con el número de BP (`Client.Partner`), la misma forma que LAN; el DMZ no cambia. Antes `Ok(Client)`, el objeto completo. Si BP01 responde 2xx sin `Partner`, desde S4 sale `"Error, <motivo>"` (R22, T1.1-08 d), nunca `""` | **HECHO sin E2E** | CTN:205-206; LCUM:104-117; LCC:20; SBPC:46-60; BPM:113-115, :117; DCC:30, :37; GUIA:363 |
 | 1.1-R21 | `Incorrecto` si el SP no devuelve filas | Sin equivalente; en LAN es inalcanzable | N/A | LCUM:105-113; CTN:205-206 |
-| 1.1-R22 | Falla: excepción → 500 → DMZ `BadRequest()` 400 con cuerpo vacío | 400 `{"Message":"Error, …"}` → PostSAP `WebException: … (400) Bad Request. Body: …` → **DMZ 200 con ese texto** en lugar de una cuenta. Si el cuerpo de error de SAP contiene `Internal Server Error` (se copia a la excepción), el DMZ da 400. El status está retirado (R-03); queda el cuerpo libre | DIF | LCC:15-21; DCURL:108-111, :130-141; DCC:34-37; SBPC:50-53; BPM:104, :154; GUIA:166-170, :642 |
+| 1.1-R22 | Falla: excepción → 500 → DMZ `BadRequest()` 400 con cuerpo vacío | Dos ramas (CQ6 = d, 2026-10-05): **(1)** BP01 responde 2xx sin `Partner` (el BP no se creó) → 200 con la cadena `"Error, <Message>"`: el `Message` del primer `toReturn.results` con `Type == "E"`; si no hay, el del primero; si la lista es nula o vacía (o `result` nulo), el literal `BP01 no devolvio un Partner valido` (SBPC:48-59; convención de `order/new`, OrderController.cs:46); el DMZ lo reenvía con 200, sin romper el flujo. **(2)** Excepción (HTTP no exitoso de SAP, token, `idMagento` inválido) → 400 `{"Message":"Error, …"}` → PostSAP `WebException: … (400) Bad Request. Body: …` → DMZ 200 con ese texto; si el cuerpo contiene `Internal Server Error`, DMZ 400. La rama (2) no cambió. El status está retirado (R-03) | **EQ-R (HECHO sin E2E, S4 2026-10-05)** | LCC:15-21; DCURL:108-111, :130-141; DCC:34-37; SBPC:48-65; BPM:105, :123; OrderController.cs:46; GUIA:166-170, :642 |
 | 1.1-R23 | LAN no registra nada | `Logger.SAP` de request, respuesta y error; el DMZ registra `BP_CREATE` | N/A | BPM:88, :99, :103; DCC:32 |
 | 1.1-R24 | Sin fuente LAN para campos solo SAP | Constantes de maestro: NameOrg1 = store code, Sort1/2, Altkn, Kvgr4 SI, Parnr, Perrl AM, Langu S; nodos `toCte` y `Empleo` en blanco. Son decisiones de maestro de CHK_BP, no paridad. Los nodos de contacto van en R25 | N/A | BPM:463-762 (p. ej. :473, :531, :556, :561, :581, :719-745) |
-| 1.1-R25 | **LAN no crea contacto**: solo Cte (CTN:109) y CteEnviarA (CTN:155) | `toCteCto` con `ZidcteCto "1"` y `ZidcteCtoTipo "20"`; `toCteCtoDireccion` con `ZidcteCto "1"` y `Zpais "MX"`. Puede crear un contacto tipo 20 por BP. CHK_BP:453 marca el tipo 20 "sin evidencia" | DIF | BPM:676-677, :702, :708; CHK_BP:453 |
+| 1.1-R25 | **LAN no crea contacto**: solo Cte (CTN:109) y CteEnviarA (CTN:155) | `toCteCto` con `ZidcteCto "1"` y `ZidcteCtoTipo "20"`; `toCteCtoDireccion` con `ZidcteCto "1"` y `Zpais "MX"`. Puede crear un contacto tipo 20 por BP. CHK_BP:453 marca el tipo 20 "sin evidencia". **Sin cambio:** diferencia aceptada (CQ4 = B, 2026-10-05; BP01 lo aceptó en los BP de DEV) | DIF aceptada (CQ4 = B) | BPM:646-647, :672, :678; CHK_BP:453 |
 | 1.1-R26 | Los parámetros del SP truncan en silencio: nombres a 100, correo a 100, sexo a 50 y teléfono a 20. LAN nunca falla por largo | Manda las cadenas completas con solo `Trim()`; BP01 puede rechazar lo que LAN aceptaba | DIF | CTN:45-48; BPM:422-434 |
 
 #### 3.1.4 Contrato de respuesta
@@ -313,6 +315,7 @@ No se editan sin aprobación (SKILL 23). La lista completa de ediciones está en
 - **Criterio.** V1. E2E en S6: BP01 acepta el payload y el valor 605 se ve en la respuesta de BP01, o en BP05MA (`partner/client/ma/{id}`) si lo expone. Si BP01 lo rechaza: revertir, reportar con el response (GUIA §2.3) y dejar R8 como DIF documentada.
 
 **T1.1-01b · DECISION (CQ8) · Dónde vive la guarda de `Partner` vacío (R20)**
+- **Elegida por el usuario (2026-10-05, CQ8):** se resuelve con la opción (d) de T1.1-08, en el controlador (el lugar de la opción A), sin miembros nuevos. El usuario: "si retorna el número vacío es porque no se creó; en la sección to_return del mensaje suele venir el motivo".
 - **Regla.** LAN siempre devolvía una cuenta (CTN:205-206). Si BP01 responde 2xx sin `Partner`, hoy sale un Client con Partner vacío (BPM:112-114, :148) y, tras T1.1-01, saldría `""`.
 - **Opción A.** En el controlador, dentro del try: `if (result == null || string.IsNullOrWhiteSpace(result.Partner)) throw new Exception(<mensaje>);`, con el patrón de OM:2623-2629, como excepción explícita a SKILL 17. El texto del mensaje lo aprueba el usuario o se copia el de OM:2628.
 - **Opción B (recomendada).** Crear un orquestador `SetCustomerAsync` en `Methods\BusinessPartner\` con el nombre de la ruta del DMZ (SKILL 28). Hace Build → Submit → guarda → devuelve `Partner.Trim()`, y el controlador solo lo llama. Es un miembro nuevo, así que necesita aprobación (GUIA §1.9b). T1.1-03 lo necesita de todos modos.
@@ -320,7 +323,7 @@ No se editan sin aprobación (SKILL 23). La lista completa de ediciones está en
 
 **T1.1-03 · DECISION (CQ2, CQ3) + CONSTRUIR · Buscar el BP existente antes de crear (R5, R19)**
 - **Depende de.** T1.1-01b = B (el orquestador), T1.1-05 y T1.1-04 (el valor buscado debe ser el mismo que se guarda) y el paso 0 de T1.1-09 (probar que el `$filter` de BP05 acepta `ZidMagento` y `Mail`).
-- **Cambio (tras la respuesta del usuario).** En `SetCustomerAsync`, antes del Build, llamar a `GetFilterClientsAsync` (BPM:249-291) con `ZidMagento eq '<id>'` si idMagento > 2, y con `ZidMagento eq '<id>' and Mail eq '<correo>'` si idMagento ≤ 2 (CTN:62-68). Si hay BP, devolver su `Partner` (forma de T1.1-01). Si el usuario lo aprueba, actualizar con un payload BP01 **parcial** (con `Partner` y solo los campos que cambian) para no vaciar el BP (CHK_BP:248-272). Si no hay BP, crear como hoy.
+- **Cambio (tras la respuesta del usuario).** En `SetCustomerAsync`, antes del Build, llamar a `GetFilterClientsAsync` (BPM:249-291) con `ZidMagento eq <id>` si idMagento > 2, y con `ZidMagento eq <id> and Mail eq '<correo>'` si idMagento ≤ 2 (CTN:62-68). Si hay BP, devolver su `Partner` (forma de T1.1-01). Si el usuario lo aprueba, actualizar con un payload BP01 **parcial** (con `Partner` y solo los campos que cambian) para no vaciar el BP (CHK_BP:248-272). Si no hay BP, crear como hoy.
 - **Condiciones obligatorias del diseño:**
   - (a) **Mayúsculas del correo.** LAN guarda UPPER(email) (CTN:133) y compara en SQL (CTN:65-66). SAP guarda `SmtpAddr` tal como llega (BPM:514). La búsqueda del invitado tiene que normalizar igual que el alta (depende de T1.1-04).
   - (b) **Escapar y codificar.** `GetFilterClientsAsync` mete el `$filter` en la URL sin codificar (BPM:252). Un correo con `+` o `&` cambia el filtro. El valor se escapa (comilla doble, como `EscapeSapFilterValue`, OM:2968-2971; es `private` en OM, así que reutilizarlo desde BPM requiere aprobación, §1.9b-c) y se codifica. No se toca el wrapper compartido.
@@ -330,6 +333,7 @@ No se editan sin aprobación (SKILL 23). La lista completa de ediciones está en
 - **Criterio.** El mismo idMagento enviado dos veces da un solo BP con el mismo número. Un invitado (id 0) con el mismo correo recibe el mismo BP. Un cambio de perfil actualiza lo aprobado sin vaciar otros campos (se comprueba en BP05MA). Un error de SAP en la búsqueda no crea BP. V1 + E2E documentada.
 
 **T1.1-04 · DECISION (CQ1, CQ10) · Orden de los nombres y mayúsculas (R9, R10)**
+- **Elegida por el usuario (2026-10-05, CQ1):** opción B. Se conserva `NameFirst = name`, `NameLast = lastName`, `NameLst2 = lastName2` (el payload real lo confirma: `name` trae el nombre y `lastName` el apellido; creó el BP 1500008276, sap.log) y se pasan a MAYÚSCULAS como LAN, **incluido el correo** (`SmtpAddr = UPPER(email)`): "si LAN lo pone en mayúsculas, hazlo igual en SAP". Con `ToUpperInvariant()` (el idioma de `MapGender`, BPM:786) sobre `nombre`, `apellidoPaterno`, `apellidoMaterno` y `correo` ya saneados y recortados (BPM:422-427), para que todos los usos de esas variables salgan en mayúsculas. Teléfono, dirección y demás campos sin cambio.
 - **Opción A (paridad estricta):** `NameLast = UPPER(name)`, `NameLst2 = UPPER(lastName)`, `NameFirst = UPPER(lastName2)` y `SmtpAddr = UPPER(email)` en BPM:422-427, :477-479 y :514.
 - **Opción B:** conservar `NameFirst = name`, `NameLast = lastName`, `NameLst2 = lastName2` y solo pasar a MAYÚSCULAS.
 - **Opción C:** sin cambio.
@@ -337,10 +341,12 @@ No se editan sin aprobación (SKILL 23). La lista completa de ediciones está en
 - **Criterio.** Un BP creado desde un payload real de Magento tiene los mismos nombres y apellidos que tendría en `Cte.Personal*` de LAN. E2E documentada.
 
 **T1.1-05 · DECISION (CQ7) · Helper `Sntz` heredado de LAN (R2, agregado a R3)**
+- **Elegida por el usuario (2026-10-05, CQ7):** sí, "como LAN pero de una mejor manera que haga lo mismo": clase `public static class SntzMethods` en `Methods\Utils\SntzMethods.cs` (namespace `ServicioSap.Methods.Utils`, con BOM y CRLF como RequestMethods.cs y StoreGlobalMethods.cs; registrada en `ServicioSap.csproj` después de `Methods\Utils\RequestMethods.cs`, regla 19) con el método `public static string Sntz(string a)` (el nombre de LAN va en el método: C# no permite un miembro con el nombre de su clase; la carpeta usa la convención `XxxMethods`), con un `Regex` estático creado una sola vez (compilado) con el mismo patrón `[&':<>\"/%()=?]`; null o vacío → `""`. Se aplica una sola vez, en BPM:422-434 y antes de `Trim`, a los mismos 7 campos que LAN sanea (LCUM:74-94): `idMagento`, `name`, `lastName`, `lastName2`, `gender`, `email` y `phone`. **No** se aplica a `storeCode` (LAN solo le quita apóstrofos para comparar, LCUM:43-49, y T1.1-07 lo deja sin cambio), ni a `address` ni a `dateBirth` (LAN no los usa; sanear `/` rompería la fecha).
 - **Cambio.** LAN tiene `sntz` dos veces, con la misma regex, en dos dominios: LCUM:184-192 y LOM:1367-1375. Por SKILL 28 se crea **una vez**, con el nombre de LAN (`Sntz`), en `Methods\Utils\` (la carpeta existe: RequestMethods.cs, StoreGlobalMethods.cs). Hace `Regex.Replace(a, "[&':<>\"/%()=?]", "")` y convierte null o vacío en `""`. Se aplica a cada campo de `CustomerRequest` que usa BPM:422-434, **antes** de `ParseMagentoId` (así `1'2` da 12, como en LAN). No va en `Methods\BusinessPartner` ni con otro nombre. Hay que registrarlo en CSPROJ (regla 19). El flujo de orden de ServicioSAP tampoco tiene hoy equivalente (no hay sanitizador en SS): el helper se diseña para servir a los dos, pero aquí solo se aplica a setCustomer.
 - **Criterio.** Una entrada con esos caracteres da nombres, correo y teléfono sin ellos, como LAN. V1 (con el `.cs` en CSPROJ) + E2E.
 
 **T1.1-06 · DECISION (CQ4) · Valores que LAN nunca guardó (R11, R14, R15 y Region)**
+- **Elegida por el usuario (2026-10-05, CQ4):** opción B. Se conservan los valores actuales: SAP DEV ya aceptó `Street`, `NameCo`, teléfono, `Birthdt` y `Region = JAL` en los BP 1500007543, 1500007544 y 1500008276 (sap.log); el usuario: "a veces SAP necesita valores por default para funcionar... deja los valores así en este momento". Diferencias aceptadas, sin cambio de código.
 - **Opción A (DU5 estricta):**
   - `Street` y `NameCo` = `""` en lugar de address (BPM:491, :493).
   - Sin teléfono en `TelNumber`, `TelnrLong` ni `toCteTel` (BPM:506, :513, :662).
@@ -352,6 +358,7 @@ No se editan sin aprobación (SKILL 23). La lista completa de ediciones está en
 - **Criterio.** Cada campo coincide con la decisión en un BP leído por BP05MA, y BP01 acepta el payload. E2E.
 
 **T1.1-07 · DECISION (CQ5) · `idMagento`/`storeCode` inválidos y un solo resolvedor (R3, R4)**
+- **Elegida por el usuario (2026-10-05, CQ5):** solo `idMagento`: "no puede venir vacío; si por alguna razón viene nulo o vacío, falla como LAN porque es un campo obligatorio". Se hace como LAN: `int.Parse(Sntz(idMagento))` en lugar de `ParseMagentoId` (que convierte lo inválido en 0); vacío, no numérico o desbordado lanza la misma excepción que en LAN y sale por el catch actual del controlador (SBPC:50-53). Si `ParseMagentoId` tiene otros llamadores, no se toca. `storeCode` y el resolvedor de organización quedan **sin cambio** (el usuario no lo decidió; regla "si funciona, no lo muevas"); `mavi` sigue abierto.
 - LAN falla (500 → 400 del DMZ) en estos casos:
   - idMagento vacío, no numérico o mayor que int.MaxValue;
   - storeCode null;
@@ -361,22 +368,26 @@ No se editan sin aprobación (SKILL 23). La lista completa de ediciones está en
 - **Criterio.** Cada clase de entrada da el resultado acordado: `muebles_america`, `viu`, `mavi`, `VIU`, `''`, `'1'`, `'2'`, basura, null, idMagento vacío o `1'2`. Queda un solo resolvedor de organización.
 
 **T1.1-08 · DECISION (CQ6) · Cuerpo y status de la falla (R22)**
+- **Elegida por el usuario (2026-10-05, CQ6):** opción nueva **(d)**. Cuando BP01 no crea el BP, `Partner` viene vacío y `toReturn` trae el motivo (ej. sap.log: "Cuenta asociada (KNB1-AKONT) es un campo de entrada obligatoria"). En ese caso el controlador responde `Ok("Error, " + <Message del primer `result.to_return.results` con `Type == "E"`; si no hay, el `Message` del primero; si la lista es null o vacía, el literal `BP01 no devolvio un Partner valido` (prefijo del mensaje de OM:2652)>)`, también cuando `result` es null, sin romper el flujo y con la misma convención que `order/new` (OrderController.cs:32). Las excepciones (HTTP no exitoso de SAP, idMagento inválido) siguen por el catch actual, sin cambio.
 - **(a)** `Ok("Incorrecto")`, la única palabra de falla de LAN, en el catch de SBPC:50-53.
 - **(b) (recomendada, coherente con T1.L-02)** ServicioSAP responde `InternalServerError`. El chequeo que ya existe en el DMZ (DCC:34-35) contesta 400 vacío, que es exactamente lo que Magento veía con LAN, sin tocar el DMZ. Choca con el corolario de GUIA §1.5 (resultado de negocio con 200): una falla de SAP no es un resultado de negocio. Se reporta el choque y decide el usuario.
 - **(c)** Dejarlo como está.
 - **Criterio.** Un error forzado de BP01 (un campo inválido, en DEV y con visto bueno) da a Magento la respuesta acordada. Documentado.
 
 **T1.1-09 · VERIFICACION · E2E de paridad (SKILL 25)**
-- **Paso 0** (solo lectura; antes de S5). `GET <<SAP>>/partner/client/filter/{sapFilter}` (SBPC:137) con `ZidMagento eq '<<ID_MAGENTO_PRUEBA>>'` y con `Mail eq '<<CORREO_PRUEBA>>'`. Si alguno falla, T1.1-03 queda bloqueado: SAP/ABAP tiene que exponer esa consulta.
+- **Paso 0** (solo lectura; antes de S5). `GET <<SAP>>/partner/client/filter/{sapFilter}` (SBPC:137) con `ZidMagento eq <<ID_MAGENTO_PRUEBA>>` (sin comillas: `ZidMagento` es numérico, Partner.cs:36; ningún código actual filtra por él; D-15 del 2026-10-05) y con `Mail eq '<<CORREO_PRUEBA>>'`. Si alguno falla, T1.1-03 queda bloqueado: SAP/ABAP tiene que exponer esa consulta.
 - **Casos por el DMZ** (crean BP: visto bueno por caso): nuevo MA; nuevo VIU; el mismo idMagento dos veces; invitado id 0 con correo repetido; nombre con caracteres especiales; nombre de más de 100 caracteres (R26); sin `dateBirth`; error forzado de SAP.
 - **En cada BP creado,** leer por BP05MA: nombres, correo, FiscalRegimen, `Birthdt`, Region, dirección, teléfono, `Marst` y el nodo de contacto (R25).
+- **Resultado esperado por caso tras S4 (2026-10-05; sin kit, D-17: lo ejecuta el usuario).** *Nuevo MA / nuevo VIU:* DMZ 200 con `"15000XXXXX"`; en BP05MA `NameFirst`, `NameLast`, `NameLst2` y `SmtpAddr` en MAYÚSCULAS y sin `& ' : < > " / % ( ) = ?`; `Birthdt`, teléfono (`TelNumber`, `TelnrLong`, `toCteTel`), `Street`/`NameCo`, `Region JAL` y el contacto tipo 20 conservados (CQ4 = B); `Fiscalregimen ""`; `Marst "1"` (P14). *Mismo idMagento dos veces / invitado id 0 con correo repetido:* todavía dos BP distintos (la búsqueda es S5, T1.1-03). *Nombre con caracteres especiales:* los caracteres de `Sntz` desaparecen y el resto queda en MAYÚSCULAS; `idMagento` `1'2` → `ZidMagento 12`. *Nombre de más de 100 caracteres:* sin cambio (R26 DIF; lo que diga BP01). *Sin `dateBirth`:* `Birthdt` omitido (CQ4 = B). *idMagento vacío o no numérico:* ServicioSAP 400 `{"Message":"Error, <texto de FormatException u OverflowException>"}` → DMZ 200 con `WebException: … (400) Bad Request. Body: …`; no se crea BP. *storeCode desconocido o `mavi`:* BP con org 04 (sin cambio, R4). *Error forzado de SAP:* si BP01 responde HTTP no exitoso, ServicioSAP 400 `{"Message":"Error, Ocurrio un error al intentar enviar la informacion del cliente: …"}` → DMZ 200 con el texto `WebException…`; si BP01 responde 2xx sin `Partner`, ServicioSAP 200 `"Error, <Message del toReturn con Type E>"` → DMZ 200 con esa cadena (R22). En `sap.log` no hay hoy ninguna respuesta 2xx con `Partner` vacío: la rama (1) de R22 solo se prueba con un error forzado.
 - **Criterio.** Cada regla EQ o EQ-R se cumple con IDs reales anotados en `Resources/master_test_plan.md`, sin datos personales.
 
 **T1.1-10 · DECISION (CQ9) · Código muerto del builder (SKILL 12)**
+- **Elegida por el usuario (2026-10-05, CQ9):** sí, borrarlo, comprobando antes que no se usa en absolutamente ningún otro lugar de la solución ("si después se necesita, lo volvemos a poner").
 - Borrar, solo si el usuario lo aprueba: BPM:425-426, :429, :815-829, :455 y el bloque comentado :116-146. En commit propio.
 - **Criterio.** Aprobado o rechazado por el usuario; si se aprueba, V1 en verde.
 
 **T1.1-11 · DECISION (CQ4) · Contacto tipo 20 que LAN no creaba (R25)**
+- **Elegida por el usuario (2026-10-05, CQ4):** opción B. Se conserva el contacto tipo 20 (BP01 lo aceptó en los mismos 3 BP); diferencia aceptada, sin cambio de código.
 - **Opción A (DU5, recomendada si BP01 lo acepta):** `toCteCto` y `toCteCtoDireccion` en blanco como los demás nodos, con `ZidcteCto`, `ZidcteCtoTipo` y `Zpais` a `""` (BPM:676-677, :702, :708).
 - **Opción B:** conservar y registrar la diferencia.
 - **Criterio.** El BP nuevo no tiene contacto tipo 20 (se ve en BP05MA) y BP01 acepta el payload.
@@ -417,6 +428,8 @@ CQ1, CQ2, CQ3, CQ4, CQ5, CQ6, CQ7, CQ8, CQ9, CQ10 y CQ11 (§5).
 
 > [!note] Correcciones de la verificación ya aplicadas
 > R4 y R16 pasan a PENDIENTE: el EXEC posicional hace que el **orden** decida dónde queda cada valor, y solo se observó `IdMagento`. R22 (la carga de datos) es un prerrequisito de pase, no una regla de paridad. T1.2-02 necesita aprobación. Hay regla nueva R23 (valores del invitado) y R10 se extiende a espacios finales. Se quitaron de las correcciones las fuentes retiradas (`MIGRATION_STATUS_MASTER_v2`, `_EXCLUIDOS`). La cita de Magento para `black` queda en EML:260-262 y :445-465.
+>
+> **2026-10-05 (S3):** T1.2-02 aplicada (SCUM:83, `Uri.EscapeDataString(valor)`; CQ13) y T1.2-04 cerrada (CQ15 aceptada). Con T1.L-02 = A, `blackwhitelistAsync` relanza el error SQL (SCUM:68): en set lo atrapa SCC:50-54 → 200 sin contenido, como LAN (R19 pasa a EQ). Las citas SCUM a partir de :69 de este documento quedan corridas una línea (+1); las filas tocadas en S3 ya traen la numeración nueva.
 
 #### 3.2.2 Proceso LAN paso a paso
 
@@ -445,17 +458,17 @@ CQ1, CQ2, CQ3, CQ4, CQ5, CQ6, CQ7, CQ8, CQ9, CQ10 y CQ11 (§5).
 | 1.2-R6 | `FechaRegistro = DateTime.Now` formateada, como DateTime | Igual | EQ | LCUM:145, :151; SCUM:46-47 |
 | 1.2-R7 | Nombre, DireccionEntrega y NumCuenta = idMagento (entity_id de Magento, no BP ni cuenta C), crudos, VarChar | Igual. DU2 no aplica: no hay mapeo de cuenta | EQ | LCUM:148-150; SCUM:43-45; EML:451, :482 |
 | 1.2-R8 | Precondición: el correo existe en `cte` (COUNT > 0 dentro del SP) | Se valida en C# con BP05 `Mail eq`: con 0 resultados no se llama el SP | EQ-R | LNB:74-78, :103-107; SCUM:21-24, :74-97; `.agents/skills/lan-sap-migration/RSG/bp05_maestro.md`:188; E-02:106, :110; EP:363, :386 |
-| 1.2-R9 | El correo se compara con un SqlParameter: cualquier carácter vale | Va al `$filter` con solo `'` duplicada y se concatena **sin codificar** en la URL. `#` corta la query (se pierden `sap-client` y `$format`), `&` la parte y `%XX` se decodifica: el filtro queda mal → excepción → `false` → no inserta. `+` probablemente llega como espacio: necesita E2E | DIF | LNB:77; LCUM:136; SCUM:81-82, :91-96; BPM:252, :257 |
-| 1.2-R10 | `eMail1 = @Correo` bajo la collation de IntelisisTmp: sin distinguir mayúsculas y **sin contar espacios finales** (ANSI padding) | OData `Mail eq`, probablemente coincidencia exacta | PENDIENTE | LNB:77, :106; SCUM:82; EP:363 (la E2E usó la misma escritura) |
-| 1.2-R11 | Con correo `''`, si alguna fila de `cte` tiene `eMail1 = ''`, LAN inserta una fila con Correo `''` | `IsNullOrWhiteSpace` → `false` → no llama el SP | DIF | SCUM:76; LNB:74-88 |
-| 1.2-R12 | La validación del cliente no puede fallar aparte del insert: es una sola llamada | Un error o timeout de BP05 → `false` → no inserta; solo queda en sap.log. En los dos casos el DMZ dice `Correcto` | EQ-R | SCUM:91-96; BPM:278-281, :287-290; DCC:74; E-02:114-126 |
+| 1.2-R9 | El correo se compara con un SqlParameter: cualquier carácter vale | **Corregido el 2026-10-05 (T1.2-02, S3, sin E2E):** el valor (con `'` duplicada) se codifica con `Uri.EscapeDataString` antes de armar el filtro (SCUM:82-83), así que `+ & # %` viajan como `%2B %26 %23 %25` y el `$filter` llega entero a BP05; el wrapper BPM:252 no cambió. Antes se concatenaba sin codificar: `#` cortaba la query, `&` la partía y `%XX` se decodificaba → excepción → `false` → no insertaba | EQ-R (HECHO sin E2E) | LNB:77; LCUM:136; SCUM:82-83, :92-97; BPM:252, :257; CQ13 |
+| 1.2-R10 | `eMail1 = @Correo` bajo la collation de IntelisisTmp: sin distinguir mayúsculas y **sin contar espacios finales** (ANSI padding) | OData `Mail eq`, probablemente coincidencia exacta | PENDIENTE | LNB:77, :106; SCUM:83; EP:363 (la E2E usó la misma escritura) |
+| 1.2-R11 | Con correo `''`, si alguna fila de `cte` tiene `eMail1 = ''`, LAN inserta una fila con Correo `''` | `IsNullOrWhiteSpace` → `false` → no llama el SP. **Aceptado el 2026-10-05 (CQ15):** Magento siempre manda el correo que acaba de validar con Emailage, así que un correo vacío no llega a ServicioSAP | EQ-R (aceptada) | SCUM:77; LNB:74-88; EML:481; CQ15 |
+| 1.2-R12 | La validación del cliente no puede fallar aparte del insert: es una sola llamada | Un error o timeout de BP05 → `false` → no inserta; solo queda en sap.log. En los dos casos el DMZ dice `Correcto` | EQ-R | SCUM:92-97; BPM:278-281, :287-290; DCC:74; E-02:114-126 |
 | 1.2-R13 | Negra: no inserta si el correo ya está en Negra | Lo delega a `SpListaNBMagento`, cuyo cuerpo no es legible | PENDIENTE | LNB:79-83; T1.L-01 |
 | 1.2-R14 | Al insertar en Negra también borra el correo de Blanca | Delegado; cuerpo no legible | PENDIENTE | LNB:89-96; T1.L-01 |
 | 1.2-R15 | Blanca: solo inserta si el correo no está ni en Negra ni en Blanca | Delegado. EP:364/:395 no lo prueban | PENDIENTE | LNB:108-117; SCC:64-69; T1.L-01 |
 | 1.2-R16 | Columnas NumPedido, Nombre, Correo, Direccion, Cliente (= idMagento) y FechaRegistro | En SIGMavi, `IdMagento` en lugar de `Cliente` según el vault, sin DDL legible. El vault se contradice en el nombre de tabla (ODS:80 `VTASCLista*` contra el mensaje de `740669e`, `Lista*`) | PENDIENTE | LNB:87-88, :119-120; E-02:107; DEV3:317; T1.L-01 |
 | 1.2-R17 | Anchos del SP: Correo 50, Nombre 100, Direccion 100, NumCuenta 10 | Anchos de SIGMavi desconocidos | PENDIENTE | LNB:24-29; T1.L-01 |
 | 1.2-R18 | `result` es `''` y solo pasa a `'true'` si hay filas. Insertar no devuelve filas, así que el éxito es `''` | Igual | EQ | LCUM:123, :166-182; SCUM:19, :52-61, :70; EP:363, :386 |
-| 1.2-R19 | Excepción SQL → 200 sin contenido | El método la atrapa → `Ok("")` 200 con `""`. Por el DMZ es `Correcto` en los dos casos | EQ-R | LCC:46-50; SCUM:64-70; DCC:70-74; EML:494-497 |
+| 1.2-R19 | Excepción SQL → 200 sin contenido | **Desde el 2026-10-05 (T1.L-02 = A):** el método registra y relanza (SCUM:64-69); el catch del controlador responde `Ok()` → 200 sin contenido, como LAN. Por el DMZ es `Correcto` en los dos casos. Antes el método la atrapaba → `Ok("")` 200 con `""` | EQ (HECHO sin E2E) | LCC:46-50; SCUM:64-69; SCC:50-54; DCC:70-74; EML:494-497 |
 | 1.2-R20 | Contrato a Magento: 200 `Correcto`, salvo upstream 500 → 400 | El mismo envoltorio del DMZ | EQ | DCC:47-74; GUIA:369 |
 | 1.2-R21 | `[Authorize]`; el DMZ se autenticaba contra LAN | `[Authorize]`; el token sale de `login/auth` de SS. Un fallo de login se relanza → 500 | EQ-R | LCC:9; SCC:11; DCURL:61-90 |
 | 1.2-R22 | Las reglas R13-R15 actúan sobre las filas que ya existen en IntelisisTmp | Las tablas de SIGMavi están vacías en DEVMAVI a propósito; la carga de producción la hacen los DBA | N/A (prerrequisito, T1.L-04) | DEV3:495; GUIA §8.6 |
@@ -463,14 +476,14 @@ CQ1, CQ2, CQ3, CQ4, CQ5, CQ6, CQ7, CQ8, CQ9, CQ10 y CQ11 (§5).
 
 **Notas que no son reglas de paridad:**
 - `blackwhitelistAsync(tipo)` atiende 3 rutas con un flag de modo (SCC:46, :64, :86), algo que GUIA §1.4 y SKILL 28 prohíben. Pero es un port literal de LAN (LCUM:120), y ODS:87 migra las tres rutas en bloque. No se refactoriza sin aprobación (CQ19).
-- Código muerto que solo se reporta: `break;` después de un `return` (DCC:66; LCC:40), `Ok(e.ToString())` sin return (LCC:48) y el catch prácticamente inalcanzable de SCC:50-54 (lo único que puede lanzar fuera de un try es `ConfigurationManager`, SCUM:78).
+- Código muerto que solo se reporta: `break;` después de un `return` (DCC:66; LCC:40), `Ok(e.ToString())` sin return (LCC:48) y el catch de SCC:50-54, que hasta el 2026-10-05 era prácticamente inalcanzable (solo `ConfigurationManager`, SCUM:79) y desde T1.L-02 = A es la rama normal del error SQL (1.2-R19).
 
 #### 3.2.4 Contrato de respuesta
 
 - **LAN:** 200 `""` en el camino normal, se haya insertado o no; 200 sin contenido en excepción; 400 sin cuerpo con lista inválida (LCC:23-51).
-- **ServicioSAP:** 200 `""` en el camino normal y también cuando el BP no existe, BP05 falla o falla el SQL (SCUM:21-24, :64-70); 400 `Datos incompletos` / `Lista invalida`.
+- **ServicioSAP:** 200 `""` en el camino normal y también cuando el BP no existe o BP05 falla (SCUM:21-24); desde el 2026-10-05 (T1.L-02 = A) un error de SQL sube del método (SCUM:64-69) y el controlador responde 200 sin contenido (SCC:50-54), como LAN; 400 `Datos incompletos` / `Lista invalida`.
 - **Magento, por el DMZ, igual con los dos orígenes:** 200 `Correcto`; 400 por las validaciones del DMZ; 400 sin cuerpo si el upstream da 500; 500 si falla el login de `Curl` (DCURL:86-90). Magento solo lo registra en el log (EML:487-497).
-- **Veredicto:** el contrato está en paridad (confirma GUIA:369). Las diferencias están en los **efectos** (R9, R11, R13-R17, R23), no en la respuesta.
+- **Veredicto:** el contrato está en paridad (confirma GUIA:369). Las diferencias están en los **efectos** (R13-R17, R23; R9 y R11 se cerraron el 2026-10-05), no en la respuesta.
 
 #### 3.2.5 Tareas Fable
 
@@ -488,6 +501,7 @@ CQ1, CQ2, CQ3, CQ4, CQ5, CQ6, CQ7, CQ8, CQ9, CQ10 y CQ11 (§5).
 - **Primero la E2E:** un BP cuyo `Mail` lleve `+` (y `&` si existe) confirma que no se inserta.
 - **Luego, con aprobación,** codificar solo el valor en SCUM:81-82: `Uri.EscapeDataString` sobre el literal que ya tiene la comilla duplicada, antes de `GetFilterClientsAsync`. **No** se toca el wrapper compartido BPM:252, que también usan `ProspectoController.cs:49` y SBPC:143. Sin variables, parámetros ni llaves nuevas (§1.9b). Si el usuario pide commit, va separado de T1.H-01 (§1.8b).
 - **Criterio.** Antes del cambio, la E2E con `+`/`&` no inserta; después, inserta. Un correo normal sigue insertando. V1. Request y response documentados.
+- **Aplicado el 2026-10-05 (S3), por decisión del usuario sin la E2E previa (CQ13: "yes do it for the Special caracters + &# %"):** SCUM:83 `string filtro = $"{campo} eq '{Uri.EscapeDataString(valor)}'";`. Una línea; sin variables ni llaves nuevas; BPM:252 intacto. Para S6 ya no hay "antes/después": solo se comprueba que un correo con `+`, `&`, `#` o `%` inserta y que un correo normal sigue insertando. El log `[CUSTOMER ValidarClienteEnSap]` (SCUM:94-95) muestra el correo codificado dentro del filtro.
 
 **T1.2-03 · VERIFICACION → DECISION (CQ14) · Mayúsculas y espacios finales (R10)**
 - Sin código por ahora. Mandar un correo con otra escritura (MAYÚSCULAS) y otro con un espacio al final, y comparar con lo que haría LAN (collation de IntelisisTmp).
@@ -497,6 +511,7 @@ CQ1, CQ2, CQ3, CQ4, CQ5, CQ6, CQ7, CQ8, CQ9, CQ10 y CQ11 (§5).
 **T1.2-04 · DECISION (CQ15) · Correo vacío (R11)**
 - Recomendación: aceptar la desviación y documentarla, porque Magento siempre manda el correo que acaba de validar con Emailage (EML:481).
 - **Criterio.** Respuesta registrada en §5; R11 pasa a EQ-R (aceptada) o se reabre.
+- **Decidido el 2026-10-05 (CQ15):** aceptada ("Magento wont get to ServicioSAP if they dont have an email"). R11 → EQ-R. Sin código.
 
 Tareas compartidas de esta ruta: T1.L-01, T1.L-02 (en set no cambia lo que ve Magento), T1.L-04 y T1.H-01 (§3.8, §3.10).
 
@@ -528,6 +543,8 @@ CQ13, CQ14, CQ15, CQ16, CQ17 y CQ19 (§5).
 
 > [!note] Correcciones de la verificación ya aplicadas
 > F1.3-T1 (el `throw;`) deja de ser LISTO: es DECISION (T1.L-02) por el choque DU5/§1.9 contra §1.5 y por la decisión de opacidad del 2026-08-07. Su efecto real en set y delete está en T1.L-02. La evidencia de R11 se corrigió, y R11 pasa a prerrequisito de pase, como R22 de 1.2. C24 también está refutado en ejecución. Hay reglas nuevas R16-R18.
+>
+> **2026-10-05 (S3):** T1.L-02 = A aplicada (CQ12 "Option A"): `throw;` en SCUM:68. R12 pasa a EQ-R sin E2E: un error de BD ya da 500 en ServicioSAP y 400 en el DMZ, como LAN.
 
 #### 3.3.2 Proceso LAN paso a paso
 
@@ -560,7 +577,7 @@ CQ13, CQ14, CQ15, CQ16, CQ17 y CQ19 (§5).
 | 1.3-R9 | Tablas `VTASCListaNegra`/`Blanca` en IntelisisTmp | ListaNegra/ListaBlanca en SIGMavi (DU9) | EQ-R | LCONN:26; LNB:46, :62; SCUM:32-33; SQLH:72-91 |
 | 1.3-R10 | `WHERE Correo = @Correo` con NOLOCK, `varchar(50)` y la collation de IntelisisTmp | El cuerpo de `SpListaNBMagento` no está en el vault | PENDIENTE | LNB:23-25, :34-65; CML:61; T1.L-01 |
 | 1.3-R11 | La respuesta depende de los datos de producción | SIGMavi está vacío en DEVMAVI a propósito; la carga la hacen los DBA. El commit `a0f1017` todavía decía "decidir si se migran las listas"; DEV3:495 lo cerró el 12 de agosto | N/A (prerrequisito, T1.L-04) | EP:352, :375, :402, :1307; DEV3:495 |
-| 1.3-R12 | Un error de BD **no** se atrapa → 500 → DMZ 400 | Se atrapa, se registra y devuelve `""` → 200 `No esta en listas` (o `white` si solo falló la consulta de Negra) → DMZ `Ok`. **Un correo en lista negra pasa como limpio mientras SIGMavi está caído** | DIF | LCUM:162-164 (el único try está en :170-175); LCC:55-77; SCUM:64-70; SCC:66-76; DCURL:108-111; DCC:89-90; EP:323-330; `CustomersController/Post_GetCustomerList_Mapping.md`:37 |
+| 1.3-R12 | Un error de BD **no** se atrapa → 500 → DMZ 400 | **Corregido el 2026-10-05 (T1.L-02 = A, S3, sin E2E):** se registra y se relanza (SCUM:64-69); SCC:59-77 no tiene try → 500 → DMZ 400, como LAN. Antes se atrapaba y devolvía `""` → 200 `No esta en listas` (o `white` si solo falló la consulta de Negra) → DMZ `Ok`, y un correo en lista negra pasaba como limpio mientras SIGMavi estaba caído | EQ-R (HECHO sin E2E) | LCUM:162-164 (el único try está en :170-175); LCC:55-77; SCUM:64-69; SCC:59-77; DCURL:108-111; DCC:89-90; EP:323-330; `CustomersController/Post_GetCustomerList_Mapping.md`:37; CQ12 |
 | 1.3-R13 | 200 con una cadena JSON; el DMZ quita las comillas y la vuelve a envolver | Igual | EQ | LCC:76; SCC:76; DCC:88, :92 |
 | 1.3-R14 | Sin efectos | Igual; Consultar no pasa por la validación del BP | EQ | LNB:34-65; SCUM:21 |
 | 1.3-R15 | Sin log | Registra solo errores (`[CUSTOMER blackwhitelist ERROR]`) | N/A | SCUM:66-67 |
@@ -571,15 +588,15 @@ CQ13, CQ14, CQ15, CQ16, CQ17 y CQ19 (§5).
 #### 3.3.4 Contrato de respuesta
 
 - **LAN:** 200 con `"black"`, `"white"` o `"No esta en listas"`; cualquier excepción da 500. Por el DMZ: esas tres cadenas con 200, y una falla de BD como 400 vacío (DCC:89-90).
-- **ServicioSAP:** 200 con las mismas tres cadenas (SCC:68, :73, :76); 400 `{"Message":"Datos incompletos"}`, inalcanzable desde el DMZ; una falla de BD da 200 `No esta en listas`.
-- **Única diferencia de contrato:** 1.3-R12. El camino feliz es idéntico (EP:360-399).
+- **ServicioSAP:** 200 con las mismas tres cadenas (SCC:68, :73, :76); 400 `{"Message":"Datos incompletos"}`, inalcanzable desde el DMZ; una falla de BD da 500 desde el 2026-10-05 (T1.L-02 = A; antes daba 200 `No esta en listas`).
+- **Sin diferencia de contrato desde el 2026-10-05:** 1.3-R12 corregida, pendiente de la E2E de S6. El camino feliz es idéntico (EP:360-399).
 
 #### 3.3.5 Tareas Fable
 
 **T1.3-01 · VERIFICACION · E2E por el DMZ**
 - Sin código. GET con body `{"email":…}` por el **DMZ** (las corridas del 10 de agosto fueron directas a ServicioSAP, EP:360-399).
-- Casos: los tres valores de respuesta, email null (el DMZ da 400 `Datos incompletos`) y, después de T1.L-02, una falla de BD.
-- **Criterio.** Request y response exactos anotados. Status y cuerpo iguales a LAN por el DMZ: 200 con las tres cadenas, 400 con email null y 400 con falla de BD (si T1.L-02 = A).
+- Casos: los tres valores de respuesta, email null (el DMZ da 400 `Datos incompletos`) y una falla de BD (T1.L-02 = A ya aplicada el 2026-10-05).
+- **Criterio.** Request y response exactos anotados. Status y cuerpo iguales a LAN por el DMZ: 200 con las tres cadenas, 400 con email null y, con falla de BD, 500 en ServicioSAP (con `[CUSTOMER blackwhitelist ERROR]` en sap.log) y 400 vacío en el DMZ (T1.L-02 = A aplicada el 2026-10-05).
 
 Tareas compartidas: **T1.L-02** (la que cierra R12), T1.L-01 (R10, R18), T1.L-04 (R11, R18) y T1.H-01.
 
@@ -611,6 +628,8 @@ CQ12, CQ16, CQ17 y CQ18 (§5).
 
 > [!note] Correcciones de la verificación ya aplicadas
 > El DIF de R12 solo lo comparten get y delete. **set ya está en paridad** en la rama de error, porque en LAN el catch del controlador descarta el `Ok(e.ToString())` y devuelve `Ok()`. La corrida del 7 de agosto solo probó get: la DIF de delete descansa en el código. Logger puede lanzar desde el catch (SLOG:26-31). R4 es EQ solo en C#; su efecto en BD queda PENDIENTE. Se agregan R17 y R18 (EQ) y el caso de conexión null queda dentro de R12.
+>
+> **2026-10-05 (S3):** T1.L-02 = A aplicada (SCUM:68). R12 → EQ-R sin E2E: un error de BD da 500 → DMZ 400, como LAN.
 
 #### 3.4.2 Proceso LAN paso a paso
 
@@ -640,7 +659,7 @@ CQ12, CQ16, CQ17 y CQ18 (§5).
 | 1.4-R9 | Coincidencia por `varchar(50)` y la collation de IntelisisTmp | Anchos y collation de SIGMavi desconocidos | PENDIENTE | LNB:24, :69; LCUM:132; SCUM:37; T1.L-01 |
 | 1.4-R10 | `result` = `""` (sin filas) | Igual | EQ | LCUM:123, :166-177; SCUM:19, :54-60; EP:387, :461-465 |
 | 1.4-R11 | Éxito: 200 `""`, haya borrado o no | Igual | EQ | LCC:86; SCC:87; GUIA:369 |
-| 1.4-R12 | Error de BD, de conexión o SP inexistente → 500 → DMZ 400 | Todo se atrapa → 200 `""` → DMZ `Correcto`. También si `Conexion.Data.getconexion` devuelve null: SQLH:79-91 devuelve null y `ExecuteReaderAsync` lanza. **Excepción:** si `Logger.SAP` lanza desde el catch (SLOG:26-31, `CreateDirectory` fuera de try), sale 500 → 400 por accidente | DIF | LCUM:128, :162-164; LCC:81-87; SCUM:30-33, :64-70; SQLH:79-97; SLOG:26-31; DCC:107-110 |
+| 1.4-R12 | Error de BD, de conexión o SP inexistente → 500 → DMZ 400 | **Corregido el 2026-10-05 (T1.L-02 = A, S3, sin E2E):** el catch registra y relanza (SCUM:64-69); SCC:81-88 no tiene try → 500 → DMZ 400, como LAN. También si `Conexion.Data.getconexion` devuelve null (SQLH:79-91) y `ExecuteReaderAsync` lanza. Si `Logger.SAP` lanza desde el catch (SLOG:26-31), el resultado es el mismo 500 → 400 (T1.5-04 ya no cambia el status aquí). Antes todo se atrapaba → 200 `""` → DMZ `Correcto` | EQ-R (HECHO sin E2E) | LCUM:128, :162-164; LCC:81-87; SCUM:30-33, :64-69; SCC:81-88; SQLH:79-97; SLOG:26-31; DCC:107-110; CQ12 |
 | 1.4-R13 | El DMZ siempre responde `Correcto`, salvo un 500 | El mismo DMZ con `PostSAP`. Un 401 o 404 también terminan en `Correcto`: ya pasaba antes | EQ | DCC:106-110 |
 | 1.4-R14 | No informa las filas afectadas | Igual | EQ | LCUM:164; SCUM:52; E-04:45 |
 | 1.4-R15 | Sin log | Registra errores | N/A | SCUM:66-67 |
@@ -651,10 +670,10 @@ CQ12, CQ16, CQ17 y CQ18 (§5).
 #### 3.4.4 Contrato de respuesta
 
 - **Magento, por el DMZ, igual con los dos orígenes:** éxito → 200 `Correcto`, exista la fila o no (DCC:110). Sin email → 400 `Datos incompletos` (DCC:102-103). Body null → 400 vacío (DCC:99-100). Upstream con `Internal Server Error` → 400 vacío (DCC:107-108).
-- **Los orígenes solo difieren en el error:**
+- **Los orígenes ya no difieren en el error (desde el 2026-10-05, T1.L-02 = A):**
   - LAN: 200 `""` en el éxito (LCC:86) y 500 en error.
-  - ServicioSAP: 200 `""` en el éxito **y también en error de BD** (SCUM:64-70).
-- Por lo tanto, una falla de BD que antes le llegaba a Magento como 400 ahora le llega como 200 `Correcto` (1.4-R12).
+  - ServicioSAP: 200 `""` en el éxito y 500 en error de BD (SCUM:64-69 relanza; SCC:81-88 sin try). Antes del cambio era 200 `""` también en error.
+- Por lo tanto, una falla de BD le llega a Magento como 400, igual que con LAN (1.4-R12; pendiente la E2E de T1.4-01 f).
 
 #### 3.4.5 Tareas Fable
 
@@ -665,7 +684,7 @@ CQ12, CQ16, CQ17 y CQ18 (§5).
   - (c) correo en ninguna lista → `Correcto`;
   - (d) body sin email → 400 `Datos incompletos`;
   - (e) email `""` → `Correcto` (se cuentan antes y después las filas con Correo vacío);
-  - (f) después de T1.L-02, si se aplica: una falla de BD forzada da 400 en el DMZ.
+  - (f) T1.L-02 = A aplicada el 2026-10-05: una falla de BD forzada da 500 en ServicioSAP (con `[CUSTOMER blackwhitelist ERROR]` en sap.log) y 400 vacío en el DMZ.
 - **Criterio.** Cada caso con su request y response, sobre código igual o posterior a `e20033b`. En los casos a-e, sap.log sin errores `[CUSTOMER …]`.
 
 Tareas compartidas: **T1.L-02**, T1.L-01 (R4, R8, R9 y triggers), T1.L-04 (R16) y T1.H-01.
@@ -722,13 +741,13 @@ CQ12, CQ16, CQ17 y CQ18 (§5).
 | 1.5-R1 | Validación → `{400, 'Petición incorrecta, verifica los campos.'}` | La misma condición y el mismo literal | EQ | LCUM:196-201; CRM:49-54; EP:880-888 |
 | 1.5-R2 | Carpeta local fija, se crea si falta | Sale de `CASH_REPORT_LOCAL_PATH`, con respaldo constante; `CreateDirectory` | EQ-R | LCUM:205-206; CRM:19, :24-31, :58; SWC:69; E-13:106-108 |
 | 1.5-R3 | `FromBase64String` | Igual | EQ | LCUM:207; CRM:60 |
-| 1.5-R4 | `Path.Combine` sin sanear | Igual (heredado, §1.9) | EQ | LCUM:208; CRM:61; GUIA:526 |
+| 1.5-R4 | `Path.Combine` sin sanear | Igual (heredado, §1.9). **Decisión del 2026-10-05 (CQ20: "if this works, dont move"):** no se sanea; T1.5-03 cerrada sin código y el riesgo sigue como deuda en GUIA §8.1 | EQ | LCUM:208; CRM:61; GUIA:526; CQ20 |
 | 1.5-R5 | `File.WriteAllBytes`, que sobrescribe | `FileStream(FileMode.Create)` + `WriteAsync` | EQ-R | LCUM:209; CRM:64-68 |
 | 1.5-R6 | `LogonUser` tipo 2 / proveedor 0 con la cuenta de LAN | Copia literal, con llaves del Web.config (credenciales iguales por hash) | EQ | LCUM:211-212; LPIM:421-435; IMP:22-36; CRM:70-73; SWC:83-85 |
 | 1.5-R7 | `File.Copy(…, <share> + fileName, true)` por concatenación | `File.Copy(…, Path.Combine(SharePath, fileName), true)` con el mismo destino. Solo difieren con un `fileName` con raíz (`\\x.csv`, `/x.csv`): LAN puede copiar a `STAGE\x.csv` y ServicioSAP intentaría copiar el archivo sobre sí mismo. Sin impacto práctico: Magento siempre manda `CashCustomerReport_<timestamp>.csv` | EQ-R | LCUM:208-214; CRM:33-40, :61, :75; SWC:70; RDP:71 |
 | 1.5-R8 | Éxito `{200, 'Se ha generado la descarga del Reporte.'}` | El mismo literal (la DLL lo tiene con acentos correctos) | EQ | LCUM:217; CRM:78 |
-| 1.5-R9 | Excepción → `{500, 'Error al crear el reporte: ' + ex.Message}`, sin log, y el catch **no puede lanzar** | La misma respuesta más `Logger.SAP` **dentro del catch**. SLOG hace `Directory.CreateDirectory(<BaseDirectory>\Logs)` fuera de try (agregado en `74d7c2f`). Si la carpeta no existe y el app pool no puede crearla, la excepción sale del catch → HTTP 500 real → DMZ 400 sin cuerpo, en lugar de 200 `{status:500}`. La carpeta `Logs` no está en git ni en CSPROJ, así que una publicación limpia no la trae | EQ-R (con riesgo, T1.5-04) | LCUM:219-222; CRM:80-85, :82-83; SLOG:26-31; DCURL:130-138; DCC:121-122; `.gitignore`:68 |
-| 1.5-R10 | `Json(ApiResponse)`: siempre HTTP 200 | `Json(await …)`: HTTP 200 **mientras `Logger.SAP` no lance** (el controlador no tiene try, SCC:114-118) | EQ-R | LCC:113; SCC:117; SLOG:28-31 |
+| 1.5-R9 | Excepción → `{500, 'Error al crear el reporte: ' + ex.Message}`, sin log, y el catch **no puede lanzar** | La misma respuesta más `Logger.SAP` **dentro del catch**. SLOG hace `Directory.CreateDirectory(<BaseDirectory>\Logs)` fuera de try (agregado en `74d7c2f`). Si la carpeta no existe y el app pool no puede crearla, la excepción sale del catch → HTTP 500 real → DMZ 400 sin cuerpo, en lugar de 200 `{status:500}`. La carpeta `Logs` no está en git ni en CSPROJ, así que una publicación limpia no la trae. **CQ21 (2026-10-05):** la respuesta del usuario describe las dos rutas de SLOG (servidor SLOG:11, local SLOG:26-27) sin elegir A ni B; sin código en S3; pendiente confirmar A | EQ-R (con riesgo, T1.5-04; CQ21 pendiente de confirmar) | LCUM:219-222; CRM:80-85, :82-83; SLOG:26-31; DCURL:130-138; DCC:121-122; `.gitignore`:68 |
+| 1.5-R10 | `Json(ApiResponse)`: siempre HTTP 200 | `Json(await …)`: HTTP 200 **mientras `Logger.SAP` no lance** (el controlador no tiene try, SCC:114-118). Sin cambio en S3: CQ21 pendiente de confirmar | EQ-R | LCC:113; SCC:117; SLOG:28-31 |
 | 1.5-R11 | `[Authorize]`: sin token → 401 | Igual | EQ | LCC:9; SCC:11; EP:888 |
 | 1.5-R12 | Límite de 4 MB | 50 MB: acepta todo lo que LAN aceptaba. El DMZ sigue con el límite por defecto | EQ-R | LAN Web.config:54; SWC:93, :101; DMZ Web.config:43 |
 | 1.5-R13 | El archivo local se queda aunque falle la copia | El mismo orden, sin limpieza | EQ | LCUM:209, :214; CRM:64-76; E-13:142-143 |
@@ -753,7 +772,7 @@ CQ12, CQ16, CQ17 y CQ18 (§5).
   - sin token.
 - Hay que rehacer la evidencia: `Tests\ServicioSap.Ola6.http` está en el `.gitignore` y no existe.
 - **Comprobaciones agregadas:**
-  - (a) el Base64 inválido por el DMZ da HTTP 200 con `{status: 500, 'Error al crear el reporte: …'}`, no HTTP 400: así se detecta el riesgo de SLOG;
+  - (a) el Base64 inválido por el DMZ da HTTP 200 con `{status: 500, 'Error al crear el reporte: …'}`, no HTTP 400: así se detecta el riesgo de SLOG (valor esperado sin cambio tras S3: T1.5-04 sin código, CQ21 pendiente de confirmar A);
   - (b) `<sitio>\Logs` existe en el sitio de ServicioSAP de QA/PROD o el app pool puede crearlo;
   - (c) la cuenta impersonada puede leer `CASH_REPORT_LOCAL_PATH` (entorno, DU1);
   - (d) el DMZ desplegado incluye `e403065` (E-13:85-86 lo daba "sin desplegar" al 31 de agosto).
@@ -770,12 +789,14 @@ CQ12, CQ16, CQ17 y CQ18 (§5).
 - Solo con aprobación: `Path.GetFileName(request.fileName)` antes de los dos `Path.Combine` (CRM:61, :75) y, si se aprueba también, el mismo `status 400` cuando el nombre saneado difiera o quede vacío. Es un desvío de LAN (LCUM:208, :214), así que §1.9 exige aprobación explícita.
 - **Recomendación: sanear.** No cambia el tráfico legítimo (RDP:71) y cierra un riesgo que la GUIA ya tiene registrado.
 - **Criterio.** Con aprobación: los nombres legítimos se comportan igual y los que llevan `..\` o raíz ya no escriben fuera. Sin aprobación: sin cambio, y sigue como deuda en GUIA §8.1.
+- **Decidido el 2026-10-05 (CQ20):** "why you need to change this? if this works, dont move". Sin aprobación → sin cambio: CRM:61 y :75 quedan como LAN (LCUM:208, :214); el riesgo sigue como deuda en GUIA §8.1. Tarea cerrada por decisión.
 
 **T1.5-04 · DECISION (CQ21) · `Logger.SAP` puede romper el contrato de error (R9, R10). Transversal: es el B8 de CREDITO §6.7**
 - **Opción A (sin código, recomendada ahora):** el despliegue crea `<sitio>\Logs` con permiso de escritura para el app pool de ServicioSAP. Se comprueba en T1.5-01 (a) y (b).
 - **Opción B (código):** mover SLOG:26-32 dentro del try/catch existente de SLOG:34-41, como pide el comentario "Silencioso" de SLOG:23. Toca un helper compartido (~95 llamadores de `Logger.SAP`), así que necesita la aprobación del usuario o del dueño de `74d7c2f`, y va sola.
 - También afecta la rama de error de las listas (1.4-R12).
 - **Criterio.** Tras el cambio o el despliegue, el Base64 inválido da HTTP 200 `{status: 500}` por el DMZ.
+- **CQ21 (2026-10-05):** "this is because the route its for localhost and the other its for the server,". La respuesta describe las dos rutas de SLOG (`C:\inetpub\wwwroot\log\sap.log` para el servidor, SLOG:11, dentro de try; `<sitio>\Logs\sap.log` para pruebas locales, SLOG:26-32, con `CreateDirectory` fuera de try) sin elegir A ni B. Sin código en S3: B toca el helper compartido y exige aprobación explícita. **Pendiente:** confirmar A (sin código: el despliegue crea `<sitio>\Logs` con permiso de escritura para el app pool).
 
 Higiene de esta ruta: CRM:67 en T1.H-01. Corrección del CSV fila 36: T1.0-DOC.
 
@@ -833,7 +854,7 @@ CQ20, CQ21 y CQ22 (§5).
 | 1.6-R11 | Desescapado Replace/Replace/Trim | Idéntico en `Desescapar`, más una guarda de null inalcanzable | EQ | LMAG:314; MAM:40-45 |
 | 1.6-R12 | Éxito: 200 con una cadena JSON que contiene el arreglo, p. ej. `"[]"` | Igual. El caso de correo existente nunca se probó | EQ | LCC:95; SCC:97; EP:863; E-11:116-117 |
 | 1.6-R13 | Error de validación de Magento: 200 con el JSON de error. El desescapado convierte `\"%fieldName\"` en comillas dobles, así que el cuerpo **queda como JSON inválido** | La misma cadena de desescapado | EQ | DMAG:40-45; DMC:117; LMAG:314; MAM:44; EP:865 |
-| 1.6-R14 | Falla la llamada al DMZ tras el login (no 2xx, red, timeout): 200 con `e.Message` | Lanza, reintenta 3 veces y lanza `DMZ falló tras 3 intentos…`; sin try en el controlador → **500** | DIF | LCURL:105-108; LMAG:314; LCC:95; SCURL:90-92, :95-104; SCC:94-98 |
+| 1.6-R14 | Falla la llamada al DMZ tras el login (no 2xx, red, timeout): 200 con `e.Message` | Lanza, reintenta 3 veces y lanza `DMZ falló tras 3 intentos…`; sin try en el controlador → **500** | DIF (CQ24 sin respuesta el 2026-10-05: sin cambio en S3) | LCURL:105-108; LMAG:314; LCC:95; SCURL:90-92, :95-104; SCC:94-98 |
 | 1.6-R15 | Falla el login al DMZ: constructor sin guarda → 500 inmediato con el mensaje genérico | 3 intentos (con 2+4 s de espera) → 500. Con `customErrors Off` y `httpErrors Detailed` el 500 trae el detalle de la excepción y el stack; LAN, sin `customErrors`, trae el genérico. Es configuración de Dev (DU1) | EQ-R | LCURL:30-38; SCURL:57-61, :75, :81, :99-104; SWC:94, :97 |
 | 1.6-R16 | Timeout de 9999999 ms | 30 s por petición. Si Magento tarda más de 30 s (el DMZ no tiene timeout hacia Magento, DMAG:33), LAN devuelve 200 con datos y ServicioSAP 500 tras unos 96 s. Solo hay una muestra de 1.6 s | DIF | LCURL:35, :99; SCURL:19, :43, :75, :99-100, :104; E-11:112 |
 | 1.6-R17 | Sin reintentos | 3 intentos (§1.9a) | DIF | SCURL:19, :75, :99-100 |
@@ -867,7 +888,7 @@ CQ20, CQ21 y CQ22 (§5).
   - (5) sin token;
   - (6) token malformado (500 en los dos);
   - (7) cliente con acentos en el nombre;
-  - (8) falla del DMZ después del login, por ejemplo deteniendo la app del DMZ tras autenticar. Es la rama de R14: LAN 200 con mensaje y ServicioSAP 500.
+  - (8) falla del DMZ después del login, por ejemplo deteniendo la app del DMZ tras autenticar. Es la rama de R14: LAN 200 con mensaje y ServicioSAP 500. Valor esperado sin cambio tras S3 (T1.C-01 no aplicada; CQ24 pendiente).
 - **Criterio.** Status y cuerpo idénticos en todos los casos menos el 8, que registra la diferencia. Evidencia escrita: el `.http` de la Ola 6 no existe. Solo lectura contra Magento, con visto bueno.
 
 Tareas compartidas: **T1.C-01** (la decisión de R14, R16 y R17), **T1.C-02** (consumidor; cierra R2) y T1.H-01 (MAM:24).
@@ -924,7 +945,7 @@ CQ23, CQ24 y CQ25 (§5).
 | 1.7-R8 | Un login por request, `USER_DMZ` crudo, token sin Bearer | Un login por intento, `USER_DMZ` re-serializado, Bearer. El DMZ acepta las dos formas | EQ-R | LCURL:21-22, :30-38, :98; SCURL:48-65, :81-82; DTVH:28 |
 | 1.7-R9 | Desescapado | Idéntico | EQ | LMAG:324; MAM:40-45 |
 | 1.7-R10 | 200 `"true"`; idCliente inexistente → 200 con `{"message":"Customer does not exist."}` como cadena | Igual | EQ | LCC:104; SCC:107; CMA:58-65; E-12:87-92; CML:118 |
-| 1.7-R11 | Falla la llamada al DMZ después del login → 200 con el texto de la WebException | 3 intentos → 500 (sin filtro de excepciones). Solo aparece cuando falla el propio DMZ (401, 500 al escribir su log, caído o timeout), porque el DMZ da 200 ante cualquier respuesta de Magento. También choca con GUIA §1.5 | DIF | LCURL:105-108; LMAG:324; LCC:104; SCURL:75-104; SS App_Start/WebApiConfig.cs:11-23; DMAG:38-45; DMZ Helper/Logger.cs:24-25 |
+| 1.7-R11 | Falla la llamada al DMZ después del login → 200 con el texto de la WebException | 3 intentos → 500 (sin filtro de excepciones). Solo aparece cuando falla el propio DMZ (401, 500 al escribir su log, caído o timeout), porque el DMZ da 200 ante cualquier respuesta de Magento. También choca con GUIA §1.5 | DIF (CQ24 sin respuesta el 2026-10-05: sin cambio en S3) | LCURL:105-108; LMAG:324; LCC:104; SCURL:75-104; SS App_Start/WebApiConfig.cs:11-23; DMAG:38-45; DMZ Helper/Logger.cs:24-25 |
 | 1.7-R12 | Login al DMZ falla o el DMZ no responde → 500. No es inmediato: espera el timeout de TCP, o hasta 9999999 ms si el DMZ se cuelga | 3 intentos → 500, con `ExceptionMessage` y `StackTrace` (customErrors Off, DU1) | EQ-R | LCURL:30-38; SCURL:57-61, :81, :104; SWC:94 |
 | 1.7-R13 | Timeout de 9999999 ms, un intento | 30 s por petición (login y POST), hasta 3 intentos: peor caso ≈ 3 × (30 + 30) + 2 + 4 ≈ 186 s. Si Magento tarda más de 30 s en guardar, ServicioSAP reenvía la escritura (es idempotente) y responde 500 aunque Magento haya guardado | DIF | LCURL:35, :99; SCURL:19, :43, :55, :75-101, :85; DMAG:33; CMA:61-65 |
 | 1.7-R14 | Sin log en LAN; el DMZ registra los no-OK de Magento | Solo `Console.WriteLine` | EQ-R | LMAG:319-326; SCURL:88, :98; DMAG:40-43 |
@@ -1002,6 +1023,7 @@ CQ23, CQ24, CQ25 y CQ26 (§5).
   - Con SIGMavi inalcanzable o el SP renombrado en una copia de dev: get y delete dan 500 en ServicioSAP y 400 en el DMZ, y el error sigue en sap.log.
   - set da 200 sin contenido en ServicioSAP y `Correcto` en el DMZ.
   - Commit propio si se pide.
+- **Aplicado el 2026-10-05 (S3), opción A (CQ12 "Option A"):** SCUM:68 `throw;` después de `Logger.SAP` (SCUM:66-67). Una línea; sin E2E (la hace el usuario en S6); compila el usuario. Efecto: 1.3-R12 y 1.4-R12 → EQ-R, 1.2-R19 → EQ. Las citas SCUM a partir de :69 de este documento quedan corridas +1 (`ValidarClienteEnSapAsync` SCUM:75-98; filtro SCUM:82-83; su catch SCUM:92-97).
 
 **T1.L-04 · PRERREQUISITO (CQ17) · Carga de producción de las listas en SIGMavi**
 - Sin código y sin bloquear el cierre del paquete (DEV3:495; GUIA §8.6).
@@ -1021,6 +1043,7 @@ CQ23, CQ24, CQ25 y CQ26 (§5).
 - **Opción B2:** distinguir el fallo del login del fallo de datos cambiando el `Curl` compartido (H-03, que también usan MagentoCatalogMethods, MagentoOrderMethods y OrderStatusMethods). Es un miembro nuevo: aprobación del usuario (§1.9b).
 - **Rechazada:** comparar por el prefijo `DMZ token HTTP` (SCURL:60). Es frágil y no ve los errores de red del login.
 - **Criterio.** La decisión queda registrada en §5. Con B1 o B2, una E2E con el DMZ inalcanzable da el resultado acordado, el camino feliz no cambia y V1 queda en verde.
+- **2026-10-05 (S3):** CQ24 sin respuesta (el usuario pidió más explicación). No se aplicó ninguna opción; MAM y SCURL sin cambio por esta tarea; sigue DECISION.
 
 **T1.C-02 · BLOQUEADO_EQUIPO (CQ23) · Consumidor de las rutas LAN-only y su corte**
 - Revisar los logs IIS de LAN buscando `POST /customer/getCuenta`, `/customer/setCuenta` y `/login/authenticate` (IP, user-agent y fechas).
@@ -1084,14 +1107,17 @@ CQ23, CQ24, CQ25 y CQ26 (§5).
 
 **Reglas de sesión.** Una sesión = una S; nunca el paquete entero (PLAN_FABLE, "Para qué existe este documento"). Cada sesión termina actualizando §1.4 (estado y fecha), las filas de §3 que cambian y la columna "Respuesta" de §5. Si se alarga, termina la tarea en curso, actualiza el tablero, reporta y sigue en una sesión nueva con el mismo prompt.
 
-**Abrir la sesión.** En la app de escritorio de Claude, abrir **Claude Code**, crear una sesión nueva con carpeta de trabajo `C:\BackEndEcommerce` (así se cargan las reglas de memoria: DU1, DU2, Marst/Gender, etc.), elegir **Fable 5.1** con esfuerzo **xhigh** (o High si se prefieren turnos cortos) y dejar el modo de permisos que pide confirmación antes de editar y ejecutar.
+**Abrir la sesión.** En la app de escritorio de Claude, abrir **Claude Code**, crear una sesión nueva con carpeta de trabajo `C:\BackEndEcommerce` (una carpeta local: la app no acepta `\\172.16.214.58\sap` como carpeta de trabajo, pero la sesión lee y escribe el share con rutas completas. Las reglas no vienen de memoria: están en PLAN_FABLE_POR_CONTROLADOR.md, "Reglas vigentes de las sesiones Fable — 2026-10-05"), elegir **Fable 5.1** con esfuerzo **xhigh** (o High si se prefieren turnos cortos) y dejar el modo de permisos que pide confirmación antes de editar y ejecutar.
+
+> [!important] **Reglas vigentes 2026-10-05** (PLAN_FABLE_POR_CONTROLADOR.md, "Reglas vigentes de las sesiones Fable"): prevalecen sobre los prompts de abajo. Código actual de `SpExportaEcommerce` sin commit fijo; Fable no compila (lo hace el usuario), no hace commit y no prepara ni corre pruebas; solo edita Business Rules Ecommerce y el tablero de esta spec; T1.1-02 quedó en DECISION: `Fiscalregimen` sigue vacío hasta que confirme el dueño fiscal (D-14 reabierta); el filtro `ZidMagento` va sin comillas (D-15).
 
 ### 4.1 S1 · Marcos · CORREGIR (LISTO) `setCustomer`
 
-Tareas: T1.1-01 y T1.1-02, luego V1. Prepara el paso 0 de T1.1-09 para que lo corra el usuario.
+Tareas: T1.1-01 y T1.1-02 (FiscalRegimen `605` como LAN, decisión D-14 del 2026-10-05). Sin compilación ni pruebas de Fable (reglas vigentes 2 y 6).
 
 ```text
 Esta sesión es S1 del paquete 1 (CustomersController), desarrollador Marcos, y solo S1.
+Antes de todo: aplica las "Reglas vigentes de las sesiones Fable (2026-10-05)" de PLAN_FABLE_POR_CONTROLADOR.md; prevalecen sobre este prompt.
 
 Lee completos, en este orden:
 1. \\172.16.214.58\sap\.agents\skills\lan-sap-migration\SKILL.md
@@ -1099,52 +1125,53 @@ Lee completos, en este orden:
 3. \\172.16.214.58\sap\.agents\skills\lan-sap-migration\MappingMetods\PLAN_FABLE_CONTROLADORES\01_CustomersController.md §0, §1.4, §3.1 completo y §4.1
 4. \\172.16.214.58\sap\.agents\skills\lan-sap-migration\MappingMetods\Business Rules Ecommerce.md: la sección "Cómo mantener este documento" y el bloque "POST /partner/client"
 
-Objetivo: aplicar T1.1-01 y T1.1-02 exactamente como están en §3.1.5, compilar (V1 de §0.5) y dejar listo el paso 0 de T1.1-09.
+Objetivo: aplicar T1.1-01 y T1.1-02 exactamente como están en §3.1.5, con el código sin errores de compilación (lo compila el usuario).
 
 Reglas:
-- Primero verifica el estado: git status de ServicioSAP (rama SpExportaEcommerce, HEAD 2cf425f, solo los 4 archivos de crédito modificados) y que SBPC:48 dice "return Ok(result);" y BPM:578 dice "Fiscalregimen = \"\",". Si algo no cuadra, detente y repórtame.
+- Primero verifica el estado: el código actual de la rama SpExportaEcommerce, sin buscar un commit fijo (si SBPC o BPM tienen cambios sin commit, detente y repórtalo), y que SBPC:48 dice "return Ok(result);" y BPM:578 dice "Fiscalregimen = \"\",". Si algo no cuadra, detente y repórtame.
 - Replicar, no mejorar (GUIA §1.9): ningún miembro, variable, parámetro ni constante que la tarea no nombre. La guarda de Partner vacío NO va en esta sesión (es T1.1-01b, DECISION).
 - DU2: no mapees cuentas C…. DU1: no marques credenciales ni URLs de Dev y nunca imprimas valores del Web.config.
 - No toques el DMZ, ni PATCH partner/client, ni ninguna tarea DECISION.
 - Después de cada Edit: restaura CRLF conservando el BOM (BPM tiene BOM, SBPC no) y comprueba git ls-files --eol = w/crlf. git siempre con -c "safe.directory=%(prefix)///172.16.214.58/SAP/ServicioSAP".
-- Chequeo rápido tras cada tarea y MSBuild al final, con OutDir e IntermediateOutputPath fuera del share.
-- No hagas commit. No ejecutes SQL, no llames endpoints, no crees BP: prepara los requests y yo los corro.
+- No compiles ni copies el proyecto: deja el código sin errores; lo compila el usuario en Visual Studio.
+- No hagas commit. No ejecutes SQL, no llames endpoints, no crees BP. No prepares pruebas ni requests de prueba: las hace el usuario.
 - El código del share manda sobre los documentos.
 
 Al terminar:
 1. Actualiza en 01_CustomersController.md el tablero §1.4 (T1.1-01 y T1.1-02 → HECHO con fecha) y las filas 1.1-R8 y 1.1-R20 de §3.1.3 (estado "HECHO sin E2E"). El .md queda sin BOM y con CRLF.
-1b. Actualiza en Business Rules Ecommerce.md el bloque "POST /partner/client" (respuesta: el número de BP en lugar del Client completo) y sus citas archivo:línea, según "Cómo mantener este documento" (decisión X-1 del 2026-10-02). Sin BOM y con CRLF.
-2. Dame, listos para pegar, los dos GET del paso 0 de T1.1-09 (partner/client/filter con ZidMagento y con Mail, con marcadores <<…>>) y el request de E2E de T1.1-01 por el DMZ, con el valor esperado.
-3. Repórtame git status, git diff --stat, el git diff de SBPC y BPM, la salida de V1 y git ls-files --eol.
+1b. Actualiza en Business Rules Ecommerce.md el bloque "POST /partner/client" y su repetición en "Pendientes globales" (D-16 del 2026-10-05) (respuesta: el número de BP en lugar del Client completo) y sus citas archivo:línea, según "Cómo mantener este documento" (decisión X-1 del 2026-10-02). Sin BOM y con CRLF.
+2. Dime qué cambiaste (archivo:línea) y qué queda pendiente.
+3. Repórtame git status, git diff --stat, el git diff de SBPC y BPM y git ls-files --eol.
 ```
 
 ### 4.2 S2 · Diego · CORREGIR (LISTO) higiene + kits de prueba
 
-Tareas: T1.H-01, luego V1. Prepara los kits de T1.2-01, T1.2-02 (solo la parte E2E), T1.2-03, T1.3-01, T1.4-01, T1.5-01, T1.5-02, T1.6-01 y T1.7-01.
+Tareas: T1.H-01 (solo .ConfigureAwait(false)). Sin kits de prueba: las pruebas las hace el usuario (D-17 del 2026-10-05).
 
 ```text
 Esta sesión es S2 del paquete 1 (CustomersController), desarrollador Diego, y solo S2.
+Antes de todo: aplica las "Reglas vigentes de las sesiones Fable (2026-10-05)" de PLAN_FABLE_POR_CONTROLADOR.md; prevalecen sobre este prompt.
 
 Lee completos, en este orden:
 1. \\172.16.214.58\sap\.agents\skills\lan-sap-migration\SKILL.md
 2. \\172.16.214.58\sap\.agents\skills\lan-sap-migration\MappingMetods\GUIA_MIGRACION_FABLE.md §0-§2, §1.6, §1.9 y §9b
 3. \\172.16.214.58\sap\.agents\skills\lan-sap-migration\MappingMetods\PLAN_FABLE_CONTROLADORES\01_CustomersController.md §0, §1.4, §3.2 a §3.10 y §4.2
 
-Objetivo: aplicar T1.H-01 (§3.10) exactamente, compilar (V1 de §0.5) y preparar los kits de prueba de las tareas VERIFICACION de Diego.
+Objetivo: aplicar T1.H-01 (§3.10) exactamente, con el código sin errores de compilación (lo compila el usuario).
 
 Reglas:
-- Verifica primero: git status de ServicioSAP (SpExportaEcommerce, HEAD 2cf425f, solo los 4 archivos de crédito) y que las líneas citadas en T1.H-01 (SCUM:21, :33, :52, :56, :88; CRM:67; MAM:24, :34) siguen siendo esos await. Si no cuadra, detente.
+- Verifica primero: en el código actual de la rama SpExportaEcommerce, sin buscar un commit fijo, que las líneas citadas en T1.H-01 (SCUM:21, :33, :52, :56, :88; CRM:67; MAM:24, :34) siguen siendo esos await. Si no cuadra, detente.
 - Solo .ConfigureAwait(false). Nada de throw;, codificación de URL, Path.GetFileName ni cambios en Logger o Curl: son DECISION (T1.L-02, T1.2-02, T1.5-03, T1.5-04, T1.C-01).
 - Después de cada Edit: CRLF conservando el BOM (SCUM, CRM y MAM no tienen BOM) y git ls-files --eol = w/crlf; git con -c "safe.directory=%(prefix)///172.16.214.58/SAP/ServicioSAP".
-- Chequeo rápido y MSBuild al final, fuera de bin\ y obj\ del share. Sin commit.
+- No compiles (lo hace el usuario en Visual Studio). Sin commit.
 - No ejecutes SQL ni endpoints, ni escribas en SIGMavi, Magento o el share. Solo preparas.
 - En los kits, solo marcadores (<<SAP>>, <<DMZ>>, <<LAN>>, <<jwt_…>>, <<CORREO_PRUEBA>>@example.invalid, <<BP_PRUEBA>>, <<ID_CLIENTE_MAGENTO_PRUEBA>>). Nada de datos personales ni secretos.
 
 Al terminar:
 1. Actualiza §1.4 (T1.H-01 → HECHO con fecha). El .md sin BOM y con CRLF.
-2. Dame en un solo mensaje, por tarea VERIFICACION (T1.2-01, T1.2-02 parte E2E, T1.2-03, T1.3-01, T1.4-01, T1.5-01, T1.5-02, T1.6-01, T1.7-01): el request exacto por el DMZ (o LAN/ServicioSAP donde la tarea lo pide), el SELECT de conteo o de fila completa que corre el DBA, el valor esperado según §3 y qué escritura necesita mi visto bueno.
+2. Dime qué cambiaste (archivo:línea).
 3. Dame redactadas, para mandarlas, las preguntas de §5 que son de Diego o de otros equipos (CQ12-CQ27).
-4. Repórtame git status, git diff --stat, el git diff de SCUM, CRM y MAM, V1 y git ls-files --eol.
+4. Repórtame git status, git diff --stat, el git diff de SCUM, CRM y MAM y git ls-files --eol.
 ```
 
 ### 4.3 S3 · Diego · CORREGIR por decisión (listas, cash y cuentas)
@@ -1153,6 +1180,7 @@ Tareas, solo las que el usuario haya contestado en §5: T1.L-02 (CQ12), T1.2-02 
 
 ```text
 Esta sesión es S3 del paquete 1 (CustomersController), desarrollador Diego, y solo S3.
+Antes de todo: aplica las "Reglas vigentes de las sesiones Fable (2026-10-05)" de PLAN_FABLE_POR_CONTROLADOR.md; prevalecen sobre este prompt.
 
 Lee SKILL.md, GUIA_MIGRACION_FABLE.md §0-§2, §1.5, §1.8b, §1.9 y §9b, y de PLAN_FABLE_CONTROLADORES\01_CustomersController.md: §0, §1.4, §3.2.5, §3.3, §3.4, §3.5.5, §3.8, §3.9, §5 y §4.3.
 
@@ -1181,6 +1209,7 @@ Tareas, solo las contestadas: T1.1-01b opción A (CQ8 = A; con B va en S5), T1.1
 
 ```text
 Esta sesión es S4 del paquete 1 (CustomersController), desarrollador Marcos, y solo S4.
+Antes de todo: aplica las "Reglas vigentes de las sesiones Fable (2026-10-05)" de PLAN_FABLE_POR_CONTROLADOR.md; prevalecen sobre este prompt.
 
 Lee SKILL.md (reglas 12, 17, 19, 28), GUIA_MIGRACION_FABLE.md §0-§2, §1.5, §1.7, §1.8, §1.9 y §9b, y de PLAN_FABLE_CONTROLADORES\01_CustomersController.md: §0, §1.4 (choques), §3.1 completo, §5 y §4.4. Lee también CREDITO_WEB_ANALISIS_COMPLETO_Y_PLAN_FINAL.md §6.3.6 (P5) y §6.3.15 (P14): Marst NO se decide aquí.
 
@@ -1209,6 +1238,7 @@ Tareas: T1.1-01b opción B (el orquestador `SetCustomerAsync`) + T1.1-03. Requis
 
 ```text
 Esta sesión es S5 del paquete 1 (CustomersController), desarrollador Marcos, y solo S5: construir la búsqueda del BP existente que LAN hacía en SP_eCommerceCtenuevo.
+Antes de todo: aplica las "Reglas vigentes de las sesiones Fable (2026-10-05)" de PLAN_FABLE_POR_CONTROLADOR.md; prevalecen sobre este prompt.
 
 Lee SKILL.md (reglas 6, 12, 13, 17, 19, 20, 28, 32), GUIA_MIGRACION_FABLE.md §0-§2, §1.4, §1.8, §1.9 y §9b, y de PLAN_FABLE_CONTROLADORES\01_CustomersController.md: §0, §3.1.2 pasos 8 y 13, §3.1.3 (R5, R19, R20), §3.1.5 T1.1-01b y T1.1-03 (condiciones a-e), §5 y §4.5.
 
@@ -1236,6 +1266,7 @@ Tareas: T1.1-09, T1.2-01, T1.2-02 (después del cambio), T1.2-03, T1.3-01, T1.4-
 
 ```text
 Esta sesión es S6 del paquete 1 (CustomersController): E2E de <Marcos: T1.1-09 | Diego: T1.2-01, T1.2-02, T1.2-03, T1.3-01, T1.4-01, T1.5-01, T1.5-02, T1.6-01, T1.7-01>.
+Antes de todo: aplica las "Reglas vigentes de las sesiones Fable (2026-10-05)" de PLAN_FABLE_POR_CONTROLADOR.md; prevalecen sobre este prompt.
 
 Lee SKILL.md (reglas 14 y 25) y de PLAN_FABLE_CONTROLADORES\01_CustomersController.md: §0.6, §1.4, la sección §3 de cada tarea (proceso LAN, contrato de respuesta y criterio) y §4.6.
 
@@ -1256,6 +1287,7 @@ Tareas: T1.L-01 (llegó el SP o el DDL), T1.C-02 (llegaron los logs IIS), T1.0-D
 
 ```text
 Esta sesión es S7 del paquete 1 (CustomersController), desarrollador <Diego|Marcos>: incorporar lo que entregaron otros equipos.
+Antes de todo: aplica las "Reglas vigentes de las sesiones Fable (2026-10-05)" de PLAN_FABLE_POR_CONTROLADOR.md; prevalecen sobre este prompt.
 
 Lee SKILL.md (regla 23), GUIA_MIGRACION_FABLE.md §2 y §8.6, y de PLAN_FABLE_CONTROLADORES\01_CustomersController.md: §0, §1.4, §2, §3.8, §3.9, §3.10 y §4.7.
 
@@ -1309,30 +1341,30 @@ Una sola lista para todo el paquete. La recomendación es la del plan; **no se i
 
 | Id | Pregunta | Tareas | Recomendación | Respuesta del usuario (fecha) |
 |---|---|---|---|---|
-| CQ1 | setCustomer: LAN guardaba `name` como apellido paterno, `lastName` como materno y `lastName2` como nombre(s), todo en MAYÚSCULAS, y el correo en MAYÚSCULAS (LCUM:21-23; CTN:115-118, :133). ¿ServicioSAP copia eso (A), conserva `NameFirst=name` / `NameLast=lastName` / `NameLst2=lastName2` y solo pasa a MAYÚSCULAS (B), o lo deja igual (C)? | T1.1-04 | Decidir después de ver un payload real (CQ10) | |
+| CQ1 | setCustomer: LAN guardaba `name` como apellido paterno, `lastName` como materno y `lastName2` como nombre(s), todo en MAYÚSCULAS, y el correo en MAYÚSCULAS (LCUM:21-23; CTN:115-118, :133). ¿ServicioSAP copia eso (A), conserva `NameFirst=name` / `NameLast=lastName` / `NameLst2=lastName2` y solo pasa a MAYÚSCULAS (B), o lo deja igual (C)? | T1.1-04 | Decidir después de ver un payload real (CQ10) | "ok but, is theres is a differently names uses, wich do you recomend? i mean because the values in SAP maybe are different" y después "if LAN put in Uppercase, do it the same in SAP to be equal" (2026-10-05). Elegida: **B** de T1.1-04 (se conserva `NameFirst=name` / `NameLast=lastName` / `NameLst2=lastName2`, confirmado por el payload de CQ10, y se pasan a MAYÚSCULAS nombres y correo). Aplicada en S4, sin E2E |
 | CQ2 | setCustomer: si ya existe un BP con ese idMagento (o con el correo del invitado): ¿solo se devuelve, o también se actualizan nombres y correo como el SP (con payload parcial)? ¿Se replica el borrado de dirección del SP (CTN:181-187, :193-199), que borraría la dirección del BP? Si hay varios BP con el mismo `ZidMagento` (OM:2802; BPM:835-850), ¿cuál se toma? | T1.1-03 | Devolver el existente y actualizar solo nombres y correo; **no** borrar la dirección; con varios, el `Partner` más reciente | |
 | CQ3 | ¿Magento sigue llamando setCustomer para invitados (idMagento 0-2)? Si sí, ¿cada correo de invitado tiene su BP (LAN) o se usa el BP fijo de invitado del flujo de orden (OM:41)? | T1.1-03 | — | |
-| CQ4 | setCustomer: LAN no guardaba dirección, teléfono ni fecha (`1900-01-02`) y no creaba contacto. ServicioSAP manda `Street`/`NameCo`, teléfono, `Birthdt`, Region `JAL` y un contacto tipo 20. ¿Se vacían como LAN (A, con `Birthdt = 19000102`) o se conservan (B)? `Marst` se decide en CREDITO P14 | T1.1-06, T1.1-11 | A (DU5), campo por campo si BP01 lo acepta | |
-| CQ5 | ¿Un idMagento vacío, no numérico o desbordado, o un storeCode desconocido o en otra escritura, debe fallar como en LAN en lugar de crear un BP con `ZidMagento 0` y org 04? ¿La tienda `mavi` (UEN 3) sigue en uso y a qué org SAP va? | T1.1-07 | Fallar como LAN, por la rama de T1.1-08 | |
-| CQ6 | Falla de setCustomer: ¿Magento recibe `Incorrecto` (a), 400 vacío como con LAN porque ServicioSAP da 500 (b), o el 200 con el texto `WebException` de hoy (c)? | T1.1-08 | (b); choca con GUIA §1.5, que se reporta | |
-| CQ7 | ¿Apruebas crear el helper `Sntz` (nombre de LAN) en `Methods\Utils\` para copiar la limpieza de caracteres de LAN? | T1.1-05 | Sí | |
-| CQ8 | Guarda de `Partner` vacío: ¿en el controlador como excepción a SKILL 17 (A) o en un orquestador nuevo `SetCustomerAsync` (B)? | T1.1-01b | B | |
-| CQ9 | ¿Se borra el código muerto del builder (BPM:425-426, :429, :815-829, :455 y el bloque :116-146)? | T1.1-10 | Sí, en commit propio | |
-| CQ10 | ¿Qué módulo de Magento llama `customer/setCustomer` y lee la cuenta? (en Magento248 app/code no hay llamador). ¿Puedes pasar un payload real anonimizado? | T1.1-04; confirma T1.1-01 | — | |
+| CQ4 | setCustomer: LAN no guardaba dirección, teléfono ni fecha (`1900-01-02`) y no creaba contacto. ServicioSAP manda `Street`/`NameCo`, teléfono, `Birthdt`, Region `JAL` y un contacto tipo 20. ¿Se vacían como LAN (A, con `Birthdt = 19000102`) o se conservan (B)? `Marst` se decide en CREDITO P14 | T1.1-06, T1.1-11 | A (DU5), campo por campo si BP01 lo acepta | "sometimes in some api rest SAP need some values bby default to work, but if LAN dosnt put it, if LAN already have let the values like that in this moment, but tell me more about this to define the process" (2026-10-05). Elegida: **B** de T1.1-06 y de T1.1-11: se conservan `Street`/`NameCo`, teléfono, `Birthdt`, `Region = JAL` y el contacto tipo 20; diferencias aceptadas, sin cambio de código (S4). `Marst` sigue en CREDITO P14 |
+| CQ5 | ¿Un idMagento vacío, no numérico o desbordado, o un storeCode desconocido o en otra escritura, debe fallar como en LAN en lugar de crear un BP con `ZidMagento 0` y org 04? ¿La tienda `mavi` (UEN 3) sigue en uso y a qué org SAP va? | T1.1-07 | Fallar como LAN, por la rama de T1.1-08 | "idmagento cannot be empty at this point, that is validated before sending the information to the Service, so if for some reason is null, or empty, fail like lan because its arequired field" (2026-10-05). Elegida: solo `idMagento` falla como LAN (`int.Parse`, por el catch actual del controlador). `storeCode`, el resolvedor de organización y `mavi`: sin respuesta, quedan sin cambio. Aplicada en S4, sin E2E |
+| CQ6 | Falla de setCustomer: ¿Magento recibe `Incorrecto` (a), 400 vacío como con LAN porque ServicioSAP da 500 (b), o el 200 con el texto `WebException` de hoy (c)? | T1.1-08 | (b); choca con GUIA §1.5, que se reporta | "when some API of sap dosnt finish correctly in the end of the Response there is a field named to_return, as you can see in other services, inside of them we have a message where the responses respond with the message of error, but without broke the flow of the proceess" (2026-10-05). Elegida: opción nueva **(d)**: 200 `"Error, <Message de toReturn>"` cuando BP01 responde sin `Partner`, con la convención de `order/new`; las excepciones siguen por el catch actual. Aplicada en S4, sin E2E |
+| CQ7 | ¿Apruebas crear el helper `Sntz` (nombre de LAN) en `Methods\Utils\` para copiar la limpieza de caracteres de LAN? | T1.1-05 | Sí | "and wich is SntZ? i dont remember any field named like that"; tras explicárselo: "if LAN doit replicate in SErvicio SAP but in a better way that do the same thing, theres any possibilitie to do that?" (2026-10-05). Elegida: el diseño de T1.1-05 (`SntzMethods.Sntz` en `Methods\Utils\`, `Regex` estático compilado con el patrón de LAN, 7 campos). Aplicada en S4, sin E2E |
+| CQ8 | Guarda de `Partner` vacío: ¿en el controlador como excepción a SKILL 17 (A) o en un orquestador nuevo `SetCustomerAsync` (B)? | T1.1-01b | B | "pero como que tiene que ver que retorne empty? de que estas hablando? si retorna el numero vacio es por que no se creo com ote mencione en la seccion to_return del mensaje suele venir el motivo de por que no se creo, y esa seria la unica manera de que al momento deneviar un BP y no se cree venga vacio ese campo" (2026-10-05). Elegida: se resuelve con la opción (d) de T1.1-08, en el controlador (el lugar de A), sin orquestador ni miembros nuevos; el orquestador `SetCustomerAsync` queda para S5 con T1.1-03. Aplicada en S4, sin E2E |
+| CQ9 | ¿Se borra el código muerto del builder (BPM:425-426, :429, :815-829, :455 y el bloque :116-146)? | T1.1-10 | Sí, en commit propio | "el codigo muerto, si eliminalo ya si despues se necesita lo volvemos a poner, solo procura que no se este utilizando en absolutamente ningun lado adicional" (2026-10-05). Aplicada en S4: cada pieza se buscó en todos los `.cs` de la solución antes de borrarla (resultado en T1.1-10) |
+| CQ10 | ¿Qué módulo de Magento llama `customer/setCustomer` y lee la cuenta? (en Magento248 app/code no hay llamador). ¿Puedes pasar un payload real anonimizado? | T1.1-04; confirma T1.1-01 | — | Payload real anonimizado (2026-10-05): `{"name": "<<NOMBRE>>", "lastName": "<<APELLIDO_PATERNO>>", "lastName2": "", "dateBirth": "1998-02-25", "email": "<<CORREO_PRUEBA>>@example.invalid", "gender": "H", "phone": "<<TELEFONO_9_DIGITOS>>", "idMagento": "", "storeCode": "", "list": "", "address": "<<DIRECCION>>"}`; el usuario agregó: "but inside the API we have a buildSAP, there is the conversion of the Magento Body to convert for SAP". Confirma que `name` trae el nombre y `lastName` el apellido paterno (por eso CQ1 = B). El módulo de Magento que llama y lee la cuenta sigue sin identificarse |
 | CQ11 | Buró (1.1-R17): ¿qué valor de `SeEnviaBuroCreditoMavi` tiene la fila CONTADO de `VentasCanalMAVI`, y se agrega `Katr1` al modelo `Client`? | R17 | — | |
-| CQ12 | Listas, rama de error de get/delete: ¿se replica LAN (`throw;`: 500 → DMZ 400) o se mantiene el silencio? La decisión de opacidad del 2026-08-07 (E-02:116) supone que LAN es opaco, y solo lo es en set. En get, el silencio deja pasar como limpio un correo en lista negra cuando SIGMavi está caído. DU5/§1.9 contra §1.5 | T1.L-02 | A (replicar) | |
-| CQ13 | ¿Se codifica el correo en la URL solo dentro de `ValidarClienteEnSapAsync` (SCUM:81-82), sin tocar el wrapper compartido? | T1.2-02 | Sí, después de la E2E con `+` | |
+| CQ12 | Listas, rama de error de get/delete: ¿se replica LAN (`throw;`: 500 → DMZ 400) o se mantiene el silencio? La decisión de opacidad del 2026-08-07 (E-02:116) supone que LAN es opaco, y solo lo es en set. En get, el silencio deja pasar como limpio un correo en lista negra cuando SIGMavi está caído. DU5/§1.9 contra §1.5 | T1.L-02 | A (replicar) | "Option A" (2026-10-05). Aplicada en S3: `throw;` en SCUM:68, sin E2E |
+| CQ13 | ¿Se codifica el correo en la URL solo dentro de `ValidarClienteEnSapAsync` (SCUM:81-82), sin tocar el wrapper compartido? | T1.2-02 | Sí, después de la E2E con `+` | "yes do it for the Special caracters + &# %" (2026-10-05). Sin la E2E previa: el usuario pidió aplicarlo ya. Aplicada en S3: `Uri.EscapeDataString(valor)` en SCUM:83, sin E2E |
 | CQ14 | Si la E2E muestra que BP05 `Mail eq` distingue mayúsculas o espacios finales y LAN no: ¿se normaliza (aprobación) o se acepta? | T1.2-03 | Decidir con la E2E | |
-| CQ15 | ¿Aceptas que un correo vacío nunca llegue al SP en ServicioSAP (LAN insertaría si algún `cte` tuviera `eMail1` vacío)? | T1.2-04 | Aceptar | |
+| CQ15 | ¿Aceptas que un correo vacío nunca llegue al SP en ServicioSAP (LAN insertaría si algún `cte` tuviera `eMail1` vacío)? | T1.2-04 | Aceptar | "Magento wont get to ServicioSAP if they dont have an email, ints imposible to get to the service" (2026-10-05). Aceptada: 1.2-R11 pasa a EQ-R; sin código |
 | CQ16 | ¿Quién entrega `sp_helptext SpListaNBMagento`, el DDL de ListaNegra/ListaBlanca (tipos, anchos, collation, triggers) o el acceso al repo MaviSAP, rama `SpVTASListaNBMagento`? | T1.L-01 | Diego con el DBA de SIGMavi | |
 | CQ17 | ¿Los DBA cargan las listas de producción en la misma ventana que el despliegue ServicioSAP → DMZ? ¿El reporte de Intelisis que lee las listas (ODS:71) se repunta a SIGMavi, se reemplaza o se sincroniza? ¿Se cierra GUIA §8.2 (:547) con SIGMavi como destino final? | T1.L-04, T1.0-DOC | — | |
 | CQ18 | ¿Quién consume `getCustomerList` y `deleteCustomerList`? Magento248 no las llama: solo configura setCustomerList (EML:478), y el chequeo del checkout lee las tablas propias de Magento (`Omnipro/EmailageLists/Controller/Lists/Checkemail.php`:138) | T1.3-01, T1.4-01 (prioridad) | — | |
 | CQ19 | `blackwhitelistAsync(tipo)` atiende tres rutas con un flag, lo que choca con GUIA §1.4 y SKILL 28. Es port literal de LAN y ODS:87 las migra en bloque. ¿Se acepta como está? | nota | Aceptar como port literal | |
-| CQ20 | cashCustomerReport: ¿se sanea `fileName` con `Path.GetFileName` (desvío aprobado de §1.9) o se deja la réplica exacta? | T1.5-03 | Sanear | |
-| CQ21 | `Logger.SAP` puede lanzar desde un catch (SLOG:26-31) y cambiar un 200 por 500/400: ¿A (el despliegue crea `<sitio>\Logs` con permiso) o B (mover `CreateDirectory` dentro del try; helper compartido, dueño de `74d7c2f`)? Es el B8 de CREDITO §6.7 | T1.5-04 | A ahora; B como tarea aparte | |
+| CQ20 | cashCustomerReport: ¿se sanea `fileName` con `Path.GetFileName` (desvío aprobado de §1.9) o se deja la réplica exacta? | T1.5-03 | Sanear | "why you need to change this? if this works, dont move" (2026-10-05). No se sanea: T1.5-03 cerrada sin código; 1.5-R4 sigue EQ (heredado) y el riesgo queda como deuda en GUIA §8.1:526 |
+| CQ21 | `Logger.SAP` puede lanzar desde un catch (SLOG:26-31) y cambiar un 200 por 500/400: ¿A (el despliegue crea `<sitio>\Logs` con permiso) o B (mover `CreateDirectory` dentro del try; helper compartido, dueño de `74d7c2f`)? Es el B8 de CREDITO §6.7 | T1.5-04 | A ahora; B como tarea aparte | "this is because the route its for localhost and the other its for the server," (2026-10-05). No elige A ni B: describe las dos rutas de SLOG (`C:\inetpub\wwwroot\log\sap.log` para el servidor, SLOG:11, dentro de try; `<sitio>\Logs\sap.log` para local, SLOG:26-32, con `CreateDirectory` fuera de try). Sin código en S3 (B exige aprobación explícita). **Pendiente:** confirmar si se toma A (sin código: el despliegue crea `<sitio>\Logs`) |
 | CQ22 | ¿Quién corre en QA (servidor de ServicioSAP) la E2E del caso válido con copia al share? | T1.5-01 | Diego con quien tenga acceso al IIS y al share | |
 | CQ23 | ¿Quién llama LAN `customer/getCuenta` y `customer/setCuenta` (Intelisis, backoffice, CRM, tarea programada)? ¿Alguien puede revisar los logs IIS de LAN (IP, user-agent, fechas)? Las rutas se mantienen por la decisión del 11 de agosto | T1.C-02 | — | |
-| CQ24 | Rama de error de getCuenta/setCuenta: ¿aceptar el 500 tras reintentos (A) o replicar el 200 con mensaje de LAN (B1 local, que no es exacto porque también se traga el fallo del login, o B2 cambiando el `Curl` compartido)? | T1.C-01 | A hasta conocer al consumidor | |
+| CQ24 | Rama de error de getCuenta/setCuenta: ¿aceptar el 500 tras reintentos (A) o replicar el 200 con mensaje de LAN (B1 local, que no es exacto porque también se traga el fallo del login, o B2 cambiando el `Curl` compartido)? | T1.C-01 | A hasta conocer al consumidor | Sin respuesta (2026-10-05): el usuario pidió más explicación. T1.C-01 no se aplicó en S3; sigue DECISION |
 | CQ25 | Datos de prueba: un correo de Magento que exista en los websites 1 y 5 (getCuenta, solo lectura), y un id de cliente de prueba con un BP de prueba para setCuenta (se escribe y se restaura) | T1.6-01, T1.7-01 | — | |
 | CQ26 | CSV: para las filas LAN-only, ¿`Conectado = N/A` o `Si` (como las filas 119 y 132)? ¿Apruebas las correcciones del CSV y de los documentos de §2 (T1.0-DOC)? | T1.0-DOC | N/A en todas las LAN-only, por consistencia con la definición del usuario | |
 | CQ27 | Las 5 rutas están conectadas solo en `ConexionSAP` (y `SAP-DMZ`, `dbAndroid`, `SAP_DMZ_JAVI`). `master` y `Stage` siguen con `curl.Post` a LAN, y `master` ni siquiera tiene `cashCustomerReport`. ¿Quién fusiona y despliega, y cuándo (primero ServicioSAP, después el DMZ con `4dabaa9`)? | T1.0-DEP | — | |

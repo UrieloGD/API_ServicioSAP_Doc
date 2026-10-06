@@ -24,7 +24,7 @@ alcance: solo ServicioSAP (Controllers, Methods, Models, Helpers, nombres de lla
   1. [[#Órdenes (contado, devoluciones, cancelaciones, guías, recoger en sucursal, Openpay/PayPal)|01 · Órdenes de contado y posventa]] (12 rutas, 96 reglas): pedido de contado (`order/new`), devoluciones, cancelaciones, guías, recoger en sucursal, Openpay y PayPal.
   2. [[#Órdenes a crédito (rama omnipro_pago_credito de order/new)|02 · Órdenes a crédito]] (rama de crédito de la ruta 1 y bloque del liberador; 93 reglas): rama de crédito de `order/new` (solicitud de crédito web), `order/getCondicion` y el liberador apagado.
   3. [[#Crédito (CreditController SMS, plazos, documentos, montos, Credilana, etc.)|03 · Crédito (CreditController)]] (8 rutas, 77 reglas): NIP por SMS, plazos, condiciones de pago SD40, montos de Credilana y expediente documental.
-  4. [[#Clientes y Business Partner (BP, direcciones, prospectos, mayoreo, cuentas)|04 · Clientes y Business Partner]] (29 rutas, 109 reglas): alta, cambio y consulta de BP, direcciones, listas de correos, prospectos, mayoreo, bonificaciones, sucursales y `login/auth`.
+  4. [[#Clientes y Business Partner (BP, direcciones, prospectos, mayoreo, cuentas)|04 · Clientes y Business Partner]] (29 rutas, 112 reglas): alta, cambio y consulta de BP, direcciones, listas de correos, prospectos, mayoreo, bonificaciones, sucursales y `login/auth`.
   5. [[#Atención a clientes (CustomerServiceController)|05 · Atención a clientes]] (6 rutas, 60 reglas): quejas, llave BBVA, validación del cliente, entrada al área de crédito e historial de créditos.
   6. [[#Productos, catálogo, imágenes, etiquetas y exportación a e-commerce|06 · Productos y catálogo]] (42 rutas, 132 reglas): maestro de artículos, existencias, catálogos de apoyo, exportación para Magento, cargas de catálogo, imágenes, SEO y etiquetas.
   7. [[#Ventas, monedero, abonos, SEPOMEX y listas de precios|07 · Ventas, monedero y abonos]] (13 rutas, 66 reglas): documentos de venta (SD36, PV02), MovBita, abonos y cobranza, monedero, SEPOMEX y listas de precios SD29.
@@ -84,7 +84,7 @@ alcance: solo ServicioSAP (Controllers, Methods, Models, Helpers, nombres de lla
 7. **Decisiones nuevas.** Una decisión nueva del usuario se registra en `CREDITO_WEB_ANALISIS_COMPLETO_Y_PLAN_FINAL.md` §4.5 (DU20 en adelante), y aquí se cita su id en la regla que cambia.
 8. **Formato del archivo.** UTF-8 sin BOM y fin de línea CRLF.
 
-**Prefijos de reglas en uso** (702 reglas en total; el conteo de cada sección está en el [[#Índice]])
+**Prefijos de reglas en uso** (705 reglas en total; el conteo de cada sección está en el [[#Índice]])
 
 | Prefijo | Sección | Dónde se define (primer bloque) | Reglas | Siguiente id libre |
 |---|---|---|---|---|
@@ -106,7 +106,7 @@ alcance: solo ServicioSAP (Controllers, Methods, Models, Helpers, nombres de lla
 | `RLIB` | 02 | `(sin ruta) Liberador de crédito y aviso a Magento` | 9 | `RLIB-10` |
 | `RCOM` | 02 (también en 01, 07) | `Reglas comunes del área` | 7 | `RCOM-8` |
 | `RCR` | 03 | `POST /credit/SendSmsNewNumber` y 8 bloques más | 77 | `RCR-78` |
-| `RBP` | 04 | `GET /partner/client/{clientId}` y 10 bloques más | 46 | `RBP-47` |
+| `RBP` | 04 | `GET /partner/client/{clientId}` y 10 bloques más | 49 | `RBP-50` |
 | `RDIR` | 04 | `GET /partneraddress/partner/{bpId}` y 5 bloques más | 12 | `RDIR-13` |
 | `RCLI` | 04 | `POST /customer/setCustomerList` y 5 bloques más | 20 | `RCLI-21` |
 | `RPRO` | 04 | `POST /prospecto/recuperarcuenta` | 7 | `RPRO-8` |
@@ -246,15 +246,15 @@ La columna del DMZ sale del CSV de seguimiento (`MAVI - DMZ-SAP.csv`, filas con 
 | 23 | GET | `account/sucursal/{id}` | AccountController.GetSucursal | Controllers/AccountController.cs:47 | 04 Clientes y BP | — |
 | 24 | GET | `partner/client/{clientId}` | BusinessPartnerController.GetClient | Controllers/BusinessPartnerController.cs:20 | 04 Clientes y BP | — |
 | 25 | POST | `partner/client` | BusinessPartnerController.CreateClient | Controllers/BusinessPartnerController.cs:36 | 04 Clientes y BP | `customer/setCustomer` |
-| 26 | PATCH | `partner/client` | BusinessPartnerController.UpdateClient | Controllers/BusinessPartnerController.cs:58 | 04 Clientes y BP | — |
-| 27 | PATCH | `partner/client/unircuenta` | BusinessPartnerController.UnirCuenta | Controllers/BusinessPartnerController.cs:79 | 04 Clientes y BP | `customerService/unirCuenta` |
-| 28 | POST | `partner/enablechanelorg` | BusinessPartnerController.EnableChannelOrg | Controllers/BusinessPartnerController.cs:100 | 04 Clientes y BP | — |
-| 29 | POST | `partner/testnew` | BusinessPartnerController.TestCreateClient | Controllers/BusinessPartnerController.cs:121 | 04 Clientes y BP | — |
-| 30 | GET | `partner/client/filter/{sapFilter}` | BusinessPartnerController.GetFilterClients | Controllers/BusinessPartnerController.cs:138 | 04 Clientes y BP | `customerService/validarCliente` |
-| 31 | GET | `partner/client/ma/{clientId}` | BusinessPartnerController.GetClientMa | Controllers/BusinessPartnerController.cs:154 | 04 Clientes y BP | — |
-| 32 | GET | `partner/successfactor/employee/{userId}` | BusinessPartnerController.GetSuccessFactorEmployee | Controllers/BusinessPartnerController.cs:170 | 04 Clientes y BP | — |
-| 33 | GET | `partner/ventadist/client/{clientId}` | BusinessPartnerController.GetCustomerSalesChannels | Controllers/BusinessPartnerController.cs:186 | 04 Clientes y BP | — |
-| 34 | GET | `partner/ConsultaAnexos/{valorAnexo}` | BusinessPartnerController.GetConsultaAnexos | Controllers/BusinessPartnerController.cs:201 | 04 Clientes y BP | — |
+| 26 | PATCH | `partner/client` | BusinessPartnerController.UpdateClient | Controllers/BusinessPartnerController.cs:70 | 04 Clientes y BP | — |
+| 27 | PATCH | `partner/client/unircuenta` | BusinessPartnerController.UnirCuenta | Controllers/BusinessPartnerController.cs:91 | 04 Clientes y BP | `customerService/unirCuenta` |
+| 28 | POST | `partner/enablechanelorg` | BusinessPartnerController.EnableChannelOrg | Controllers/BusinessPartnerController.cs:112 | 04 Clientes y BP | — |
+| 29 | POST | `partner/testnew` | BusinessPartnerController.TestCreateClient | Controllers/BusinessPartnerController.cs:133 | 04 Clientes y BP | — |
+| 30 | GET | `partner/client/filter/{sapFilter}` | BusinessPartnerController.GetFilterClients | Controllers/BusinessPartnerController.cs:150 | 04 Clientes y BP | `customerService/validarCliente` |
+| 31 | GET | `partner/client/ma/{clientId}` | BusinessPartnerController.GetClientMa | Controllers/BusinessPartnerController.cs:166 | 04 Clientes y BP | — |
+| 32 | GET | `partner/successfactor/employee/{userId}` | BusinessPartnerController.GetSuccessFactorEmployee | Controllers/BusinessPartnerController.cs:182 | 04 Clientes y BP | — |
+| 33 | GET | `partner/ventadist/client/{clientId}` | BusinessPartnerController.GetCustomerSalesChannels | Controllers/BusinessPartnerController.cs:198 | 04 Clientes y BP | — |
+| 34 | GET | `partner/ConsultaAnexos/{valorAnexo}` | BusinessPartnerController.GetConsultaAnexos | Controllers/BusinessPartnerController.cs:213 | 04 Clientes y BP | — |
 | 35 | POST | `customer/setCustomerList` | CustomersController.SetCustomerEmailage | Controllers/CustomersController.cs:17 | 04 Clientes y BP | `customer/setCustomerList` |
 | 36 | POST | `customer/getCustomerList` | CustomersController.GetCustomerEmailage | Controllers/CustomersController.cs:59 | 04 Clientes y BP | `customer/getCustomerList` |
 | 37 | POST | `customer/deleteCustomerList` | CustomersController.DeleteCustomerEmailage | Controllers/CustomersController.cs:81 | 04 Clientes y BP | `customer/deleteCustomerList` |
@@ -1649,47 +1649,52 @@ Las rutas de archivo son relativas a `ServicioSap\ServicioSap\`. "DMZ" es `DMZ\W
 - **Configuración usada:** ninguna llave del Web.config; la URL y el usuario de S4 salen de Conexion.dll (ver RBPC-2).
 - **Pendientes conocidos:** el mensaje de error dice "listado de clientes" aunque es una consulta individual (BusinessPartnerMethods.cs:67).
 
-### POST /partner/client  (BusinessPartnerController.CreateClient, BusinessPartnerController.cs:34-54)
+### POST /partner/client  (BusinessPartnerController.CreateClient, BusinessPartnerController.cs:34-66)
 
 - **Para qué sirve:** da de alta como BP a un cliente nuevo de la tienda en línea, completando con los valores fijos de MAVI todo lo que la tienda no captura.
 - **Quién la llama:** la ruta `customer/setCustomer` de la DMZ (DMZ Controllers\CustomersController.cs:30; tracker fila 32).
-- **Entrada:** `CustomerRequest` (CustomerRequest.cs:3-17), todo texto: `name`, `lastName` (apellido paterno), `lastName2` (apellido materno), `dateBirth`, `email`, `gender`, `phone`, `idMagento`, `storeCode`, `address`. El código solo exige que el cuerpo no sea nulo; ningún campo es obligatorio (BusinessPartnerController.cs:38-41). `list` y `cp` existen en el modelo pero esta ruta no los usa (CustomerRequest.cs:14, :16).
+- **Entrada:** `CustomerRequest` (CustomerRequest.cs:3-17), todo texto: `name`, `lastName` (apellido paterno), `lastName2` (apellido materno), `dateBirth`, `email`, `gender`, `phone`, `idMagento`, `storeCode`, `address`. El controlador solo exige que el cuerpo no sea nulo (BusinessPartnerController.cs:38-41); `idMagento` debe ser numérico: vacío, no numérico o desbordado hace fallar la ruta (RBP-15, cambio del 2026-10-05). `list` y `cp` existen en el modelo pero esta ruta no los usa (CustomerRequest.cs:14, :16).
 - **Cómo funciona (paso a paso):**
   1. Cuerpo nulo → 400 (BusinessPartnerController.cs:38-41).
-  2. `BuildClientFromCustomerRequest` arma el objeto `Client` con los datos del cliente y los valores fijos (BusinessPartnerMethods.cs:415-765; reglas RBP-5 a RBP-21).
-  3. `SubmitClientInfoAsync` pide el token CSRF a `ZAPI_BP01_PARTNER_SRV/?sap-client=110&sap-language=ES` (BusinessPartnerMethods.cs:77, :80-81).
-  4. Convierte el objeto a JSON omitiendo los campos nulos y lo escribe en el log como `[SAP BP REQUEST]` (BusinessPartnerMethods.cs:83-88).
-  5. Hace POST a `ZAPI_BP01_PARTNER_SRV/BPartnerSet?sap-client=110` y escribe la respuesta como `[SAP BP RESPONSE]` (BusinessPartnerMethods.cs:76, :90-99).
-  6. Si SAP falla o responde vacío, escribe `[SAP BP ERROR]` y lanza error; si responde HTML, lanza error (BusinessPartnerMethods.cs:101-110).
-  7. Convierte `d` en `Client` y lo devuelve; ahí viene el número de BP nuevo en `Partner` (BusinessPartnerMethods.cs:112-114, :148).
+  2. `BuildClientFromCustomerRequest` arma el objeto `Client` con los datos del cliente, saneados con `Sntz` (RBP-48), y los valores fijos (BusinessPartnerMethods.cs:384-735; reglas RBP-5 a RBP-21 y RBP-48).
+  3. `SubmitClientInfoAsync` pide el token CSRF a `ZAPI_BP01_PARTNER_SRV/?sap-client=110&sap-language=ES` (BusinessPartnerMethods.cs:78, :81-82).
+  4. Convierte el objeto a JSON omitiendo los campos nulos y lo escribe en el log como `[SAP BP REQUEST]` (BusinessPartnerMethods.cs:84-89).
+  5. Hace POST a `ZAPI_BP01_PARTNER_SRV/BPartnerSet?sap-client=110` y escribe la respuesta como `[SAP BP RESPONSE]` (BusinessPartnerMethods.cs:77, :91-100).
+  6. Si SAP falla o responde vacío, escribe `[SAP BP ERROR]` y lanza error; si responde HTML, lanza error (BusinessPartnerMethods.cs:102-111).
+  7. Convierte `d` en `Client` y lo devuelve al controlador; ahí viene el número de BP nuevo en `Partner` y los mensajes de SAP en `toReturn` (BusinessPartnerMethods.cs:113-115, :117).
+  8. Si `result` es nulo o `Partner` viene nulo o vacío, el BP no se creó: el controlador responde 200 con la cadena `"Error, <motivo>"`, con el motivo sacado de `toReturn` (BusinessPartnerController.cs:48-59; RBP-49). Si hay `Partner`, responde solo con el número de BP, sin espacios a los lados, como cadena JSON (BusinessPartnerController.cs:60; RBP-47).
 - **Reglas de negocio:**
-  - RBP-5: Nombre de persona física: `NameFirst` = `name`, `NameLast` = `lastName`, `NameLst2` = `lastName2`, cada uno sin espacios a los lados; `Natpers = "X"` marca persona física (BusinessPartnerMethods.cs:422-424, :472, :477-479).
-  - RBP-6: La organización de ventas sale de `storeCode` (BusinessPartnerMethods.cs:436-455): si contiene "viu" (sin importar mayúsculas) o es "2" → `05` y `NameOrg1 = "viu"`; si contiene "muebles_america", es "1" o viene vacío → `04` y `NameOrg1 = "muebles_america"`; cualquier otro valor → `04` como respaldo. La misma organización va a los datos de ventas y a los interlocutores (`VkorgKnvv`, `VkorgKnvp`) (BusinessPartnerMethods.cs:532, :568).
-  - RBP-7: El cliente nace solo en canal `01` (contado), sector `00` (BusinessPartnerMethods.cs:533-534, :569-570).
-  - RBP-8: No se abre el canal de crédito al dar de alta. El bloque que habilitaba el canal `02` en segundo plano está comentado porque un alta en crédito no debe ser automática: debe pasar por el proceso interno de activación de la empresa (BusinessPartnerMethods.cs:116-146).
-  - RBP-9: Sexo con `MapGender` (BusinessPartnerMethods.cs:482, :777-798): vacío → `1`; `H`, `HOMBRE`, `MASCULINO` o `1` → `1` (masculino); `M`, `MUJER`, `FEMENINO` o `2` → `2` (femenino); cualquier otro → `3`. Ojo: `M` es Mujer. Son los mismos códigos del alta desde la orden (OrderMethods.cs:2655) y del crédito (decisión DU10, no se vuelve a preguntar).
-  - RBP-10: Estado civil `Marst = "1"` (Soltero) fijo (BusinessPartnerMethods.cs:486): SAP lo exige y la tienda no lo captura. El alta desde la orden usa el mismo valor (OrderMethods.cs:2659). Decisión DU18. Tabla de códigos (DU10): 1 Soltero, 2 Casado, 3 Viudo, 4 Divorciado, 5 Separado, 6 Pareja de hecho.
-  - RBP-11: Fecha de nacimiento `Birthdt` en formato `yyyyMMdd` si `DateTime.TryParse` la entiende con la cultura del servidor; si no, queda nula y no viaja (BusinessPartnerMethods.cs:428, :488, :800-813, :83-87).
-  - RBP-12: Teléfono: `phone` sin espacios a los lados va a `TelNumber`, `TelnrLong` y a la tabla Z de teléfonos (`toCteTel.ZtelCte`) con tipo `"MOVIL"`, sin validar (`ZvalTel = false`) y con origen `ZappOrig` vacío (BusinessPartnerMethods.cs:430, :506, :513, :657-672).
-  - RBP-13: Dirección: el texto completo de `address` va a `Street` y también a `NameCo` (BusinessPartnerMethods.cs:431, :491, :493). Número (`HouseNum1`), colonia (`City2`), municipio (`City1`) y CP (`PostCode1`) van vacíos; `Region = "JAL"` queda fija porque, según el comentario del código, este cuerpo no trae el CP y no se puede consultar SEPOMEX (BusinessPartnerMethods.cs:457-461, :492, :498-502).
-  - RBP-14: Correo: `email` sin espacios a los lados va a `SmtpAddr` (BusinessPartnerMethods.cs:427, :514).
-  - RBP-15: `idMagento` se convierte a número; vacío o no numérico → `0`. Va a `toCte.ZidMagento` (BusinessPartnerMethods.cs:432-433, :609, :767-775).
-  - RBP-16: RFC genérico `Stcd1 = "XAXX010101000"` (público en general) con `Stkzn = "X"` (BusinessPartnerMethods.cs:515-516). El alta desde la orden usa el RFC del cliente cuando viene (OrderMethods.cs:2688).
-  - RBP-17: Valores fijos del maestro (BusinessPartnerMethods.cs:465-579): grupo `BuGroup = "CLIE"`, conceptos de búsqueda `Sort1`/`Sort2 = "ABC"`, nacionalidad y país `MX` (`Natio`, `Country`, `Aland`), idioma `Langu = "S"`, grupo de cuentas `Ktokd = "0110"`, sociedad `Bukrs = "5510"`, cuenta anterior `Altkn = "1234567890"`, `Kalks = "1"`, `Awahr = "100"`, `Antlf = "0"`, `Lprio = "02"`, `Vsbed = "01"`, moneda `Waers = "MXN"`, `Ktgrd = "01"`, `Kvgr4 = "SI"`, `Parnr = "000000100"`, impuesto `Tatyp = "TMX1"` con `Taxkd = "1"`, función de interlocutor `Parvw = "WE"` (destinatario de mercancía).
-  - RBP-18: `Perrl = "AM"` va siempre: SAP lo volvió obligatorio sin aviso y el valor fijo esperado es "AM" (BusinessPartnerMethods.cs:580-581).
-  - RBP-19: Las tablas Z se mandan en blanco: `toCte` con importes `"0.00"`, textos vacíos y enteros en 0, salvo `ZidMagento` (BusinessPartnerMethods.cs:582-656); contacto `toCteCto` con `ZidcteCto = "1"` y `ZidcteCtoTipo = "20"` (:673-698); dirección del contacto con `ZidcteCto = "1"` y `Zpais = "MX"` (:699-716); empleo vacío con `Zingresos = "0.00"` (:717-758); retorno vacío (:759-762). Las fechas de esas tablas van nulas y, por RBP-20, no viajan: `ZfechaIrreg`, `ZfecUltPag` (:643, :653), `Zfecha` del teléfono (:663), `ZfechaNac` del contacto (:683) y `Zantiguedad` del empleo (:724).
-  - RBP-20: Los campos nulos no viajan (`WhenWritingNull`); los booleanos y los enteros siempre viajan (BusinessPartnerMethods.cs:83-87).
-  - RBP-21: `Partner = ""` hace que SAP cree un BP nuevo (BusinessPartnerMethods.cs:465; ficha BP01).
-- **Fuentes de datos:** OData S4 `ZAPI_BP01_PARTNER_SRV`, entity set `BPartnerSet`, escritura POST con las navegaciones `toCte`, `toCteTel`, `toCteCto`, `toCteCtoDireccion`, `toCteCtoEmpleo` en el mismo cuerpo (Client.cs:131-137); más el GET del token CSRF a la raíz del servicio (BusinessPartnerMethods.cs:76-81).
+  - RBP-5: Nombre de persona física: `NameFirst` = `name`, `NameLast` = `lastName`, `NameLst2` = `lastName2`, cada uno pasado por `Sntz` (RBP-48), sin espacios a los lados y en MAYÚSCULAS (`ToUpperInvariant()`), como el `UPPER` del SP de LAN (`SPsOrden\SP_eCommerceCtenuevo.sql:115-118`); `Natpers = "X"` marca persona física (BusinessPartnerMethods.cs:394-396, :442, :447-449). El orden `name` = nombre y `lastName` = apellido paterno lo confirma el payload real de Magento (decisión CQ1 = B del 2026-10-05, `PLAN_FABLE_CONTROLADORES\01_CustomersController.md` §5, T1.1-04); mayúsculas sin E2E.
+  - RBP-6: La organización de ventas sale de `storeCode` (BusinessPartnerMethods.cs:407-425): si contiene "viu" (sin importar mayúsculas) o es "2" → `05` y `NameOrg1 = "viu"`; si contiene "muebles_america", es "1" o viene vacío → `04` y `NameOrg1 = "muebles_america"`; cualquier otro valor → `04` como respaldo. La misma organización va a los datos de ventas y a los interlocutores (`VkorgKnvv`, `VkorgKnvp`) (BusinessPartnerMethods.cs:502, :538). LAN fallaba con un `storeCode` desconocido o en otra escritura; aquí sigue yendo a `04` porque el usuario no lo decidió (CQ5 del 2026-10-05, `01_CustomersController.md` T1.1-07).
+  - RBP-7: El cliente nace solo en canal `01` (contado), sector `00` (BusinessPartnerMethods.cs:503-504, :539-540).
+  - RBP-8: No se abre el canal de crédito al dar de alta: un alta en crédito no debe ser automática, debe pasar por el proceso interno de activación de la empresa. El bloque comentado que habilitaba el canal `02` en segundo plano se borró el 2026-10-05 como código muerto (CQ9, T1.1-10); la habilitación sigue disponible solo por `POST /partner/enablechanelorg` (BusinessPartnerMethods.cs:171-213).
+  - RBP-9: Sexo con `MapGender` sobre `gender` pasado por `Sntz` (BusinessPartnerMethods.cs:405, :452, :737-758): vacío → `1`; `H`, `HOMBRE`, `MASCULINO` o `1` → `1` (masculino); `M`, `MUJER`, `FEMENINO` o `2` → `2` (femenino); cualquier otro → `3`. Ojo: `M` es Mujer. Son los mismos códigos del alta desde la orden (OrderMethods.cs:2696) y del crédito (decisión DU10, no se vuelve a preguntar).
+  - RBP-10: Estado civil `Marst = "1"` (Soltero) fijo (BusinessPartnerMethods.cs:456): SAP lo exige y la tienda no lo captura. El alta desde la orden usa el mismo valor (OrderMethods.cs:2700). Decisión DU18. Tabla de códigos (DU10): 1 Soltero, 2 Casado, 3 Viudo, 4 Divorciado, 5 Separado, 6 Pareja de hecho.
+  - RBP-11: Fecha de nacimiento `Birthdt` en formato `yyyyMMdd` si `DateTime.TryParse` la entiende con la cultura del servidor; si no, queda nula y no viaja (BusinessPartnerMethods.cs:398, :458, :760-773, :84-88). LAN la fijaba en `1900-01-02`; diferencia aceptada por el usuario (CQ4 = B del 2026-10-05, T1.1-06).
+  - RBP-12: Teléfono: `phone` pasado por `Sntz` (RBP-48) y sin espacios a los lados va a `TelNumber`, `TelnrLong` y a la tabla Z de teléfonos (`toCteTel.ZtelCte`) con tipo `"MOVIL"`, sin validar (`ZvalTel = false`) y con origen `ZappOrig` vacío (BusinessPartnerMethods.cs:399, :476, :483, :627-642). LAN no guardaba el teléfono; diferencia aceptada por el usuario (CQ4 = B del 2026-10-05, T1.1-06).
+  - RBP-13: Dirección: el texto completo de `address` (sin `Sntz`, como en LAN, que no lo usaba) va a `Street` y también a `NameCo` (BusinessPartnerMethods.cs:400, :461, :463). Número (`HouseNum1`), colonia (`City2`), municipio (`City1`) y CP (`PostCode1`) van vacíos; `Region = "JAL"` queda fija porque, según el comentario del código, este cuerpo no trae el CP y no se puede consultar SEPOMEX (BusinessPartnerMethods.cs:427-431, :462, :468-472). LAN dejaba la dirección vacía; diferencia aceptada por el usuario (CQ4 = B del 2026-10-05, T1.1-06).
+  - RBP-14: Correo: `email` pasado por `Sntz` (RBP-48), sin espacios a los lados y en MAYÚSCULAS (`ToUpperInvariant()`), como el `UPPER(email)` del SP de LAN (`SPsOrden\SP_eCommerceCtenuevo.sql:133`), va a `SmtpAddr` (BusinessPartnerMethods.cs:397, :484). Cambio del 2026-10-05 (CQ1, T1.1-04), sin E2E.
+  - RBP-15: `idMagento` pasa por `Sntz` (RBP-48) y se convierte con `int.Parse`, como LAN (`LAN Metodos\CustomerMethods.cs:74`): vacío o no numérico lanza `FormatException` y desbordado `OverflowException`; la excepción sale por el `catch` del controlador como 400 (ver "Salida y errores") y no se crea el BP. Va a `toCte.ZidMagento` (BusinessPartnerMethods.cs:401, :404, :579). Cambio del 2026-10-05 (CQ5, T1.1-07), sin E2E; antes lo inválido se convertía en `0` con `ParseMagentoId`, que se borró.
+  - RBP-16: RFC genérico `Stcd1 = "XAXX010101000"` (público en general) con `Stkzn = "X"` (BusinessPartnerMethods.cs:485-486). El alta desde la orden usa el RFC del cliente cuando viene (OrderMethods.cs:2729).
+  - RBP-17: Valores fijos del maestro (BusinessPartnerMethods.cs:435-549): grupo `BuGroup = "CLIE"`, conceptos de búsqueda `Sort1`/`Sort2 = "ABC"`, nacionalidad y país `MX` (`Natio`, `Country`, `Aland`), idioma `Langu = "S"`, grupo de cuentas `Ktokd = "0110"`, sociedad `Bukrs = "5510"`, cuenta anterior `Altkn = "1234567890"`, `Kalks = "1"`, `Awahr = "100"`, `Antlf = "0"`, `Lprio = "02"`, `Vsbed = "01"`, moneda `Waers = "MXN"`, `Ktgrd = "01"`, `Kvgr4 = "SI"`, `Parnr = "000000100"`, impuesto `Tatyp = "TMX1"` con `Taxkd = "1"`, función de interlocutor `Parvw = "WE"` (destinatario de mercancía), régimen fiscal `Fiscalregimen = ""` vacío (BusinessPartnerMethods.cs:548), como siempre se ha mandado a SAP. LAN escribía `'605'` en `Cte.FiscalRegimen` de Intelisis (`SPsOrden\SP_eCommerceCtenuevo.sql:109, :114`); el 2026-10-05 se probó `"605"` y el usuario lo revirtió el mismo día para no romper el flujo. Queda pendiente del dueño fiscal de SAP (con el RFC genérico `XAXX010101000`, CFDI 4.0 suele esperar el régimen 616): tarea T1.1-02, DECISION.
+  - RBP-18: `Perrl = "AM"` va siempre: SAP lo volvió obligatorio sin aviso y el valor fijo esperado es "AM" (BusinessPartnerMethods.cs:550-551).
+  - RBP-19: Las tablas Z se mandan en blanco: `toCte` con importes `"0.00"`, textos vacíos y enteros en 0, salvo `ZidMagento` (BusinessPartnerMethods.cs:552-626); contacto `toCteCto` con `ZidcteCto = "1"` y `ZidcteCtoTipo = "20"` (:643-668); dirección del contacto con `ZidcteCto = "1"` y `Zpais = "MX"` (:669-686); empleo vacío con `Zingresos = "0.00"` (:687-728); retorno vacío (:729-732). Las fechas de esas tablas van nulas y, por RBP-20, no viajan: `ZfechaIrreg`, `ZfecUltPag` (:613, :623), `Zfecha` del teléfono (:633), `ZfechaNac` del contacto (:653) y `Zantiguedad` del empleo (:694). El contacto tipo 20, que LAN no creaba, se conserva por decisión del usuario (CQ4 = B del 2026-10-05, T1.1-11).
+  - RBP-20: Los campos nulos no viajan (`WhenWritingNull`); los booleanos y los enteros siempre viajan (BusinessPartnerMethods.cs:84-88).
+  - RBP-21: `Partner = ""` hace que SAP cree un BP nuevo (BusinessPartnerMethods.cs:435; ficha BP01). No se busca si ya existe un BP con ese `ZidMagento` o correo, como hacía el SP de LAN: es la tarea T1.1-03 de `01_CustomersController.md` (S5).
+  - RBP-47: La ruta devuelve solo el número de BP que trae `Partner` en la respuesta de BP01, sin espacios a los lados y como cadena JSON (p. ej. `"15000XXXXX"`), no el objeto `Client` (BusinessPartnerController.cs:60). Es la misma forma que LAN, que devolvía la cuenta como cadena, con el número de BP en lugar de la cuenta `C…` (DU2; GUIA §3.1). Cambiado el 2026-10-05, sin E2E (tarea T1.1-01 de `PLAN_FABLE_CONTROLADORES\01_CustomersController.md`; decisión D-16 del 2026-10-05, `PLAN_EJECUCION_SP_CREDITO_A_CODIGO.md:2742`). `SubmitClientInfoAsync` sigue devolviendo el `Client` completo, que `PATCH /partner/client` sí responde entero (BusinessPartnerMethods.cs:117; BusinessPartnerController.cs:80-81).
+  - RBP-48: Saneado heredado de LAN: antes de usarlos, `idMagento`, `name`, `lastName`, `lastName2`, `gender`, `email` y `phone` pasan por `SntzMethods.Sntz` (`Methods\Utils\SntzMethods.cs:14, :19-27`; registrado en `ServicioSap.csproj:279`), que quita los caracteres `& ' : < > " / % ( ) = ?` con la misma expresión regular que el `sntz` de LAN (`LAN Metodos\CustomerMethods.cs:184-192` y `Metodos\OrderMethods.cs:1367-1375`) y convierte nulo en `""`; se aplica antes de `Trim` (BusinessPartnerMethods.cs:391-405). `storeCode`, `address` y `dateBirth` no se sanean, como en LAN. Cambio del 2026-10-05 (CQ7, T1.1-05), sin E2E.
+  - RBP-49: Guarda de `Partner` vacío: si BP01 responde 2xx pero `result` es nulo o `Partner` viene nulo o vacío, el BP no se creó y la ruta responde 200 con la cadena JSON `"Error, <motivo>"`. El motivo es el `Message` del primer `toReturn.results` con `Type == "E"`; si ninguno es `E`, el `Message` del primero; si la lista es nula o vacía, el literal `BP01 no devolvio un Partner valido` (BusinessPartnerController.cs:48-59; `Client.to_return` se lee del nodo `toReturn`, Client.cs:136-137). Es la convención de `order/new` (OrderController.cs:46) y no rompe el flujo: Magento recibe 200 con el texto. Las excepciones (HTTP no exitoso de SAP, token, `idMagento` inválido) siguen por el `catch` como 400. Cambio del 2026-10-05 (CQ6 y CQ8, T1.1-08 opción d y T1.1-01b, `PLAN_FABLE_CONTROLADORES\01_CustomersController.md` §3.1.5), sin E2E; es una excepción explícita a SKILL 17 hasta que S5 cree el orquestador `SetCustomerAsync` (T1.1-03). En `sap.log` no hay hoy ninguna respuesta 2xx con `Partner` vacío.
+- **Fuentes de datos:** OData S4 `ZAPI_BP01_PARTNER_SRV`, entity set `BPartnerSet`, escritura POST con las navegaciones `toCte`, `toCteTel`, `toCteCto`, `toCteCtoDireccion`, `toCteCtoEmpleo` en el mismo cuerpo (Client.cs:131-137); más el GET del token CSRF a la raíz del servicio (BusinessPartnerMethods.cs:77-82).
 - **Salida y errores:**
-  - 200 con el `Client` que devuelve SAP, con el `Partner` nuevo (BusinessPartnerController.cs:48). LAN devolvía solo la cuenta (GUIA §3.1).
+  - 200 con una cadena JSON que es el número de BP nuevo: `Partner` sin espacios a los lados, p. ej. `"15000XXXXX"` (BusinessPartnerController.cs:60; BusinessPartnerMethods.cs:113-115, :117; RBP-47). Hasta el 2026-10-05 devolvía el `Client` completo; LAN devolvía solo la cuenta (GUIA §3.1).
+  - 200 con la cadena JSON `"Error, <motivo>"` si BP01 respondió 2xx sin `Partner` (nulo o vacío) o `result` es nulo; el motivo sale de `toReturn` o es el literal `BP01 no devolvio un Partner valido` (BusinessPartnerController.cs:48-59; RBP-49). Hasta el 2026-10-05 salía `""` con `Partner` vacío, o el 400 de abajo con `Partner` nulo.
   - 400 `{"Message": "Uno o mas campos estan mal formulados"}` si el cuerpo es nulo (BusinessPartnerController.cs:40).
-  - 400 `{"Message": "Error, Ocurrio un error al intentar enviar la informacion del cliente: …"}` en cualquier error de SAP o del token (BusinessPartnerController.cs:50-53; BusinessPartnerMethods.cs:152-155).
-  - El JSON enviado, la respuesta y el error quedan en `sap.log`, con los datos personales del cliente (BusinessPartnerMethods.cs:88, :99, :103).
+  - 400 `{"Message": "Error, Ocurrio un error al intentar enviar la informacion del cliente: …"}` en cualquier error HTTP de SAP o del token (BusinessPartnerController.cs:62-65; BusinessPartnerMethods.cs:121-124), y 400 `{"Message": "Error, <texto de FormatException u OverflowException>"}` si `idMagento` viene vacío, no numérico o desbordado (RBP-15; BusinessPartnerMethods.cs:404).
+  - El JSON enviado, la respuesta y el error quedan en `sap.log`, con los datos personales del cliente (BusinessPartnerMethods.cs:89, :100, :104).
 - **Configuración usada:** ninguna llave del Web.config (S4 por Conexion.dll, RBPC-2).
-- **Pendientes conocidos:** `nombreCompleto` y `nacimientoOdata` se calculan y no se usan (BusinessPartnerMethods.cs:425-426, :429); el `cp` del modelo no se aprovecha y la región queda fija en "JAL" (BusinessPartnerMethods.cs:457-461); falta definir qué `ZappOrig` llevan los BP de la tienda en línea (ACT-36); falta probar en DEV un alta con `Marst` 1 (ACT-25 lo prueba en el alta desde una orden de contado, que usa el mismo valor); la GUIA cuenta esta ruta entre las que no están en paridad con LAN porque devuelve el `Client` completo y LAN devolvía la cuenta (GUIA:363).
+- **Pendientes conocidos:** el `cp` del modelo no se aprovecha y la región queda fija en "JAL" (BusinessPartnerMethods.cs:427-431); falta definir qué `ZappOrig` llevan los BP de la tienda en línea (ACT-36); falta probar en DEV un alta con `Marst` 1 (ACT-25 lo prueba en el alta desde una orden de contado, que usa el mismo valor; `Marst` se decide en CREDITO P14); los cambios del 2026-10-05 están sin E2E y la E2E la hace el usuario (`01_CustomersController.md` T1.1-09, S6): la respuesta es el número de BP (RBP-47), el saneado `Sntz` (RBP-48), nombres y correo en MAYÚSCULAS (RBP-5, RBP-14), `idMagento` obligatorio (RBP-15) y la guarda de `Partner` vacío (RBP-49); `Fiscalregimen` sigue vacío, como siempre en SAP, y el `'605'` de LAN queda pendiente del dueño fiscal (RBP-17, T1.1-02); mientras no haya E2E, GUIA:363 sigue contando esta ruta entre las que no están en paridad con LAN; un `storeCode` desconocido, en otra escritura o `mavi` sigue yendo a la organización `04` (RBP-6) donde LAN fallaba, porque el usuario no lo decidió (CQ5 del 2026-10-05; `01_CustomersController.md` T1.1-07, 1.1-R4); la dirección, el teléfono, la fecha de nacimiento, `Region` y el contacto tipo 20 que LAN no guardaba se conservan por decisión del usuario (CQ4 = B, 2026-10-05; T1.1-06, T1.1-11); la búsqueda del BP existente antes de crear, que LAN hacía en el SP, es la tarea T1.1-03 de S5: hoy cada llamada crea un BP (RBP-21). El código muerto del builder (`nombreCompleto`, `nacimientoOdata` con `FormatDateSapOData`, `mappedVkorgKnvp`, el bloque comentado del canal `02` y `ParseMagentoId`) se borró el 2026-10-05 (CQ9, T1.1-10).
 
-### PATCH /partner/client  (BusinessPartnerController.UpdateClient, BusinessPartnerController.cs:56-75)
+### PATCH /partner/client  (BusinessPartnerController.UpdateClient, BusinessPartnerController.cs:68-87)
 
 - **Para qué sirve:** actualiza un BP existente mandando a BP01 el objeto `Client` tal como llega.
 - **Quién la llama:** no se encontró llamador en la DMZ ni en el tracker.
@@ -1707,7 +1712,7 @@ Las rutas de archivo son relativas a `ServicioSap\ServicioSap\`. "DMZ" es `DMZ\W
 - **Configuración usada:** ninguna llave del Web.config.
 - **Pendientes conocidos:** por RBP-24, una actualización parcial manda en `false`/`0` los campos que no se enviaron; no se verificó qué hace SAP con ellos.
 
-### PATCH /partner/client/unircuenta  (BusinessPartnerController.UnirCuenta, BusinessPartnerController.cs:77-96)
+### PATCH /partner/client/unircuenta  (BusinessPartnerController.UnirCuenta, BusinessPartnerController.cs:89-108)
 
 - **Para qué sirve:** liga la cuenta de Magento con el BP: escribe el id numérico del cliente de Magento en `ZidMagento` de la tabla Z de clientes.
 - **Quién la llama:** la ruta `customerService/unirCuenta` de la DMZ (DMZ Controllers\CustomerServiceController.cs:60; tracker fila 43). El flujo de crédito usa el mismo método (CreditMethods.cs:274).
@@ -1726,7 +1731,7 @@ Las rutas de archivo son relativas a `ServicioSap\ServicioSap\`. "DMZ" es `DMZ\W
 - **Configuración usada:** ninguna llave del Web.config.
 - **Pendientes conocidos:** las URLs del PATCH y del token no llevan `sap-client`, así que usan el mandante por defecto del sistema (BusinessPartnerMethods.cs:842-843).
 
-### POST /partner/enablechanelorg  (BusinessPartnerController.EnableChannelOrg, BusinessPartnerController.cs:98-117)
+### POST /partner/enablechanelorg  (BusinessPartnerController.EnableChannelOrg, BusinessPartnerController.cs:110-129)
 
 - **Para qué sirve:** habilita un BP existente en otra área de ventas (datos de ventas KNVV), por ejemplo abrir el canal `02` (crédito) a un cliente que solo tenía `01` (contado) (BusinessPartnerMethods.cs:199-202).
 - **Quién la llama:** no se encontró llamador. El alta lo llamaba en segundo plano y ese bloque está comentado (RBP-8).
@@ -1745,7 +1750,7 @@ Las rutas de archivo son relativas a `ServicioSap\ServicioSap\`. "DMZ" es `DMZ\W
 - **Configuración usada:** `URL_BP_API`.
 - **Pendientes conocidos:** al recibir, la ruta lee `ReturnSet` con su nombre C#, no `RETURNSet` (RBPC-7); crea un cliente HTTP por petición en lugar de usar el cliente externo compartido (BusinessPartnerMethods.cs:214; TokenGenerator.cs:98-111).
 
-### POST /partner/testnew  (BusinessPartnerController.TestCreateClient, BusinessPartnerController.cs:119-134)
+### POST /partner/testnew  (BusinessPartnerController.TestCreateClient, BusinessPartnerController.cs:131-146)
 
 - **Para qué sirve:** ruta de prueba: manda a BP01 el JSON del cuerpo tal cual, sin validar ni completar.
 - **Quién la llama:** nadie. Está en la lista de "¿se borra?" (GUIA §8.2).
@@ -1762,10 +1767,10 @@ Las rutas de archivo son relativas a `ServicioSap\ServicioSap\`. "DMZ" es `DMZ\W
 - **Configuración usada:** ninguna llave del Web.config.
 - **Pendientes conocidos:** decidir si se borra (GUIA §8.2).
 
-### GET /partner/client/filter/{sapFilter}  (BusinessPartnerController.GetFilterClients, BusinessPartnerController.cs:136-150)
+### GET /partner/client/filter/{sapFilter}  (BusinessPartnerController.GetFilterClients, BusinessPartnerController.cs:148-162)
 
 - **Para qué sirve:** búsqueda libre de clientes en BP05 con una expresión `$filter` de OData que arma el llamador.
-- **Quién la llama:** sin llamador directo en la DMZ (el tracker fila 44 la asocia a `customerService/validarCliente`, pero la DMZ llama a la ruta de ServicioSAP del mismo nombre, DMZ Controllers\CustomerServiceController.cs:77). El método se reutiliza en las listas de correos (CustomerMethods.cs:88) y en `prospecto/recuperarcuenta` (ProspectoController.cs:49).
+- **Quién la llama:** sin llamador directo en la DMZ (el tracker fila 44 la asocia a `customerService/validarCliente`, pero la DMZ llama a la ruta de ServicioSAP del mismo nombre, DMZ Controllers\CustomerServiceController.cs:77). El método se reutiliza en las listas de correos (CustomerMethods.cs:89) y en `prospecto/recuperarcuenta` (ProspectoController.cs:49).
 - **Entrada:** `sapFilter` (texto en la ruta, codificado para URL): una expresión OData, por ejemplo `Mail eq '…'` (BusinessPartnerController.cs:137-138).
 - **Cómo funciona (paso a paso):**
   1. Arma `ZB_DATOS_CLIENTE?$filter={sapFilter}&sap-client=110&$format=json` (BusinessPartnerMethods.cs:252).
@@ -1781,7 +1786,7 @@ Las rutas de archivo son relativas a `ServicioSap\ServicioSap\`. "DMZ" es `DMZ\W
 - **Configuración usada:** ninguna llave del Web.config.
 - **Pendientes conocidos:** quien arme el filtro con datos del usuario debe escapar la comilla simple; ver GUIA C12 y RPRO-7. Como el filtro viaja dentro de la ruta y el Web.config no cambia la lista de caracteres prohibidos en rutas (Web.config:93), ASP.NET rechaza con 400, antes de llegar al controlador, un filtro con `:`, `*`, `%`, `&`, `<`, `>` o `\`; por ejemplo, uno con fecha (`datetime'…T00:00:00'`). Una `/` dentro del filtro rompe la ruta. Las llamadas internas (listas de correos, recuperar cuenta) no pasan por la ruta y no tienen este límite.
 
-### GET /partner/client/ma/{clientId}  (BusinessPartnerController.GetClientMa, BusinessPartnerController.cs:152-166)
+### GET /partner/client/ma/{clientId}  (BusinessPartnerController.GetClientMa, BusinessPartnerController.cs:164-178)
 
 - **Para qué sirve:** devuelve la ficha ampliada del cliente (BP05MA) con 12 navegaciones: teléfonos, domicilios, sociedad, dirección personal, contactos, datos de cliente, datos comerciales, tabla Z `Cte`, personas de contacto, datos bancarios, funciones de interlocutor e impuestos (BusinessPartnerMethods.cs:299).
 - **Quién la llama:** el tracker fila 45 la asigna a `customerService/nombreCliente` (no conectada). El método lo usan atención a clientes, crédito y mayoreo (CustomerServiceMethods.cs:201, :228, :260, :344; SolicitudCreditoWebMethods.cs:379; BusinessPartnerMethods.cs:916).
@@ -1800,7 +1805,7 @@ Las rutas de archivo son relativas a `ServicioSap\ServicioSap\`. "DMZ" es `DMZ\W
 - **Configuración usada:** ninguna llave del Web.config.
 - **Pendientes conocidos:** ninguno en el código.
 
-### GET /partner/successfactor/employee/{userId}  (BusinessPartnerController.GetSuccessFactorEmployee, BusinessPartnerController.cs:168-182)
+### GET /partner/successfactor/employee/{userId}  (BusinessPartnerController.GetSuccessFactorEmployee, BusinessPartnerController.cs:180-194)
 
 - **Para qué sirve:** consulta en SuccessFactors (el sistema de recursos humanos) los datos de un empleado por su número de usuario o nómina.
 - **Quién la llama:** el tracker fila 59 la asigna a `customerService/GetEmpleadoByNomina` (no conectada). El método lo usan las órdenes para validar si un código promocional es de un empleado (`HandlePromoCodeAsync`, OrderMethods.cs:1013, :1044).
@@ -1818,7 +1823,7 @@ Las rutas de archivo son relativas a `ServicioSap\ServicioSap\`. "DMZ" es `DMZ\W
 - **Configuración usada:** `URL_ANDROID_API`.
 - **Pendientes conocidos:** devuelve datos personales del empleado (correo, teléfonos, dirección, fecha de nacimiento) a quien tenga token (SuccessFactorEmployee.cs:40-104); crea un cliente HTTP por petición, sin tiempo de espera propio (BusinessPartnerMethods.cs:352).
 
-### GET /partner/ventadist/client/{clientId}  (BusinessPartnerController.GetCustomerSalesChannels, BusinessPartnerController.cs:184-198)
+### GET /partner/ventadist/client/{clientId}  (BusinessPartnerController.GetCustomerSalesChannels, BusinessPartnerController.cs:196-210)
 
 - **Para qué sirve:** lista las áreas de ventas (organización, canal y sector, con descripciones) en las que está dado de alta un cliente (SD52). Es el reemplazo de la tabla `VentasCanalMAVI` (GUIA:547).
 - **Quién la llama:** no se encontró llamador.
@@ -1836,7 +1841,7 @@ Las rutas de archivo son relativas a `ServicioSap\ServicioSap\`. "DMZ" es `DMZ\W
 - **Configuración usada:** ninguna llave del Web.config.
 - **Pendientes conocidos:** la **edición** del canal de venta (POST por `URL_ANDROID_API`) no está implementada (BusinessPartnerMethods.cs:383).
 
-### GET /partner/ConsultaAnexos/{valorAnexo}  (BusinessPartnerController.GetConsultaAnexos, BusinessPartnerController.cs:199-213)
+### GET /partner/ConsultaAnexos/{valorAnexo}  (BusinessPartnerController.GetConsultaAnexos, BusinessPartnerController.cs:211-225)
 
 - **Para qué sirve:** lee del catálogo general de códigos de SAP (code master) los valores de un programa o "anexo".
 - **Quién la llama:** no se encontró llamador.
@@ -1970,23 +1975,23 @@ Las rutas de archivo son relativas a `ServicioSap\ServicioSap\`. "DMZ" es `DMZ\W
   1. Cuerpo nulo o campo nulo → 400 "Datos incompletos" (CustomersController.cs:19-29).
   2. Traduce la lista: `white` → `Blanca`, `black` → `Negra`; otro valor → 400 "Lista invalida" (CustomersController.cs:32-42).
   3. Llama a `blackwhitelistAsync("Insertar", …)` (CustomersController.cs:46-47).
-  4. Antes de insertar, busca en BP05 un cliente con ese correo; si no hay, devuelve `""` sin insertar (CustomerMethods.cs:21-24, :74-97).
+  4. Antes de insertar, busca en BP05 un cliente con ese correo (el valor va con la comilla duplicada y codificado para la URL, RCLI-3); si no hay, devuelve `""` sin insertar (CustomerMethods.cs:21-24, :75-98).
   5. Ejecuta `exec SpListaNBMagento @Tipo, @Correo, @Lista, @NumPedido, @Nombre, @DireccionEntrega, @IdMagento, @FechaRegistro` en SIGMavi (CustomerMethods.cs:26-48).
   6. Si el SP devuelve alguna fila, la respuesta es `"true"`; si no, `""` (CustomerMethods.cs:52-61).
 - **Reglas de negocio:**
   - RCLI-1: Solo se inserta si el correo pertenece a un BP en SAP (CustomerMethods.cs:21-24).
-  - RCLI-2: El campo de correo en BP05 se toma de la llave `SAP_BP_CAMPO_EMAIL`; como no está en el Web.config, se usa `Mail` (CustomerMethods.cs:78-79).
-  - RCLI-3: La comilla simple del correo se duplica para no romper el filtro OData (CustomerMethods.cs:81-82).
+  - RCLI-2: El campo de correo en BP05 se toma de la llave `SAP_BP_CAMPO_EMAIL`; como no está en el Web.config, se usa `Mail` (CustomerMethods.cs:79-80).
+  - RCLI-3: La comilla simple del correo se duplica y el valor se codifica para la URL con `Uri.EscapeDataString` antes de armar el filtro OData, así que `+`, `&`, `#`, `%` y `@` viajan como `%2B`, `%26`, `%23`, `%25` y `%40` y el filtro llega entero a SAP (CustomerMethods.cs:82-83). La codificación es del 2026-10-05 (decisión CQ13, `PLAN_FABLE_CONTROLADORES\01_CustomersController.md` §5, T1.2-02), sin E2E: la hace el usuario (S6). Antes solo se duplicaba la comilla y un correo con `#`, `&` o `%` rompía el filtro, así que no se insertaba.
   - RCLI-4: `@NumPedido` va siempre en `"0"` y `@FechaRegistro` es la hora del servidor (CustomerMethods.cs:42, :46-47).
-  - RCLI-5: Si falla la consulta a SAP, se toma como "el correo no existe" y se registra `[CUSTOMER ValidarClienteEnSap]` (CustomerMethods.cs:91-96). Como BP05 responde "No se encontraron clientes" con un error cuando no hay coincidencias (RBP-35), un correo que no es de ningún BP también deja esa línea en el log, con el correo dentro del filtro (CustomerMethods.cs:82, :93-94; BusinessPartnerMethods.cs:278-281).
-  - RCLI-6: Si falla el SQL, se registra `[CUSTOMER blackwhitelist ERROR]` y la respuesta es `""`; el error no sube (CustomerMethods.cs:64-70).
+  - RCLI-5: Si falla la consulta a SAP, se toma como "el correo no existe" y se registra `[CUSTOMER ValidarClienteEnSap]` (CustomerMethods.cs:92-97). Como BP05 responde "No se encontraron clientes" con un error cuando no hay coincidencias (RBP-35), un correo que no es de ningún BP también deja esa línea en el log, con el correo dentro del filtro, codificado desde el 2026-10-05 (RCLI-3) (CustomerMethods.cs:83, :94-95; BusinessPartnerMethods.cs:278-281).
+  - RCLI-6: Si falla el SQL, se registra `[CUSTOMER blackwhitelist ERROR]` y el error se relanza (CustomerMethods.cs:64-69); en esta ruta lo atrapa el controlador, que lo registra como `[CUSTOMER setCustomerList ERROR]` y responde 200 sin cuerpo (CustomersController.cs:50-54), igual que LAN. Cambio del 2026-10-05 (decisión CQ12 = A, `PLAN_FABLE_CONTROLADORES\01_CustomersController.md` §5, T1.L-02), sin E2E. Antes el método se tragaba el error y la respuesta era `""`.
   - RCLI-7: El tiempo de espera del comando es de 999 999 segundos (CustomerMethods.cs:50).
 - **Fuentes de datos:**
-  - OData S4 BP05 (`ZB_DATOS_CLIENTE`), filtro `Mail eq '…'`, lectura (CustomerMethods.cs:86-88).
+  - OData S4 BP05 (`ZB_DATOS_CLIENTE`), filtro `Mail eq '…'`, lectura (CustomerMethods.cs:87-89).
   - SQL Server SIGMavi, SP `SpListaNBMagento` con `@Tipo = 'Insertar'`, escritura. La conexión sale de Conexion.dll con `obtenerConexionSigMaviAsync` y el alias de servidor del setting `Server` (CustomerMethods.cs:32-33; ConexionSQL.cs:72-98; decisión DU19).
-- **Salida y errores:** 200 con `"true"` o `""`; 400 `{"Message": "Datos incompletos"}` o `{"Message": "Lista invalida"}`; un error inesperado se registra como `[CUSTOMER setCustomerList ERROR]` y responde 200 sin cuerpo (CustomersController.cs:48-53).
+- **Salida y errores:** 200 con `"true"` o `""`; 400 `{"Message": "Datos incompletos"}` o `{"Message": "Lista invalida"}`; un error de SQL (RCLI-6) o inesperado se registra como `[CUSTOMER setCustomerList ERROR]` y responde 200 sin cuerpo (CustomersController.cs:50-54).
 - **Configuración usada:** `SAP_BP_CAMPO_EMAIL` (opcional, hoy ausente); setting `Server` (Web.config:159-161).
-- **Pendientes conocidos:** en paridad con LAN; no volver a reportarlo (GUIA:369). Falta confirmar el destino final de las listas cuando se apague Intelisis, probablemente SIGMavi (GUIA:547).
+- **Pendientes conocidos:** en paridad con LAN; no volver a reportarlo (GUIA:369). Falta confirmar el destino final de las listas cuando se apague Intelisis, probablemente SIGMavi (GUIA:547). La codificación del correo en el filtro (RCLI-3) y la rama de error (RCLI-6) cambiaron el 2026-10-05 sin E2E; la E2E la hace el usuario (`PLAN_FABLE_CONTROLADORES\01_CustomersController.md` T1.2-01, T1.2-02, S6).
 
 ### POST /customer/getCustomerList  (CustomersController.GetCustomerEmailage, CustomersController.cs:57-77)
 
@@ -2000,11 +2005,11 @@ Las rutas de archivo son relativas a `ServicioSap\ServicioSap\`. "DMZ" es `DMZ\W
 - **Reglas de negocio:**
   - RCLI-8: La lista negra gana: se consulta primero (CustomersController.cs:64-69).
   - RCLI-9: La consulta no revisa que el correo sea de un BP; eso solo pasa al insertar (CustomerMethods.cs:21).
-  - RCLI-10: Un error de SQL se traga y se lee como "no está": la respuesta puede ser `"No esta en listas"` aunque la base haya fallado (CustomerMethods.cs:64-70; CustomersController.cs:73).
+  - RCLI-10: Un error de SQL se registra como `[CUSTOMER blackwhitelist ERROR]` y se relanza (CustomerMethods.cs:64-69); el controlador no lo atrapa, así que la respuesta es 500, igual que LAN (CustomersController.cs:59-77). Cambio del 2026-10-05 (decisión CQ12 = A, `PLAN_FABLE_CONTROLADORES\01_CustomersController.md` §5, T1.L-02), sin E2E. Antes el error se tragaba y se leía como "no está": la respuesta podía ser `"No esta en listas"` aunque la base hubiera fallado, y un correo en lista negra pasaba como limpio con SIGMavi caído.
 - **Fuentes de datos:** SQL Server SIGMavi, SP `SpListaNBMagento` con `@Tipo = 'Consultar'` y `@Lista` `Negra` o `Blanca`, lectura (CustomerMethods.cs:26, :32-38).
-- **Salida y errores:** 200 con `"black"`, `"white"` o `"No esta en listas"`; 400 `{"Message": "Datos incompletos"}` (CustomersController.cs:62, :76).
+- **Salida y errores:** 200 con `"black"`, `"white"` o `"No esta en listas"`; 400 `{"Message": "Datos incompletos"}` (CustomersController.cs:62, :76); 500 si falla SQL (RCLI-10).
 - **Configuración usada:** setting `Server` (Web.config:159-161).
-- **Pendientes conocidos:** ver RCLI-10.
+- **Pendientes conocidos:** la rama de error (RCLI-10) cambió el 2026-10-05 sin E2E; la E2E la hace el usuario (`PLAN_FABLE_CONTROLADORES\01_CustomersController.md` T1.3-01, S6).
 
 ### POST /customer/deleteCustomerList  (CustomersController.DeleteCustomerEmailage, CustomersController.cs:79-88)
 
@@ -2017,11 +2022,11 @@ Las rutas de archivo son relativas a `ServicioSap\ServicioSap\`. "DMZ" es `DMZ\W
   3. Si el SP devuelve filas → `"true"`; si no → `""` (CustomerMethods.cs:52-61).
 - **Reglas de negocio:**
   - RCLI-11: No se indica lista: `@Lista` va vacío (CustomersController.cs:86; CustomerMethods.cs:16, :38).
-  - RCLI-12: Un error de SQL se registra y la respuesta es `""` (CustomerMethods.cs:64-70).
+  - RCLI-12: Un error de SQL se registra como `[CUSTOMER blackwhitelist ERROR]` y se relanza (CustomerMethods.cs:64-69); el controlador no lo atrapa, así que la respuesta es 500, igual que LAN (CustomersController.cs:81-88). Cambio del 2026-10-05 (decisión CQ12 = A, `PLAN_FABLE_CONTROLADORES\01_CustomersController.md` §5, T1.L-02), sin E2E. Antes la respuesta era `""`.
 - **Fuentes de datos:** SQL Server SIGMavi, SP `SpListaNBMagento`, escritura.
-- **Salida y errores:** 200 con `"true"` o `""`; 400 `{"Message": "Datos incompletos"}` (CustomersController.cs:84, :87).
+- **Salida y errores:** 200 con `"true"` o `""`; 400 `{"Message": "Datos incompletos"}` (CustomersController.cs:84, :87); 500 si falla SQL (RCLI-12).
 - **Configuración usada:** setting `Server` (Web.config:159-161).
-- **Pendientes conocidos:** en paridad con LAN (GUIA:369).
+- **Pendientes conocidos:** en paridad con LAN (GUIA:369); la rama de error (RCLI-12) cambió el 2026-10-05 sin E2E; la E2E la hace el usuario (`PLAN_FABLE_CONTROLADORES\01_CustomersController.md` T1.4-01, S6).
 
 ### POST /customer/getCuenta  (CustomersController.GetCuenta, CustomersController.cs:92-98)
 
@@ -2201,13 +2206,13 @@ Las rutas de archivo son relativas a `ServicioSap\ServicioSap\`. "DMZ" es `DMZ\W
 - RBPC-2: **Conexión a S4.** La URL base y el usuario de servicio salen de Conexion.dll con el nodo `ENVIROMENT_DEV` (por ejemplo BusinessPartnerMethods.cs:30; TokenGenerator.cs:60-82); los valores de ambiente son de Dev y no son bloqueo (DU1); el nodo fijo es un prerrequisito de pase, no un defecto (GUIA §8.6). La autenticación es Basic, guardada en memoria; cada llamada crea un cliente HTTP con cookies (para la sesión del token CSRF), 60 s de espera, y acepta cualquier certificado (TokenGenerator.cs:113-133). Un cliente nuevo por petición es diseño, no deuda: el token CSRF queda ligado a la cookie de ese cliente (GUIA §1.6a).
 - RBPC-3: **Escrituras a S4.** Antes de cada escritura se pide el token CSRF; un token vacío o `Required` es error (TokenGenerator.cs:135-171).
 - RBPC-4: **Mandante.** Casi todas las URLs llevan `sap-client=110` fijo; no lo llevan las de `API_BUSINESS_PARTNER` (DeliveryAddressMethods.cs:32, :75, :116, :157) ni la de `ZSDT_CTE` (BusinessPartnerMethods.cs:842-843).
-- RBPC-5: **Errores.** Los métodos envuelven el error con contexto (estado y cuerpo de SAP) y lo relanzan; los controladores lo devuelven como 400 `{"Message": "…"}`. Excepciones: `prospecto/recuperarcuenta` y `cashCustomerReport` siempre dan 200 con el resultado en el cuerpo (RPRO-5, RCLI-19); las listas de correos se tragan los errores (RCLI-6, RCLI-10); `company/wholesale-customer` da 500 (RMAY-3); `getCuenta`/`setCuenta` no atrapan nada y dan 500 (CustomersController.cs:94-107). Con `customErrors` apagado, los 500 llevan el detalle de la excepción (Web.config:94).
-- RBPC-6: **Filtros OData.** Los valores se pegan en las URLs sin escapar (BusinessPartnerMethods.cs:30, :252, :302, :350, :843, :882; DeliveryAddressMethods.cs:32, :75, :116, :157, :197; AccountMethods.cs:190; ProspectoController.cs:47). Solo SD52 codifica el valor (BusinessPartnerMethods.cs:385) y las listas de correos duplican la comilla (CustomerMethods.cs:81). El crédito filtra la cuenta a letras y números antes de consultar (CreditMethods.cs:337-339).
+- RBPC-5: **Errores.** Los métodos envuelven el error con contexto (estado y cuerpo de SAP) y lo relanzan; los controladores lo devuelven como 400 `{"Message": "…"}`. Excepciones: `prospecto/recuperarcuenta` y `cashCustomerReport` siempre dan 200 con el resultado en el cuerpo (RPRO-5, RCLI-19); `partner/client` POST responde 200 con la cadena `"Error, …"` cuando BP01 responde 2xx sin `Partner` (RBP-49; cambio del 2026-10-05); en las listas de correos el error de SQL se relanza (RCLI-6, RCLI-10, RCLI-12; cambio del 2026-10-05): `setCustomerList` lo atrapa en el controlador y responde 200 sin cuerpo, `getCustomerList` y `deleteCustomerList` dan 500; `company/wholesale-customer` da 500 (RMAY-3); `getCuenta`/`setCuenta` no atrapan nada y dan 500 (CustomersController.cs:94-107). Con `customErrors` apagado, los 500 llevan el detalle de la excepción (Web.config:94).
+- RBPC-6: **Filtros OData.** Los valores se pegan en las URLs sin escapar (BusinessPartnerMethods.cs:30, :252, :302, :350, :843, :882; DeliveryAddressMethods.cs:32, :75, :116, :157, :197; AccountMethods.cs:190; ProspectoController.cs:47). Solo SD52 codifica el valor (BusinessPartnerMethods.cs:385) y las listas de correos duplican la comilla y codifican el valor con `Uri.EscapeDataString` (CustomerMethods.cs:82-83; la codificación es del 2026-10-05, RCLI-3). El crédito filtra la cuenta a letras y números antes de consultar (CreditMethods.cs:337-339).
 - RBPC-7: **Nombres de campos en la respuesta.** Hacia SAP se usa System.Text.Json (BP01, BP05, BP05MA, SD52, SD33) o Newtonsoft (direcciones, anexos, sucursales). Hacia el llamador, Web API usa su formateador por defecto (Newtonsoft; WebApiConfig.cs:11-23 no lo cambia), que ignora los atributos `[JsonPropertyName]`. Por eso salen los nombres C#: `to_return` en `Client` (Client.cs:136-137), `To_CteTel` con `Results` en BP05MA (BusinessPartnerMa.cs:128-162; NavigationCollection.cs:8-9), `PersonIdExternal` en SuccessFactors (SuccessFactorEmployee.cs:7-8). Al recibir pasa lo mismo: `Client.to_return` y `BpCombinationRequest.ReturnSet` se leen con su nombre C#.
 - RBPC-8: **Dos lugares crean BP.** El alta de la tienda (`BuildClientFromCustomerRequest`, BusinessPartnerMethods.cs:415) y el alta desde una orden (`BuildBpClientFromOrder`, OrderMethods.cs:2618). Comparten `MapGender` y `Marst = "1"` (OrderMethods.cs:2655, :2659; RBP-9, RBP-10) y mandan los dos por `SubmitClientInfoAsync` (OrderMethods.cs:2607).
 - RBPC-9: **Cuenta = BP numérico.** Las rutas reciben el número de BP tal cual; no se traducen cuentas `C…` (DU2).
 - RBPC-10: **Bases de datos.** La única base SQL del área es SIGMavi y se abre con Conexion.dll (`obtenerConexionSigMaviAsync`) y el setting `Server` (ConexionSQL.cs:72-98; Web.config:159-161; DU19). Las cadenas `MAVICBOSANDROID` y `ADMINDOC` del Web.config no se usan en esta área.
-- RBPC-11: **Log.** `Logger.SAP` escribe cada línea en tres lugares: el archivo fijo `C:\inetpub\wwwroot\log\sap.log` si esa carpeta existe, `Logs\sap.log` dentro de la carpeta del sitio y la salida de depuración (Logger.cs:11-23, :26-41, :44). Los errores al escribir se ignoran, pero la creación de la carpeta `Logs` está fuera del `try`: si el sitio no puede crearla, el error sube al método que estaba registrando (Logger.cs:28-31). En esta área registran: alta y cambio de BP (con los datos personales del cliente), unir cuenta, error de anexos, listas de correos, reporte de contado y error de recuperar cuenta (BusinessPartnerMethods.cs:88, :99, :103, :854, :865, :904; CustomerMethods.cs:66, :93; CustomersController.cs:52; CashReportMethods.cs:82; ProspectoController.cs:70). Las demás consultas no registran nada.
+- RBPC-11: **Log.** `Logger.SAP` escribe cada línea en tres lugares: el archivo fijo `C:\inetpub\wwwroot\log\sap.log` si esa carpeta existe, `Logs\sap.log` dentro de la carpeta del sitio y la salida de depuración (Logger.cs:11-23, :26-41, :44). Los errores al escribir se ignoran, pero la creación de la carpeta `Logs` está fuera del `try`: si el sitio no puede crearla, el error sube al método que estaba registrando (Logger.cs:28-31). En esta área registran: alta y cambio de BP (con los datos personales del cliente), unir cuenta, error de anexos, listas de correos, reporte de contado y error de recuperar cuenta (BusinessPartnerMethods.cs:88, :99, :103, :854, :865, :904; CustomerMethods.cs:66, :94; CustomersController.cs:52; CashReportMethods.cs:82; ProspectoController.cs:70). Las demás consultas no registran nada.
 
 ---
 
@@ -4185,7 +4190,7 @@ Solo nombres de llave, nunca valores. Los valores de ambiente son de Dev y son c
 | Bases SQL | `connectionStrings/ADMINDOC` | `:15` | `Helpers/ConexionDB/ConexionSQL.cs:140`, `:171` |
 | Bases SQL | `applicationSettings/Server` (alias para SIGMavi en el DLL) | `:157-163` | `Helpers/ConexionDB/ConexionSQL.cs:15`, `:75`; si falta en Web.config se usa el valor por defecto compilado (`Properties/Settings.Designer.cs:28`) |
 | Plantilla MVC | `webpages:Version`, `webpages:Enabled`, `ClientValidationEnabled`, `UnobtrusiveJavaScriptEnabled` | `:22-25` | ningún archivo del código (vienen de la plantilla; las lee el propio ASP.NET) |
-| Falta en Web.config | `SAP_BP_CAMPO_EMAIL` | — | `Methods/Customer/CustomerMethods.cs:78`; si no existe usa `Mail` (`:79`) |
+| Falta en Web.config | `SAP_BP_CAMPO_EMAIL` | — | `Methods/Customer/CustomerMethods.cs:79`; si no existe usa `Mail` (`:80`) |
 
 Lo que **no** está en Web.config, a propósito: la URL base de S/4HANA y las credenciales del usuario de servicio (salen de `Conexion.dll`, `Helpers/TokenGenerator.cs:70-71`), y la conexión a SIGMavi (sale del DLL, DU19). Las credenciales SMTP tampoco están, pero esa sí es deuda (`Helpers/MailHelper.cs:113-117`).
 
@@ -4259,7 +4264,7 @@ La tabla maestra se movió al inicio del documento, a [[#Mapa de rutas]], para q
 | PT-6 | Detalle de excepciones visible para quien llama | `Web.config:94`, `:97` | — |
 | PT-7 | Logs: `Console.WriteLine` que se pierde en IIS; creación de carpeta fuera del `try` | `Helpers/Logger.cs:28-31` | — |
 | PT-8 | Login al DMZ duplicado fuera de `Curl` | `Methods/Order/OrderMethods.cs:1177-1215`, `:1270` | — |
-| PT-9 | Llaves sin uso (`SAP_STAGE`, plantilla MVC) y llave leída que no existe (`SAP_BP_CAMPO_EMAIL`) | `Web.config:22-25`, `:34`; `Methods/Customer/CustomerMethods.cs:78-79` | — |
+| PT-9 | Llaves sin uso (`SAP_STAGE`, plantilla MVC) y llave leída que no existe (`SAP_BP_CAMPO_EMAIL`) | `Web.config:22-25`, `:34`; `Methods/Customer/CustomerMethods.cs:79-80` | — |
 | PT-10 | Rutas de prueba `order/testnew` y `partner/testnew` | `Controllers/OrderController.cs:50-54`, `Controllers/BusinessPartnerController.cs:119-121` | GUIA §8.2 |
 | PT-11 | Alias de servidor de SIGMavi para Prod no existe en el DLL | `Helpers/ConexionDB/ConexionSQL.cs:19`, `:79` | DU19 |
 | PT-12 | Raíz del CSRF de bonificación escrita a mano en vez de salir de `ZAPI_CAMPANA_BONIFICACION_SRV` | `Methods/MaterialManagement/AccountMethods.cs:50`, `:102` | SKILL regla 20 |
@@ -4384,7 +4389,7 @@ Sección: [[#Crédito (CreditController SMS, plazos, documentos, montos, Credila
 Sección: [[#Clientes y Business Partner (BP, direcciones, prospectos, mayoreo, cuentas)|Clientes y Business Partner (BP, direcciones, prospectos, mayoreo, cuentas)]]
 
 - **GET /partner/client/{clientId}**: el mensaje de error dice "listado de clientes" aunque es una consulta individual (BusinessPartnerMethods.cs:67).
-- **POST /partner/client**: `nombreCompleto` y `nacimientoOdata` se calculan y no se usan (BusinessPartnerMethods.cs:425-426, :429); el `cp` del modelo no se aprovecha y la región queda fija en "JAL" (BusinessPartnerMethods.cs:457-461); falta definir qué `ZappOrig` llevan los BP de la tienda en línea (ACT-36); falta probar en DEV un alta con `Marst` 1 (ACT-25 lo prueba en el alta desde una orden de contado, que usa el mismo valor); la GUIA cuenta esta ruta entre las que no están en paridad con LAN porque devuelve el `Client` completo y LAN devolvía la cuenta (GUIA:363).
+- **POST /partner/client**: el `cp` del modelo no se aprovecha y la región queda fija en "JAL" (BusinessPartnerMethods.cs:427-431); falta definir qué `ZappOrig` llevan los BP de la tienda en línea (ACT-36); falta probar en DEV un alta con `Marst` 1 (ACT-25 lo prueba en el alta desde una orden de contado, que usa el mismo valor; `Marst` se decide en CREDITO P14); los cambios del 2026-10-05 están sin E2E y la E2E la hace el usuario (`01_CustomersController.md` T1.1-09, S6): la respuesta es el número de BP (RBP-47), el saneado `Sntz` (RBP-48), nombres y correo en MAYÚSCULAS (RBP-5, RBP-14), `idMagento` obligatorio (RBP-15) y la guarda de `Partner` vacío (RBP-49); `Fiscalregimen` sigue vacío, como siempre en SAP, y el `'605'` de LAN queda pendiente del dueño fiscal (RBP-17, T1.1-02); mientras no haya E2E, GUIA:363 sigue contando esta ruta entre las que no están en paridad con LAN; un `storeCode` desconocido, en otra escritura o `mavi` sigue yendo a la organización `04` (RBP-6) donde LAN fallaba, porque el usuario no lo decidió (CQ5 del 2026-10-05; `01_CustomersController.md` T1.1-07, 1.1-R4); la dirección, el teléfono, la fecha de nacimiento, `Region` y el contacto tipo 20 que LAN no guardaba se conservan por decisión del usuario (CQ4 = B, 2026-10-05; T1.1-06, T1.1-11); la búsqueda del BP existente antes de crear, que LAN hacía en el SP, es la tarea T1.1-03 de S5: hoy cada llamada crea un BP (RBP-21). El código muerto del builder (`nombreCompleto`, `nacimientoOdata` con `FormatDateSapOData`, `mappedVkorgKnvp`, el bloque comentado del canal `02` y `ParseMagentoId`) se borró el 2026-10-05 (CQ9, T1.1-10).
 - **PATCH /partner/client**: por RBP-24, una actualización parcial manda en `false`/`0` los campos que no se enviaron; no se verificó qué hace SAP con ellos.
 - **PATCH /partner/client/unircuenta**: las URLs del PATCH y del token no llevan `sap-client`, así que usan el mandante por defecto del sistema (BusinessPartnerMethods.cs:842-843).
 - **POST /partner/enablechanelorg**: al recibir, la ruta lee `ReturnSet` con su nombre C#, no `RETURNSet` (RBPC-7); crea un cliente HTTP por petición en lugar de usar el cliente externo compartido (BusinessPartnerMethods.cs:214; TokenGenerator.cs:98-111).
@@ -4397,9 +4402,9 @@ Sección: [[#Clientes y Business Partner (BP, direcciones, prospectos, mayoreo, 
 - **POST /partneraddress/partner/{bpId}**: el modelo de alta no tiene `AdditionalStreetPrefixName`, que sí existe en el de cambio (AddressModels.cs:49-66, :81); el POST no lleva `sap-client`, aunque el token se pide con 110 (DeliveryAddressMethods.cs:74-75).
 - **PATCH /partneraddress/partner/{bpId}/address/{addressId}**: el PATCH no lleva `sap-client` (DeliveryAddressMethods.cs:116).
 - **PATCH /partneraddress/partner/phone**: por RDIR-8, un cambio que no mande `IsDefaultPhoneNumber` le quita al teléfono la marca de predeterminado.
-- **POST /customer/setCustomerList**: en paridad con LAN; no volver a reportarlo (GUIA:369). Falta confirmar el destino final de las listas cuando se apague Intelisis, probablemente SIGMavi (GUIA:547).
-- **POST /customer/getCustomerList**: ver RCLI-10.
-- **POST /customer/deleteCustomerList**: en paridad con LAN (GUIA:369).
+- **POST /customer/setCustomerList**: en paridad con LAN; no volver a reportarlo (GUIA:369). Falta confirmar el destino final de las listas cuando se apague Intelisis, probablemente SIGMavi (GUIA:547). La codificación del correo en el filtro (RCLI-3) y la rama de error (RCLI-6) cambiaron el 2026-10-05 sin E2E; la E2E la hace el usuario (`PLAN_FABLE_CONTROLADORES\01_CustomersController.md` T1.2-01, T1.2-02, S6).
+- **POST /customer/getCustomerList**: la rama de error (RCLI-10) cambió el 2026-10-05 sin E2E; la E2E la hace el usuario (`PLAN_FABLE_CONTROLADORES\01_CustomersController.md` T1.3-01, S6).
+- **POST /customer/deleteCustomerList**: en paridad con LAN (GUIA:369); la rama de error (RCLI-12) cambió el 2026-10-05 sin E2E; la E2E la hace el usuario (`PLAN_FABLE_CONTROLADORES\01_CustomersController.md` T1.4-01, S6).
 - **POST /customer/getCuenta**: sin ruta en la DMZ (tracker fila 116).
 - **POST /customer/setCuenta**: sin ruta en la DMZ (tracker fila 117).
 - **POST /customer/cashCustomerReport**: la ruta de respaldo del código apunta a una carpeta STAGE, igual que el legado (CashReportMethods.cs:21-22); el tracker fila 36 aún la marca "To Do" aunque la ruta existe; ver RCLI-20.

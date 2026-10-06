@@ -661,6 +661,8 @@ No volver a levantarlos, y **corregir la auditoría** donde todavía los declare
 
 ## 9b. Cómo compilar y verificar
 
+> [!important] 2026-10-05 (usuario): en las sesiones Fable **no se compila**: se edita en `\\172.16.214.58\sap` y el usuario compila en Visual Studio (PLAN_FABLE_POR_CONTROLADOR.md, reglas vigentes 2). Lo de abajo queda como referencia para el usuario.
+
 > [!success] Corregido el 2026-09-14 — **MSBuild SÍ funciona** en esta máquina
 > Esta sección decía que no servía y que había que usar el `csc.exe` suelto. Era falso: MSBuild
 > falla sólo por dos cosas, y las dos se resuelven con una bandera. No hay que instalar nada.

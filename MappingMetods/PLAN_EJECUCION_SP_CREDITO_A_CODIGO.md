@@ -2724,3 +2724,44 @@ Later (not needed for the first test): GEN-1, LIM-1, P1, NIP-1 (+ sap-client=110
 
 `\\CATECINF214058D\Migracion SAP` → `\\172.16.214.58\sap` in `SKILL.md` (9 mentions), `GUIA_MIGRACION_FABLE.md:94`, `Resources\MemoryClaude\convenciones-migracion-sap.md:13`, `LAN - Mapa.md:13`. Historical/explanatory mentions kept. Remaining fixes before Fable S1 (package 1, T1.1-01): build without `Z:` (GUIA §9b → 01 §0.5 V1), X-1 (who updates Business Rules), X-2 (HTTP status policy), remove T1.1-02. See `REVISION_PLAN_FABLE_2026-10-02.md` §4 and §8.
 - **X-1 answered 2026-10-02:** Fable updates Business Rules Ecommerce in the same change when the change rests on rules already defined; asks otherwise. Applied in 01_CustomersController.md (§0.6 exception, S1 prompt) and PLAN_FABLE_POR_CONTROLADOR.md (mandatory reading 4, closure criterion).
+
+### 27.13 2026-10-05 — Fable plan + DMZ connections re-check
+
+See `REVISION_PLAN_FABLE_Y_CONEXIONES_2026-10-05.md` (workflow `wf_f1ee71ad-54e`): plan not ready as is (Fable prompts check the old baseline 2cf425f; ServicioSAP is now 6214ed8, clean, credit committed in 05df55a). DMZ ConexionSAP: 26 bridges to ServicioSAP, 63 to LAN, 25 Magento, 5 local/stub; none deployed (origin/Production is 89 commits apart). 55 definitions to start changes, 17 for connections, 23 other-team items.
+
+### 27.14 2026-10-05 — User's answers to the 8 Fable starting decisions (applied to the plan)
+
+| ID | User's answer | Applied as |
+|---|---|---|
+| D-01 | "Check the actual code; SpExportaEcommerce is the most advanced" | Rule 1: current SpExportaEcommerce code, no fixed commit; files the session touches must have no uncommitted changes |
+| D-03 | "Not possible; only make the code with 0 errors in \\172.16.214.58\sap; this desktop has little installed" | Rule 2: edit directly on the share, no copy, no local tools; Fable does not build; the user compiles in Visual Studio. Note added to GUIA §9b |
+| D-06 | "Don't commit; I do it; you only write code" | Rule 3 |
+| D-09 | "SKILL has out-of-date documents; use only the documents we are talking about and how the code works (the code is OK); ask if in doubt; use the most recently updated by date" | Rule 4: code first, then the current working documents (newest wins); SKILL references to old/missing docs not used |
+| D-14 | "Use the same value if LAN does it — is it a value for SAP?" | T1.1-02 stays in S1 with `605`. Verified: LAN writes Cte.FiscalRegimen '605' (SP_eCommerceCtenuevo.sql:109-114); SAP BP01 has `Fiscalregimen` with the same SAT catalog codes (RSG/bp01_bp02_maestro.md:224 shows "601"). Caution for the fiscal owner: with the generic RFC XAXX010101000, CFDI 4.0 normally expects regime 616 |
+| D-15 | "Look at other APIs whether we use quotes" | No current code filters by ZidMagento; existing filters quote only text fields; ZidMagento is int (Partner.cs:36) → `ZidMagento eq <id>` without quotes (01 T1.1-03 and step 0) |
+| D-16 | "It's OK; only the BP is returned, like the code" | S1 updates the POST /partner/client block and its repeat in "Pendientes globales" |
+| D-17 | "You don't need to test; that's for me when you finish writing code" | Rule 6: Fable prepares and runs no tests; S2 = ConfigureAwait only |
+
+Rules block added to PLAN_FABLE_POR_CONTROLADOR.md ("Reglas vigentes de las sesiones Fable — 2026-10-05", prevails over SKILL.md, GUIA and spec prompts); closure criteria updated (build by the user; tests by the user); 01 S1/S2 prompts rewritten accordingly; rule 5 also lets Fable update its own spec status board.
+### 27.15 2026-10-05 — First Fable session (package 1, S1) — result, verified by Claude
+
+Fable 5.1 ran the S1 prompt verbatim (launched as an agent from the Claude session; only an environment note added). Verified against a snapshot (ServicioSAP 6214ed8 clean + copies of Business Rules and the 01 spec):
+- Code, exactly 2 lines: `BusinessPartnerController.cs:48` `return Ok(result);` → `return Ok(result.Partner.Trim());` (T1.1-01); `BusinessPartnerMethods.cs:578` `Fiscalregimen = ""` → `"605"` (T1.1-02, D-14). CRLF kept; BOM only in BPM, as before. Logically compiles (`SubmitClientInfoAsync` returns `Client`; `Client.Partner` is string, Client.cs:15).
+- Docs: 01 spec §1.4 (:134-135) and rows 1.1-R8 (:277), 1.1-R20 (:289) only. Business Rules: POST /partner/client block (:1664-1692: new RBP-47, RBP-17 with 605, output 200 "15000XXXXX", moved OM citations :2696/:2700/:2729 verified), pending item closed at :1692 and :4389, counts :27/:87/:109.
+- Rules followed: no build, no commit, no tests, no DMZ/PATCH, nothing invented; reported pre-existing uncommitted hunks as not its own; listed stale docs it did not edit (01 §1.1, §3.1.1/§3.1.4; GUIA:363).
+- Pending for the user: compile in VS, test customer/setCustomer (expect 200 with the BP only), confirm BP01 accepts Fiscalregimen 605 (else revert BPM:578), commit (suggested: one commit per task).
+### 27.16 2026-10-05 — Second Fable session (package 1, S2) — result, verified by Claude
+
+T1.H-01 only: `.ConfigureAwait(false)` on 8 awaits — `Methods\Customer\CustomerMethods.cs:21, :33, :52, :56, :88`, `CashReportMethods.cs:67`, `MagentoAccountMethods.cs:25, :35` (statements starting at :24/:34). Verified against a snapshot: exactly those 8 lines; no BOM, all CRLF; S1 files untouched; spec changed only at §1.4 :163 (T1.H-01 → HECHO); Business Rules unchanged (no behavior change; Fable flagged that RTR-64's count "384 uses" is stale — 400 before S2, 408 after — and left it for the user). Fable also drafted the §5 questions CQ12-CQ27 for Diego/other teams (in its report). No build, no commit, no tests.
+Open from S1: the user doubts `Fiscalregimen = "605"` (LAN Intelisis hard-coded value; SAP always received "" in the 8 logged BP01 payloads; CFDI 4.0 generic RFC usually expects 616) — revert to "" proposed, awaiting the user's yes.
+### 27.17 2026-10-05 — Fiscalregimen reverted (user: "change it like it was, in '' — we don't need to break the flow")
+
+`BusinessPartnerMethods.cs:578` back to `Fiscalregimen = ""` (identical to HEAD; BOM/CRLF kept). Spec: T1.1-02 → DECISION (D-14 reopened), 1.1-R8 → DIF pending the SAP fiscal owner. Business Rules RBP-17 and both pending lists updated (empty as always in SAP; LAN's '605' pending the fiscal owner). T1.1-01 (return only the BP) stays, compiled OK by the user.
+
+### 27.18 2026-10-05 — Third Fable session (package 1, S3) — result, verified by Claude
+
+Run on top of S1/S2's uncommitted changes (user: "doit with S3 with Fable"); CQ24 excluded (unanswered). Verified against a snapshot:
+- Code, exactly 2 lines in `Methods\Customer\CustomerMethods.cs`: `throw;` after `Logger.SAP` in `blackwhitelistAsync`'s catch (T1.L-02, CQ12 "Option A": get/delete → 500 → DMZ 400 like LAN; set still 200 via its controller catch) and `string filtro = $"{campo} eq '{Uri.EscapeDataString(valor)}'";` (T1.2-02, CQ13). All other files unchanged (S1/S2 lines intact; Logger, Curl, BPM, CRM, MAM untouched). No BOM, CRLF; `using System;` present.
+- No code by decision: T1.2-04 (CQ15 accepted), T1.5-03 (CQ20 "if it works, don't move": fileName not sanitized). Not applied: T1.5-04 — Fable stopped because the CQ21 answer describes the two log paths but does not choose A/B (code check: Logger.cs:26-31 "logs locales" block runs on every host, incl. the server, with CreateDirectory outside try); T1.C-01 (CQ24 unanswered).
+- Docs: 01 spec (+55/-43: §5 answers verbatim with date, §1.4, §1.1 counts, rules 1.2-1.7, S6 kit expectations) and Business Rules (+23/-23: RCLI-3/5/6/10/12, RBPC-5/6/11, moved CustomerMethods citations, pending lists). No build, no commit, no tests run.
+- Open for the user: CQ21 (A: deployment guarantees <site>\Logs, no code · B: move CreateDirectory inside the try, shared helper) and CQ24 (A: accept 500 · B1/B2: replicate LAN's 200). E2E note from Fable: `Uri.EscapeDataString` also encodes `@`→%40 and `'`→%27; the Gateway must decode them (it receives the filter unencoded otherwise, BPM:252) — the user's test of a normal email confirms it.

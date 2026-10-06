@@ -52,6 +52,16 @@ Derivadas del código el **2026-09-14**, contando atributos `[Route(...)]` por c
 ## Lo que se aplica a TODOS los paquetes
 
 No se repite en cada sección. Fable lo lee una vez y lo arrastra.
+### Reglas vigentes de las sesiones Fable — decisiones del usuario del 2026-10-05
+
+> [!important] Prevalecen sobre `SKILL.md`, [[GUIA_MIGRACION_FABLE]] y los prompts de cada spec. Si algo de esos documentos las contradice, manda esta lista.
+
+1. **Código base (D-01).** Se trabaja sobre el código actual de la rama `SpExportaEcommerce` en `\\172.16.214.58\sap\ServicioSAP` (la más avanzada). No se verifica un commit fijo: antes de tocar un archivo se lee su código actual. Si un archivo que la sesión va a tocar tiene cambios sin commit, se reporta y no se toca.
+2. **Dónde se trabaja y compilación (D-03).** Se edita directamente en `\\172.16.214.58\sap`. No se copia el proyecto ni se depende de herramientas del equipo donde corre Fable (no las tiene). El código debe quedar sin errores de compilación; **lo compila el usuario** en Visual Studio. Fable no ejecuta MSBuild.
+3. **Commits (D-06).** Fable no hace commit ni push. Solo escribe código; el usuario revisa y hace los commits.
+4. **Fuentes (D-09).** Primero manda el código actual (hoy está bien). Después, solo los documentos de trabajo vigentes y, si dos tratan lo mismo, el de **fecha de modificación más reciente**: [[Business Rules Ecommerce]], la spec del paquete, [[REVISION_PLAN_FABLE_Y_CONEXIONES_2026-10-05]] y este plan. Las referencias de `SKILL.md` a documentos viejos o que no existen (`master_migration_log.md`, `implementation_plan_master.md`, `bp_agente.md`, `bp_address.md`) no se usan. Si el código y esos documentos no resuelven una duda, se pregunta al usuario; no se inventa.
+5. **Documentos que se editan (X-1).** Solo [[Business Rules Ecommerce]] (en el mismo cambio y solo con reglas ya definidas) y el tablero de estado de la propia spec del paquete (§1.4 y las filas de estado que el prompt nombre).
+6. **Pruebas (D-17).** Fable no prepara ni corre pruebas (ni kits, ni requests de E2E, ni SELECTs). Las hace el usuario cuando el código está escrito. Al terminar, Fable entrega qué cambió (`archivo:línea`) y qué queda pendiente.
 
 ### Entrada obligatoria antes de tocar nada
 
@@ -66,9 +76,9 @@ No se repite en cada sección. Fable lo lee una vez y lo arrastra.
 - [ ] El contrato de salida es **el que devolvía LAN** (§3.2), con HTTP 200
 - [ ] El puente del DMZ usa `PostSAP` / `GetSAP` / `PatchSAP`, nunca HTTP a mano
 - [ ] Los `.cs` nuevos están en `ServicioSap.csproj` (regla 19)
-- [ ] **MSBuild** compila sin errores (guía §9b — no basta el `csc` suelto)
+- [ ] El código queda sin errores de compilación; lo compila el usuario en Visual Studio (regla vigente 2, 2026-10-05)
 - [ ] [[Business Rules Ecommerce]] actualizado en el mismo cambio: el bloque de cada ruta tocada y sus citas `archivo:línea` (SKILL.md; decisión X-1 del 2026-10-02). Solo con reglas ya definidas; si falta una, se pregunta
-- [ ] E2E documentada por ruta: request enviado y response exacto (regla 25)
+- [ ] Pruebas: las hace el usuario cuando el código está escrito; Fable no las prepara ni las corre (regla vigente 6, 2026-10-05)
 - [ ] Lo que quedó bloqueado está anotado con **quién** lo desbloquea
 
 ### Las tres formas de equivocarse, en orden de frecuencia
