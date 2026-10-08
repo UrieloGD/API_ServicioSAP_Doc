@@ -1,0 +1,405 @@
+{
+    "verify":  {
+                   "wrong":  [
+                                 {
+                                     "claim":  "\u0027Credito Muebles America\u0027 does not appear anywhere in the repos; it is probably the CMS page title.",
+                                     "correction":  "It does appear in code. It is the name of the Magento checkout payment method, shown in the product-page credit tooltip. ViuCreditInfo renders $t(\u0027Credit\u0027) + (\u0027Viu\u0027 | \u0027Muebles America\u0027), which displays as \u0027Crédito Muebles America\u0027. The tooltip text is: \u0027¿Aún no tienes tu linea de Crédito?\u0027 ... \u0027selecciona \"Aún no tengo línea de Crédito\" en la forma de pago \"Crédito Muebles America\" y ¡apertúrala!\u0027. So this label points to the checkout path (omnipro_pago_credito → /productosmx), not to the /apertura-de-cuenta CMS page.",
+                                     "evidence":  "core/src/themes/mavi-theme/components/core/blocks/Product/ViuCreditInfo.vue:34-62 (line 56: storeView.storeCode === \u0027viu\u0027 ? \u0027Viu\u0027 : \u0027Muebles America\u0027); rendered by ProductContent.vue:87-95 when credit_price_pago_puntual \u0026\u0026 credit_fee; i18n mavi es-MX.csv:107,704-708 and MA es-MX.csv:92,596-602."
+                                 },
+                                 {
+                                     "claim":  "VIU personal loan new client (/prestamo-personal/nuevo/registro): \u0027No Hazten step\u0027.",
+                                     "correction":  "VIU does run Hazten. It is folded into the GuestCreditDetails step instead of being a separate wizard step: HaztenModal camera, the liveness iframe from formData.liveness_link, getLivenessStatus (valdateLiveCutomer) and uploadImagesHazten, with the same 409/418 handling.",
+                                     "evidence":  "core/src/themes/mavi-theme/components/theme/blocks/PersonalLoan/GuestCreditDetails.vue:121-133 (HaztenModal + liveness iframe), :811 (stores liveness_link), :827-840 (credilana/valdateLiveCutomer), :846-875 (credilana/uploadImagesHazten, errorIneFront/errorManyIntentsHazten)."
+                                 },
+                                 {
+                                     "claim":  "VIU screen V: Landing \u0027Solicitar ahora\u0027 at pages/PersonalLoan.vue:109 (listed as the entry to the new-client wizard).",
+                                     "correction":  "PersonalLoan.vue:109 \u0027Apply now\u0027 (= \u0027Solicitar ahora\u0027) is the existing-client button. It links to prestamo-cliente-casa and only shows when isLogged. The new-client button is $t(\u0027Request Credit\u0027) = \u0027Solicitar Crédito\u0027, which links to prestamo-cliente-nuevo.",
+                                     "evidence":  "core/src/themes/mavi-theme/pages/PersonalLoan.vue:81-86 (link prestamo-cliente-nuevo, \u0027Request Credit\u0027) vs :103-109 (v-if isLogged, link prestamo-cliente-casa, \u0027Apply now\u0027); mavi es-MX.csv:1093 \u0027Request Credit\u0027,\u0027Solicitar Crédito\u0027."
+                                 },
+                                 {
+                                     "claim":  "RACE finding: \u0027A 409 from either [setData or setAddress] opens the already-made-a-request modal (UserProfileForm.vue:321).\u0027",
+                                     "correction":  "Only setData can trigger the modal. setUserDetails rethrows error.message, which carries response.code, so Number(err) === 409 works. setAddress throws a bare new Error(), so Number(err) is NaN and a 409 from setAddress shows the generic \u0027An error occurred while saving the information.\u0027 Promise.all also rejects with whichever call fails first.",
+                                     "evidence":  "core/src/modules/mavi-credilana/store/actions/userActions.ts:76,81 (throw new Error(response.code) ... throw error.message) vs addressActions.ts:123,128 (throw new Error(); throw error); UserProfileForm.vue:313-322."
+                                 },
+                                 {
+                                     "claim":  "getLivenessStatus only runs when the user closes the modal (closeModal, :311-318) or the popup (:209-215).",
+                                     "correction":  "The popup path is dead code. popup() (which window.opens \u0027Prueba de vida\u0027 and polls waitForClose) is defined but never called. openCamera(\u0027liveCustomer\u0027) only shows the \u0027liveness\u0027 iframe modal. In APERTURA, getLivenessStatus runs only from closeModal, when the user presses the modal close button. \u0027Prueba de vida\u0027 is the popup window name, not an iframe title.",
+                                     "evidence":  "core/src/themes/mavi-theme/components/theme/blocks/CreditOpening/ValidationHaztenData.vue:173-215 (popup, only definition; grep \u0027popup\u0027 has a single hit at :173), :224-231 (openCamera emits modal-show \u0027liveness\u0027), :15-17 (close button → closeModal), :311-318."
+                                 },
+                                 {
+                                     "claim":  "VIU, MAVI and Muebles America all render the same APERTURA components; only uen and the Magento instance differ.",
+                                     "correction":  "Only the VIU (production/staging.json, theme-viu = mavi-theme, defaultStoreCode \u0027viu\u0027) and Muebles America (ma_*.json, defaultStoreCode \u0027muebles_america\u0027) deployments can run it. The MAVI B2B theme inherits the /credit/register and /apertura-de-cuenta routes, but b2b_production/b2b_staging/development_b2b (and integration.json) have none of the mavi.*_endpoint keys. Every credilana action there resolves to \u003capi\u003e/api/ext/omni/undefined. The body storeCode and uen also come from config.defaultStoreCode (one per deployment), not from the current store view.",
+                                     "evidence":  "core/src/themes/mavi-b2b-theme/router/index.js:1,14-15 (...routes from mavi-theme); grep -c set_user_contact_endpoint config/b2b_production.json = 0, config/integration.json = 0; core/src/modules/helpers/index.ts:19-20; nipActions.ts:224-227 and userActions.ts:7 use store.rootState.config.defaultStoreCode; config/*.json:203 defaultStoreCode."
+                                 },
+                                 {
+                                     "claim":  "BUG (double NIP): \u0027The bureau screen then asks for the code twice (Código SMS plus its confirmation)\u0027, presented as a consequence of the APERTURA double send.",
+                                     "correction":  "The two SMS inputs, each with its own Confirm and validateNip call, are the standard design in every guest flow. They also appear in MA Credilana CreditHistory and VIU GuestCreditHistory, which send the NIP only once. The double send is APERTURA-specific (ReferenceInfoForm.vue:144-150); the two inputs are not. \u0027Editar teléfono\u0027 (changePhone) also resets to step 0, which re-runs getRequestInfo with the existing uuid and fires another sendNip.",
+                                     "evidence":  "muebles-america-theme/components/theme/blocks/Credilana/CreditHistory.vue (18 refs to smsConfirmCode); mavi-theme/components/theme/blocks/PersonalLoan/GuestCreditHistory.vue (21 refs); CreditOpening/CreditHistory.vue:213-217 (changePhone → FORM_STEPS.STEP_0)."
+                                 },
+                                 {
+                                     "claim":  "AperturaDeCuenta.vue:32-47 dispatches cmsPage/single (for mavi-theme).",
+                                     "correction":  "Minor line drift. In mavi-theme, asyncData is at lines 33-48 (identifier at :38). Lines 32-47 are correct only for the Muebles America copy. The two copies differ only in styles.",
+                                     "evidence":  "core/src/themes/mavi-theme/pages/static/AperturaDeCuenta.vue:33-48; diff against muebles-america-theme copy shows a one-line offset at line 2 plus SCSS-only differences."
+                                 }
+                             ],
+                   "missing":  [
+                                   {
+                                       "what":  "A front-end entry point to credit opening on the product page, leading to the Magento checkout (V3). The ViuCreditInfo tooltip tells the customer to pick \u0027Aún no tengo línea de Crédito\u0027 in the payment method \u0027Crédito Viu/Muebles America\u0027 and \u0027¡apertúrala!\u0027. This is the only PWA text that links product purchase to the checkout credit-opening path.",
+                                       "evidence":  "mavi-theme/components/core/blocks/Product/ViuCreditInfo.vue:34-62; ProductContent.vue:87-95; mavi es-MX.csv:704-708; MA es-MX.csv:596-602, 699-703"
+                                   },
+                                   {
+                                       "what":  "Muebles America footer link to the Credilana landing (an entry to the Credilana new-client wizard that is not inside CMS content).",
+                                       "evidence":  "muebles-america-theme/components/core/blocks/Footer/content/HelpLinks.vue:31 (link: \u0027/credilana\u0027); config mavi.credilana = \u0027/credilana\u0027 (ma_production.json mavi block)"
+                                   },
+                                   {
+                                       "what":  "The APERTURA wizard hard-requires Hazten. \u0027Guardar y continuar\u0027 only renders when stepExtraDetails.liveCustomer is true, and that is set only when getLivenessStatus returns truthy for formData.transaction_id. If Magento\u0027s getRequestInfo returns no transaction_id/liveness_link (the back end creates the Hazten transaction only when enabled, CMgmt:114-126), the user is stuck at step 2 with an empty iframe. The PWA never uses sendRequestNoBiometric (PLAUSIBLE: depends on the Magento Hazten flag).",
+                                       "evidence":  "CreditOpening/ValidationHaztenData.vue:17 (iframe src=formData.liveness_link), :31-36 (navigation-buttons v-if isEnabled), :126-128 (isEnabled = completedSteps.liveCustomer), :311-318; ContactInfoForm.vue:113-114"
+                                   },
+                                   {
+                                       "what":  "SSR prefetch is all-or-nothing. RegisterAccount.asyncData awaits Promise.all of fetchDataLocation, fetchAntiquityAddress and fetchDimasLegend, and each rethrows. A failure in any one (e.g. getLeyendaDimas) rejects asyncData for /credit/register. The Credilana mixin, by contrast, loads these in the background and swallows errors.",
+                                       "evidence":  "core/src/modules/mavi-credilana/components/RegisterAccount.ts:102-109; addressActions.ts:14-17,38-41; dataActions.ts:44-47; compare RegisterCredit.ts:150-171"
+                                   },
+                                   {
+                                       "what":  "Correction to the back-end doc §2 rows 0a/1: getRequestInfo is fired by \u0027Verificar y continuar\u0027 (contact step), not by \u0027Solicitar ahora\u0027. \u0027Solicitar ahora\u0027 only navigates: inside the APERTURA CMS content, or the existing-client Credilana/VIU buttons. APERTURA never calls getCreditAmounts. The amount slider and the \u0027Solicitar\u0027 button belong to the Credilana landing.",
+                                       "evidence":  "CreditOpening/ContactInfoForm.vue:44,106-121; muebles-america-theme/pages/Credilana.vue:52-53,409-418; RegisterAccount.ts:102-109 (no fetchCredits); back-end doc PROCESO_APERTURA_CREDITO_2026-10-07.md lines 195,197"
+                                   },
+                                   {
+                                       "what":  "The Muebles America router includes the parent routes twice (...routes and ...themeRoutes). Its filter removes the names \u0027personal-loan\u0027 and \u0027loan-register\u0027, which do not exist (the real names are \u0027prestamo\u0027, \u0027prestamo-cliente-nuevo\u0027, \u0027prestamo-cliente-casa\u0027). So the VIU personal-loan pages /prestamo-personal/* are also routable on the Muebles America deployment.",
+                                       "evidence":  "muebles-america-theme/router/index.js:12-18; mavi-theme/router/index.js:124-126"
+                                   }
+                               ]
+               },
+    "trace":  {
+                  "summary":  "I traced the front end of credit opening in C:\\Users\\claude\\Documents\\mavi-pwa. Path prefixes used below: core/ = mavi-core\\, api/ = mavi-api\\, MW = \\\\172.16.214.58\\sap\\Magento248\\app\\code\\.\n\nHow the layers connect:\n- The Vue Storefront PWA (mavi-core) has one Vuex module, `credilana` (core/src/modules/mavi-credilana, registered at core/src/modules/client.ts:41,78).\n- Every action calls `processedUrl(key)`, which builds `${config.api.url}/api/ext/mavi/\u003cconfig.mavi[key]\u003e?storeCode=\u003cstore\u003e`.\n- mavi-api (extension `mavi`, file api/src/api/extensions/mavi/credilana/index.js) passes each call one-to-one to Magento REST `\u003cmagento2.api[_\u003cstore\u003e].url\u003e/V1/\u003croute\u003e`, signed with OAuth 1.0a integration credentials.\n\nVariants found:\n1. **APERTURA**\n   - Route `/credit/register` (page CreditRegister.vue).\n   - Its components live in mavi-theme\u0027s CreditOpening/ folder. The Muebles America theme reuses them through the webpack parent-theme fallback.\n   - The contact step sends `tipo=\u0027APERTURA\u0027` and `articulo=\u0027\u0027`.\n   - The wizard has 5 screens: phone/state/city → Hazten identity check → personal data + reference → SMS NIP + credit-bureau consent + \"Enviar solicitud\" → pre-authorized screen showing the prospect number.\n   - The only page that leads to it is the CMS page `/apertura-de-cuenta`, loaded by identifier from the Elasticsearch `cms_page` index. No code links to `/credit/register`, so the \"Solicitar ahora\" button that opens it has to be inside the CMS content.\n   - The button \"Verificar y continuar\" is the contact-step button.\n2. **Credilana new client** (Muebles America theme)\n   - Landing `/credilana` → wizard `/credilana/nuevo/registro` (CredilanaGuestRegister.vue).\n   - Same steps plus a first \"Monto deseado\" (desired amount) step. Sends `tipo=\u0027CREDITO\u0027` with the articulo and condicion of the selected loan.\n   - VIU has its own equivalent at `/prestamo-personal/nuevo/registro`, also `tipo=\u0027CREDITO\u0027`, with no Hazten step.\n3. **ProductosMX and checkout credit payment**\n   - Not implemented in the PWA. No front-end code calls `/V1/productosmx/*` or `/V1/omnipro-credito/*` (except getSaldo/getFactura in My Account).\n   - The PWA `/checkout` route is caught by the external-checkout module, which syncs the cart and redirects to Magento `\u003ccmsUrl\u003e/vue/cart/sync/token/\u003cuserToken\u003e/cart/\u003ccartToken\u003e`. From there the native Magento checkout runs the `omnipro_pago_credito` payment method and the `/productosmx` wizard.\n   - The PWA only shows credit totals from cart extension attributes and the generic `/order-success` page.\n\nCalls that fail or never run: `saveAuthorization` (no Magento route, and no button triggers it), CURP validation (config key missing) and the liveness auto-close (config key missing). The state and city picked on the contact screen are never sent, and APERTURA sends the NIP twice. The full list with file:line is in findings.",
+                  "where_born":  "APERTURA:\n- Landing: CMS page `/apertura-de-cuenta`. Route at core/src/themes/mavi-theme/router/index.js:31,106 (the Muebles America theme inherits it via core/src/themes/muebles-america-theme/router/index.js:1,16-18).\n- The page component AperturaDeCuenta.vue:32-47 (mavi-theme/pages/static, Muebles America copy at muebles-america-theme/pages/static/AperturaDeCuenta.vue:32-47) dispatches `cmsPage/single` with identifier `\u0027apertura-de-cuenta\u0027`. That action (core/core/modules/cms/store/page/actions.ts:18-24) runs `quickSearchByQuery` on entityType `cms_page`, so the content comes from Magento CMS through the Elasticsearch index. It renders as v-html with PageBuilder button styles (.pagebuilder-button-primary, AperturaDeCuenta.vue:113-125).\n- No Vue/TS/JS/JSON file links to `credit-register` or `/credit/register`, so the \"Solicitar ahora\" link has to be inside the CMS HTML, which is not in the repo.\n- Wizard: `{ name: \u0027credit-register\u0027, path: \u0027/credit/register\u0027, component: CreditRegister }` at mavi-theme/router/index.js:40,127 → core/src/themes/mavi-theme/pages/CreditRegister.vue:41-70.\n- Google Analytics funnel name \"Abre tu Crédito\" / \"Abre tu Crédito Funnel\" at mavi-theme/analytics/GTMAccountDispatcherMixin.ts:10-11.\n\nCredilana new client (Muebles America):\n- `/credilana` (muebles-america-theme/router/index.js:19, pages/Credilana.vue). Buttons \"Solicitar\" (Credilana.vue:52-53) and \"Solicitar crédito\" (Credilana.vue:220-222) call `applyForCredit(\u0027otro\u0027)` (Credilana.vue:379-397), which goes to `/credilana/nuevo/registro` (router/index.js:20, pages/CredilanaGuestRegister.vue).\n- In code, \"Solicitar ahora\" (`$t(\u0027Apply now\u0027)`, muebles-america es-MX.csv:1086, mavi es-MX.csv:997) only labels the existing-customer buttons (Credilana.vue:70,247) and the VIU loan pages (mavi-theme/pages/PersonalLoan.vue:109; components/theme/blocks/PersonalLoan/UserCreditDetails.vue:438).\n\nProductosMX / checkout:\n- Born in Magento. The PWA `/checkout` route (mavi-theme/router/index.js:47) is redirected by core/src/modules/external-checkout/router/beforeEach.ts:22-27 (registered at client.ts:96).",
+                  "screens":  [
+                                  {
+                                      "order":  "0",
+                                      "screen":  "APERTURA landing (CMS)",
+                                      "component":  "core/src/themes/mavi-theme/pages/static/AperturaDeCuenta.vue:1-47 (Muebles America copy: muebles-america-theme/pages/static/AperturaDeCuenta.vue)",
+                                      "texts":  "Title and content come from the CMS page \u0027apertura-de-cuenta\u0027 (PageBuilder HTML). The \u0027Solicitar ahora\u0027 button is presumably in this CMS content; it was not found in code.",
+                                      "store_action":  "cmsPage/single {value:\u0027apertura-de-cuenta\u0027, setCurrent:true} (core/core/modules/cms/store/page/actions.ts:18-24)",
+                                      "api_call":  "VSF catalog search on the cms_page entity (/api/catalog/... Elasticsearch), not the mavi extension",
+                                      "magento_endpoint":  "None directly. Magento CMS page indexed into Elasticsearch (indexer outside the repo)",
+                                      "data":  "CMS HTML"
+                                  },
+                                  {
+                                      "order":  "0b",
+                                      "screen":  "APERTURA wizard prefetch (SSR asyncData)",
+                                      "component":  "core/src/modules/mavi-credilana/components/RegisterAccount.ts:102-109 (mixin used by CreditRegister.vue:30,35)",
+                                      "texts":  "n/a",
+                                      "store_action":  "credilana/fetchDataLocation (addressActions.ts:20-42); credilana/fetchAntiquityAddress (addressActions.ts:5-18); credilana/fetchDimasLegend (dataActions.ts:21-48)",
+                                      "api_call":  "POST /api/ext/mavi/data-location (api/src/api/extensions/mavi/credilana/index.js:132-152); GET /api/ext/mavi/antiquity-address (index.js:107-127); POST /api/ext/mavi/dimas-legend (index.js:728+)",
+                                      "magento_endpoint":  "POST /V1/credito/getGeoInfo (MW/Mavi/CreditMigration/etc/webapi.xml:19); GET /V1/credito/getAntiguedadDomicilio (webapi.xml:40); POST /V1/credito/getLeyendaDimas (webapi.xml:5). All anonymous",
+                                      "data":  "body {storeCode}; states[].estado/municipios[] → SET_STATES; antiquity [{label,value,type}]; leyenda_dimas"
+                                  },
+                                  {
+                                      "order":  "1",
+                                      "screen":  "Step 1 \u0027Teléfono, estado / Y ciudad\u0027",
+                                      "component":  "core/src/themes/mavi-theme/components/theme/blocks/CreditOpening/ContactInfoForm.vue:1-142 (title CreditRegister.vue:43-45)",
+                                      "texts":  "Placeholders Phone/State/City; button \u0027Verificar y continuar\u0027 ($t(\u0027Check and continue\u0027) ContactInfoForm.vue:44; mavi es-MX.csv:1124, muebles-america es-MX.csv:908). Errors \u0027Fill in the cell phone number.\u0027 / \u0027The cell phone number provided is invalid.\u0027 (RegisterAccount.ts:255-260). On failure: \u0027An error occurred while saving the information.\u0027",
+                                      "store_action":  "credilana/setUserContact (userActions.ts:5-32) with bodyBuilderContact(formData,\u0027APERTURA\u0027) (RegisterAccount.ts:388-395; ContactInfoForm.vue:109-110), then credilana/postSendGuestNip {uuid} (nipActions.ts:11-38; ContactInfoForm.vue:116-120)",
+                                      "api_call":  "POST /api/ext/mavi/set-guest-contact (index.js:220-240); POST /api/ext/mavi/send-guest-sms-nip (index.js:486-506)",
+                                      "magento_endpoint":  "POST /V1/credito/guest/getRequestInfo (webapi.xml:49); POST /V1/credito/guest/sendNip (webapi.xml:91)",
+                                      "data":  "Request {uuid:\u0027\u0027, articulo:\u0027\u0027, telefono, tipo:\u0027APERTURA\u0027, storeCode}. Response data[0] {uuid, transaction_id, liveness_link}, kept in formData. sendNip body {uuid, uen (muebles_america=1, viu=2, mavi=3; nipActions.ts:4-8), hash:\u0027\u0027}. The selected state and municipality are NOT sent"
+                                  },
+                                  {
+                                      "order":  "2",
+                                      "screen":  "Step 2 \u0027Verificación de / Identidad\u0027 (Hazten)",
+                                      "component":  "CreditOpening/ValidationHaztenData.vue:1-326 + CreditHaztenImages.vue + core/src/themes/mavi-theme/components/core/blocks/Product/modals/HaztenModal.vue (camera via getUserMedia)",
+                                      "texts":  "\u0027Para continuar con el proceso es necesario tener cámara y activar los permisos\u0027; cards \u0027Identificación Oficial (Frente)\u0027, \u0027(Reverso)\u0027, \u0027Foto Cliente\u0027, \u0027Video Cliente\u0027; buttons \u0027Iniciar Proceso\u0027/\u0027Next\u0027, \u0027Guardar y continuar\u0027 (ValidationHaztenData.vue:3-37; muebles-america es-MX.csv:1230-1234). The liveness iframe/popup is titled \u0027Prueba de vida\u0027 (ValidationHaztenData.vue:196-198). Error 409 → \u0027The photo on the official ID (front) is not legible...\u0027; error 418 → \u0027The number of attempts was exceeded.\u0027 and redirect home (ValidationHaztenData.vue:270-286)",
+                                      "store_action":  "credilana/valdateLiveCutomer (userActions.ts:165-186) on closing the liveness modal/popup (ValidationHaztenData.vue:247-260,311-318); credilana/uploadImagesHazten (userActions.ts:188-209) on \u0027Guardar y continuar\u0027 (ValidationHaztenData.vue:261-309)",
+                                      "api_call":  "POST /api/ext/mavi/live-test-customer (index.js:242-262); POST /api/ext/mavi/upload-images-hazten (index.js:264-284, passes Magento\u0027s err.code through)",
+                                      "magento_endpoint":  "POST /V1/credit/biometric/getLivenessStatus (MW/Mavi/Hazten/etc/webapi.xml:12); POST /V1/credit/biometric/uploadImages (Hazten webapi.xml:6). Anonymous",
+                                      "data":  "{transaction_id}; {biometric:{transaction_id, selfie, front_document, back_document}} as base64 jpeg. The response pre-fills first_name, second_name, first_lastname, second_lastname, dob, gender, curp, zip_code, selfie_id, front_document_id, back_document_id (RegisterAccount.ts:508-544)"
+                                  },
+                                  {
+                                      "order":  "3a",
+                                      "screen":  "Step 3 \u0027Solicitud de / Datos\u0027: personal data + address",
+                                      "component":  "CreditOpening/CustomerDataForm.vue:1-64 → UserProfileForm.vue",
+                                      "texts":  "Name, Middle Name, Paternal/Maternal Surname, Birthdate, CURP, Gender, E-mail; the notice \u0027Please enter your current home address, it does not matter if it is different from your INE...\u0027 (UserProfileForm.vue:119-124); Current address, External/Internal Number, Street crossing, Postal Code, Colony, Antiquity; \u0027Guardar y continuar\u0027 (UserProfileForm.vue:229). 409 shows InformationModal \u0027Hemos detectado que ya ha realizado una solicitud anteriormente con nosotros.\u0027 with the phones \u0027ONLINE LOAN\u0027/\u0027CREDILANA ONLINE\u0027 (Modals/InformationModal.vue:14-27)",
+                                      "store_action":  "credilana/fetchColoniesByPostalCode (addressActions.ts:44-75; validator RegisterAccount.ts:184-198 and UserProfileForm.vue:306-310); then setUserDetails (userActions.ts:62-83) and setAddress (addressActions.ts:109-130) in parallel with Promise.all (UserProfileForm.vue:311-326). CURP check fetchValidateCurp (creditActions.ts:240-269) is broken, see findings",
+                                      "api_call":  "POST /api/ext/mavi/colonies-by-postal-code (index.js:154-174); POST /api/ext/mavi/set-guest-details (index.js:309-330); POST /api/ext/mavi/set-guest-address (index.js:198-218)",
+                                      "magento_endpoint":  "POST /V1/credito/getColonias (webapi.xml:26); POST /V1/credito/guest/setData (webapi.xml:56); POST /V1/credito/guest/setAddress (webapi.xml:63)",
+                                      "data":  "setData {client_data:{uuid, first_name, second_name, first_lastname, second_lastname, dob, gender, email, curp}, biometric:{transaction_id}} (RegisterAccount.ts:408-425). setAddress {client_data:{uuid, street, number, suite, between_streets, zip_code, suburb, antiqueness_type, antiqueness}, biometric:{transaction_id}} (RegisterAccount.ts:426-443). getColonias {storeCode, codigo_postal} → data[0].colonias"
+                                  },
+                                  {
+                                      "order":  "3b",
+                                      "screen":  "Step 3 sub-step \u0027Referencia / Personal\u0027",
+                                      "component":  "CreditOpening/ReferenceInfoForm.vue (shown by CustomerDataForm.vue:8-18)",
+                                      "texts":  "Name, Middle Name, surnames, Phone, Kinship; \u0027Note: The reference must not be from the same address as the applicant\u0027; \u0027Guardar y continuar\u0027 (ReferenceInfoForm.vue:10-101)",
+                                      "store_action":  "credilana/setUserReferences (userActions.ts:85-106) + credilana/postSendGuestNip (2nd NIP send) in parallel (ReferenceInfoForm.vue:141-157)",
+                                      "api_call":  "POST /api/ext/mavi/set-guest-references (index.js:332-352); POST /api/ext/mavi/send-guest-sms-nip (index.js:486)",
+                                      "magento_endpoint":  "POST /V1/credito/guest/setReference (webapi.xml:70); POST /V1/credito/guest/sendNip (webapi.xml:91)",
+                                      "data":  "{uuid, primer_nombre, segundo_nombre, apellido_paterno, apellido_materno, telefono, parentesco} (RegisterAccount.ts:444-454)"
+                                  },
+                                  {
+                                      "order":  "4",
+                                      "screen":  "Step 4 \u0027Paso de / Autenticación Buró\u0027 (SMS NIP + bureau consent + submit)",
+                                      "component":  "CreditOpening/CreditHistory.vue:1-263 + CreditAuthentication.vue:1-137",
+                                      "texts":  "\u0027Ha sido enviado un código SMS de 6 dígitos al teléfono celular: \u003cphone\u003e\u0027; two \u0027Código SMS\u0027 inputs, each with a \u0027Confirm\u0027 button; \u0027Editar teléfono\u0027; \u0027Reenviar SMS\u0027; the MAVI de OCCIDENTE 3-year consent text and the Confidential Key declaration (CreditHistory.vue:4-95); \u0027Hoy siendo \u003cdate\u003e ¿Autoriza a MAVI DE OCCIDENTE...\u0027; checkbox \u0027Consulta de mi historial crediticio\u0027; \u0027¿Tiene tarjeta de crédito?\u0027 with last 4 digits; mortgage/Infonavit and auto credit questions (CreditAuthentication.vue:6-55); links to Terms and Privacy Notice; button \u0027Enviar solicitud\u0027 (CreditHistory.vue:127; muebles-america es-MX.csv:923). Messages \u0027Código SMS correcto.\u0027 / \u0027Código SMS incorrecto.\u0027 (theme constants const CREDIT_MESSAGE). On error: \u0027Unexpected authorization error. Check your Network conection.\u0027",
+                                      "store_action":  "credilana/postValidateGuestNip (nipActions.ts:40-61), called once per input (CreditHistory.vue:201-255); resend via postSendGuestNip (CreditHistory.vue:226-238); submit credilana/saveCreditGuest (creditActions.ts:179-204; CreditHistory.vue:184-200)",
+                                      "api_call":  "POST /api/ext/mavi/validate-guest-sms-nip (index.js:464-484); POST /api/ext/mavi/send-guest-sms-nip (index.js:486); POST /api/ext/mavi/save-credit-guest (index.js:376-396)",
+                                      "magento_endpoint":  "POST /V1/credito/guest/validateNip (webapi.xml:98); POST /V1/credito/guest/sendNip (webapi.xml:91); POST /V1/credito/guest/sendRequest (webapi.xml:77)",
+                                      "data":  "validateNip {uuid, nip} → result.validacion === \u00271\u0027. sendRequest {solicitud:{uuid, codigo_promotor, codigo_recomendador, condition (undefined in APERTURA), utm_source (localStorage utmSource or \u0027WEBSITE\u0027), front_document, back_document, have_card, card_digits, credit_hipoteca, credit_automotriz, selfie}, biometric:{transaction_id, selfie_id, front_document_id, back_document_id}} (RegisterAccount.ts:469-492). Response data[0].prospecto → formData.requestId"
+                                  },
+                                  {
+                                      "order":  "5",
+                                      "screen":  "Pre-authorized result",
+                                      "component":  "CreditOpening/PreAuthorized.vue:1-112 (CreditRegister.vue:62-69, steps 4 and 5)",
+                                      "texts":  "\u0027Crédito\u0027 \u0027Pre-autorizado\u0027; \u0027¡Gracias!\u0027; \u0027Tu número de orden es: \u003cprospecto\u003e\u0027 (duplicate keys in muebles-america es-MX.csv: line 971 \u0027pedido\u0027, line 1114 \u0027orden\u0027); \u0027One of our advisors will contact you shortly...\u0027; \u0027Please have the order number on hand...\u0027; button \u0027Regresar a la tienda\u0027/\u0027Volver a la tienda\u0027",
+                                      "store_action":  "none (GTM only); resets formData and sessionStorage \u0027credit-state\u0027 on destroy",
+                                      "api_call":  "none",
+                                      "magento_endpoint":  "none",
+                                      "data":  "formData.requestId (prospect P+8 digits)"
+                                  },
+                                  {
+                                      "order":  "C0",
+                                      "screen":  "Credilana landing (new or existing client)",
+                                      "component":  "core/src/themes/muebles-america-theme/pages/Credilana.vue:1-437",
+                                      "texts":  "\u0027Si eres nuevo te prestamos hasta $X\u0027; \u0027Solicitar\u0027 (button at :52-53); \u0027Solicitar crédito\u0027 (:220-222); \u0027Ya soy cliente\u0027 / \u0027Solicitar ahora\u0027 (existing client, :17-19,:68-71,:245-248); \u0027Iniciar sesión\u0027 / \u0027Registrarse\u0027; interest legend (:283-286)",
+                                      "store_action":  "asyncData credilana/fetchCredits {type:\u0027nuevo\u0027} and {type:\u0027casa\u0027} (Credilana.vue:409-418; creditActions.ts:5-43); applyForCredit saves sessionStorage \u0027credilana-state\u0027 and commits CREDIT_INDEX (Credilana.vue:379-397); on mobile, UserService.credilanaGestorBoton opens an external URL (Credilana.vue:353-372; core/core/data-resolver/UserService.ts:107-110)",
+                                      "api_call":  "POST /api/ext/mavi/all-credits (index.js:11-31); GET /api/ext/mavi/credilana-gestor-boton (index.js:33-55; front config key users.credilana_gestor_boton, ma_production.json:799)",
+                                      "magento_endpoint":  "POST /V1/credito/getCreditAmounts (webapi.xml:12); GET /V1/credilana/gestorBoton (MW/Mavi/CredilanaConfig/etc/webapi.xml:4)",
+                                      "data":  "{type:\u0027nuevo\u0027|\u0027casa\u0027, storeCode} → data[0][0].hasta_un_maximo_de_prestamo, data[0][0].articulos[] (monto, meses, abono, articulo, condicion, tasa, cat)"
+                                  },
+                                  {
+                                      "order":  "C1-C5",
+                                      "screen":  "Credilana new-client wizard (/credilana/nuevo/registro)",
+                                      "component":  "core/src/themes/muebles-america-theme/pages/CredilanaGuestRegister.vue:86-120 → blocks/Credilana/DesireQuantity.vue, ContactInfoForm.vue, ValidationHaztenData.vue, CustomerDataForm.vue, CreditHistory.vue, PreAuthorized.vue; mixin core/src/modules/mavi-credilana/components/RegisterCredit.ts",
+                                      "texts":  "Steps \u0027Selecciona el / Monto deseado\u0027, \u0027Teléfono, estado / Y ciudad\u0027, \u0027Verificación de / Identidad\u0027, \u0027Solicitud de / Datos\u0027, \u0027Paso de / Autenticación Buró\u0027; the rate/CAT legend and dimasLegend (CredilanaGuestRegister.vue:42-52); the leave-page confirmation \u0027¿Estás seguro de abandonar la página? Perderás todos los cambios.\u0027 (:124-127); \u0027Continuar\u0027, \u0027Verificar y continuar\u0027 (ContactInfoForm.vue:42), \u0027Guardar y continuar\u0027, \u0027Enviar solicitud\u0027 (CreditHistory.vue:127)",
+                                      "store_action":  "Same actions as APERTURA, plus: mounted() background fetchDataLocation, fetchAntiquityAddress, fetchInsurances, fetchDimasLegend (RegisterCredit.ts:150-171); seller code postSellerCode (RegisterCredit.ts:198); recommender code postRecommenderCode (RegisterCredit.ts:216); setUserContact with tipo \u0027CREDITO\u0027 (Credilana/ContactInfoForm.vue:93-94); NIP sent only at the contact step and on resend (Credilana/CreditHistory.vue:243); setUserReferences without a NIP resend (Credilana/ReferenceInfoForm.vue:142-143)",
+                                      "api_call":  "Same mavi routes as APERTURA, plus validate-promotion-code (index.js:574-594), validate-seller-code (index.js:552-572) and all-insurances (index.js:618-638)",
+                                      "magento_endpoint":  "/V1/credito/guest/{getRequestInfo,sendNip,setData,setAddress,setReference,validateNip,sendRequest}; /V1/credit/biometric/{uploadImages,getLivenessStatus}; POST /V1/credito/codigoPromocion (webapi.xml:112); POST /V1/credito/codigoRecomendado (webapi.xml:119); POST /V1/credito/client/seguros/getSeguros (webapi.xml:173, resource self)",
+                                      "data":  "Contact body {uuid, articulo: stepItem.item.articulo, telefono, tipo:\u0027CREDITO\u0027} (RegisterCredit.ts:674-681); sendRequest solicitud.condition = stepItem.item.condicion (RegisterCredit.ts:747-769); postSellerCode body {idMagento:\u0027\u0027, opcion:\u0027ValidarCupon\u0027, codigo} (creditActions.ts:129-151)"
+                                  },
+                                  {
+                                      "order":  "V",
+                                      "screen":  "VIU personal loan, new client (/prestamo-personal/nuevo/registro)",
+                                      "component":  "core/src/themes/mavi-theme/pages/LoanGuestRegister.vue → blocks/PersonalLoan/DesiredGuestQuantity, GuestCreditDetails, GuestCreditExtraData, PreAuthorized",
+                                      "texts":  "Landing \u0027Solicitar ahora\u0027 at pages/PersonalLoan.vue:109",
+                                      "store_action":  "setUserContact \u0027CREDITO\u0027 (GuestCreditDetails.vue:805-806), postSendGuestNip (:814), setUserDetails/setAddress (:895-896), setUserReferences (:920), postSendGuestNip/postValidateGuestNip/saveCreditGuest (GuestCreditHistory.vue:274,306,324). No Hazten step",
+                                      "api_call":  "Same mavi routes",
+                                      "magento_endpoint":  "Same /V1/credito/guest/* routes",
+                                      "data":  "Same bodies"
+                                  },
+                                  {
+                                      "order":  "X",
+                                      "screen":  "Checkout credit payment / ProductosMX (not in PWA)",
+                                      "component":  "core/src/modules/external-checkout/router/beforeEach.ts:6-42; core/src/modules/omni-cart/store/index.ts:25-57 (credit totals); core/src/modules/external-checkout/router/routes.ts (/order-success)",
+                                      "texts":  "none credit-specific in the PWA; generic VSF success page",
+                                      "store_action":  "cart/sync {forceClientState, forceSync}, then window.location.assign(stores[storeCode].cmsUrl + \u0027/vue/cart/sync/token/\u0027+userToken+\u0027/cart/\u0027+cartToken)",
+                                      "api_call":  "VSF cart sync (/api/cart/*), no credit route",
+                                      "magento_endpoint":  "Magento /vue/cart/sync (Divante CartSync), then native Magento checkout, payment omnipro_pago_credito, the /productosmx wizard and /V1/productosmx/guest/:cartId/* (all in Magento, see the back-end doc)",
+                                      "data":  "cartServerToken, user token"
+                                  }
+                              ],
+                  "api_routes":  [
+                                     {
+                                         "route":  "POST /api/ext/mavi/set-guest-contact",
+                                         "where":  "api/src/api/extensions/mavi/credilana/index.js:220-240",
+                                         "calls":  "POST /V1/credito/guest/getRequestInfo",
+                                         "auth":  "OAuth1 integration (magento2.api[_store] consumerKey/consumerSecret/accessToken/accessTokenSecret); Magento resource anonymous"
+                                     },
+                                     {
+                                         "route":  "POST /api/ext/mavi/send-guest-sms-nip",
+                                         "where":  "credilana/index.js:486-506",
+                                         "calls":  "POST /V1/credito/guest/sendNip",
+                                         "auth":  "OAuth1 integration; anonymous"
+                                     },
+                                     {
+                                         "route":  "POST /api/ext/mavi/validate-guest-sms-nip",
+                                         "where":  "credilana/index.js:464-484",
+                                         "calls":  "POST /V1/credito/guest/validateNip",
+                                         "auth":  "OAuth1; anonymous"
+                                     },
+                                     {
+                                         "route":  "POST /api/ext/mavi/set-guest-details",
+                                         "where":  "credilana/index.js:309-330",
+                                         "calls":  "POST /V1/credito/guest/setData",
+                                         "auth":  "OAuth1; anonymous"
+                                     },
+                                     {
+                                         "route":  "POST /api/ext/mavi/set-guest-validation (not used by any screen)",
+                                         "where":  "credilana/index.js:286-307",
+                                         "calls":  "POST /V1/credito/guest/setData",
+                                         "auth":  "OAuth1; anonymous"
+                                     },
+                                     {
+                                         "route":  "POST /api/ext/mavi/set-guest-address",
+                                         "where":  "credilana/index.js:198-218",
+                                         "calls":  "POST /V1/credito/guest/setAddress",
+                                         "auth":  "OAuth1; anonymous"
+                                     },
+                                     {
+                                         "route":  "POST /api/ext/mavi/set-guest-references",
+                                         "where":  "credilana/index.js:332-352",
+                                         "calls":  "POST /V1/credito/guest/setReference",
+                                         "auth":  "OAuth1; anonymous"
+                                     },
+                                     {
+                                         "route":  "POST /api/ext/mavi/save-credit-guest",
+                                         "where":  "credilana/index.js:376-396",
+                                         "calls":  "POST /V1/credito/guest/sendRequest",
+                                         "auth":  "OAuth1; anonymous"
+                                     },
+                                     {
+                                         "route":  "POST /api/ext/mavi/set-file-authorization (unreachable from UI)",
+                                         "where":  "credilana/index.js:354-374",
+                                         "calls":  "POST /V1/credito/guest/saveAuthorization (no such route in MW/Mavi/CreditMigration/etc/webapi.xml)",
+                                         "auth":  "OAuth1"
+                                     },
+                                     {
+                                         "route":  "POST /api/ext/mavi/live-test-customer",
+                                         "where":  "credilana/index.js:242-262",
+                                         "calls":  "POST /V1/credit/biometric/getLivenessStatus",
+                                         "auth":  "OAuth1; anonymous"
+                                     },
+                                     {
+                                         "route":  "POST /api/ext/mavi/upload-images-hazten",
+                                         "where":  "credilana/index.js:264-284",
+                                         "calls":  "POST /V1/credit/biometric/uploadImages",
+                                         "auth":  "OAuth1; anonymous"
+                                     },
+                                     {
+                                         "route":  "POST /api/ext/mavi/all-credits",
+                                         "where":  "credilana/index.js:11-31",
+                                         "calls":  "POST /V1/credito/getCreditAmounts",
+                                         "auth":  "OAuth1; anonymous"
+                                     },
+                                     {
+                                         "route":  "POST /api/ext/mavi/data-location",
+                                         "where":  "credilana/index.js:132-152",
+                                         "calls":  "POST /V1/credito/getGeoInfo",
+                                         "auth":  "OAuth1; anonymous"
+                                     },
+                                     {
+                                         "route":  "POST /api/ext/mavi/colonies-by-postal-code",
+                                         "where":  "credilana/index.js:154-174",
+                                         "calls":  "POST /V1/credito/getColonias",
+                                         "auth":  "OAuth1; anonymous"
+                                     },
+                                     {
+                                         "route":  "POST /api/ext/mavi/colony-coverage (only in dead or other-flow modals)",
+                                         "where":  "credilana/index.js:176-196",
+                                         "calls":  "POST /V1/mavi-leyendaclientenuevo/validacionescobertura",
+                                         "auth":  "OAuth1; anonymous"
+                                     },
+                                     {
+                                         "route":  "GET /api/ext/mavi/antiquity-address",
+                                         "where":  "credilana/index.js:107-127",
+                                         "calls":  "GET /V1/credito/getAntiguedadDomicilio",
+                                         "auth":  "OAuth1; anonymous"
+                                     },
+                                     {
+                                         "route":  "POST /api/ext/mavi/dimas-legend",
+                                         "where":  "credilana/index.js:728+",
+                                         "calls":  "POST /V1/credito/getLeyendaDimas",
+                                         "auth":  "OAuth1; anonymous"
+                                     },
+                                     {
+                                         "route":  "POST /api/ext/mavi/customer-service",
+                                         "where":  "credilana/index.js:706-726",
+                                         "calls":  "POST /V1/credito/getAtencionClientesInfo",
+                                         "auth":  "OAuth1; the front action fetchCustomerService uses GET (dataActions.ts:5-9) and is never dispatched"
+                                     },
+                                     {
+                                         "route":  "POST /api/ext/mavi/validate-promotion-code",
+                                         "where":  "credilana/index.js:574-594",
+                                         "calls":  "POST /V1/credito/codigoPromocion",
+                                         "auth":  "OAuth1; anonymous"
+                                     },
+                                     {
+                                         "route":  "POST /api/ext/mavi/validate-seller-code",
+                                         "where":  "credilana/index.js:552-572",
+                                         "calls":  "POST /V1/credito/codigoRecomendado",
+                                         "auth":  "OAuth1; anonymous"
+                                     },
+                                     {
+                                         "route":  "GET /api/ext/mavi/credilana-gestor-boton",
+                                         "where":  "credilana/index.js:33-55",
+                                         "calls":  "GET /V1/credilana/gestorBoton",
+                                         "auth":  "OAuth1; anonymous"
+                                     },
+                                     {
+                                         "route":  "POST /api/ext/mavi/all-insurances | insurance-calculation | insurance-limit | all-banks",
+                                         "where":  "credilana/index.js:618-682, 596-616",
+                                         "calls":  "POST /V1/credito/client/seguros/{getSeguros,getCalculo,getLimite}, /V1/credito/client/getBankList",
+                                         "auth":  "OAuth1 integration against resource \u0027self\u0027"
+                                     },
+                                     {
+                                         "route":  "POST /api/ext/mavi/save-life-insurance",
+                                         "where":  "credilana/index.js:420-440",
+                                         "calls":  "POST /V1/credito/client/seguros/saveSeguroDeVida",
+                                         "auth":  "Bearer = config key magento2.api.accessToken (default store\u0027s key, even for other stores) (index.js:428)"
+                                     },
+                                     {
+                                         "route":  "POST /api/ext/mavi/post-credit-home | save-credit-home | validate-user-session | resend-client-sms-nip | validate-client-sms-nip | user-account",
+                                         "where":  "credilana/index.js:442-462, 398-418, 684-704, 508-528, 530-550, 59-79",
+                                         "calls":  "/V1/credito/client/{getClienteInfo,sendRequest,validateSession,reSendNip,validateNip}",
+                                         "auth":  "OAuth1 integration against resource \u0027self\u0027 (V4 existing client, not opening)"
+                                     },
+                                     {
+                                         "route":  "GET /api/ext/omni/credits/:costumerId and /credit-invoice/:costumerId/:incrementId",
+                                         "where":  "api/src/api/extensions/omni/credits/index.ts:14-34, 47-68",
+                                         "calls":  "GET /V1/omnipro-credito/getSaldo/:id (Bearer customer token from the request) and /V1/omnipro-credito/getFactura/:id/:inc",
+                                         "auth":  "customer token (getSaldo); OAuth1 (getFactura). Post-sale only"
+                                     },
+                                     {
+                                         "route":  "GET /api/ext/mavi/get-credit-requests/:userId",
+                                         "where":  "api/src/api/extensions/mavi/customer/index.js:58-80",
+                                         "calls":  "POST /V1/mavi-solicitudcredito/creditrequest {client_id, storeCode}",
+                                         "auth":  "OAuth1 (My Account \u0027credit-request\u0027 screen, mavi-theme/router/index.js:121)"
+                                     }
+                                 ],
+                  "config_keys":  [
+                                      "mavi-core config/\u003cenv\u003e.json api.url (ma_production.json:128-129): base URL of mavi-api as seen from the browser",
+                                      "mavi-core config mavi.endpoint = \u0027api/ext/mavi\u0027 (ma_production.json:1016) and omni.endpoint = \u0027api/ext/omni\u0027 (ma_production.json:1103)",
+                                      "mavi-core config mavi.\u003ckey\u003e path map (ma_production.json:1060-1090): set_user_contact_endpoint, set_user_validation_endpoint, set_user_details_endpoint, set_user_references_endpoint, set_file_authorization_endpoint, all_items_credits_endpoint, all_items_banks_endpoint, post_validate_session_endpoint, post_credit_home_endpoint, post_seller_code_endpoint, post_promotion_code_endpoint, save_credit_guest_endpoint, save_credit_home_endpoint, all_items_insurances_endpoint, insurance_calculation_endpoint, insurance_limit_endpoint, save_life_insurance_endpoint, antiquity_address_endpoint, data_location_endpoint, colonies_by_postal_code_endpoint, colony_coverage_endpoint, set_address_endpoint, send_guest_nip_endpoint, validate_guest_nip_endpoint, resend_client_nip_endpoint, validate_client_nip_endpoint, customer_service_endpoint, dimas_legend_endpoint, live_test_customer, upload_images_hazten. Present in production, ma_production, staging, ma_staging, development and development_viu; absent from default.json and the b2b configs",
+                                      "Resolver: core/src/modules/helpers/index.ts:16-31 (processedUrl) + adjustMultistoreApiUrl appends ?storeCode= (core/core/lib/multistore.ts:124-131)",
+                                      "MISSING keys referenced in code: mavi.validate_account_pending (creditActions.ts:241) and mavi.hazten_url_liviness (ValidationHaztenData.vue:80). Absent from every config/*.json",
+                                      "mavi-core config users.credilana_gestor_boton (ma_production.json:799; core/core/data-resolver/UserService.ts:107-110)",
+                                      "mavi-core config externalCheckout.cmsUrl and externalCheckout.stores.\u003cstoreCode\u003e.cmsUrl (ma_production.json:1148): Magento checkout host for the redirect",
+                                      "mavi-core config omni.magentoURL (Magento media host)",
+                                      "mavi-api config registeredExtensions includes \u0027mavi\u0027 and \u0027omni\u0027 (config/production.json; mounted by api/src/api/index.ts:51-62)",
+                                      "mavi-api config magento2.api.{url, consumerKey, consumerSecret, accessToken, accessTokenSecret} plus per-store overrides magento2.api_muebles_america and magento2.api_mavi (config/production.json, staging.json, development.json); availableStores [\u0027viu\u0027,\u0027muebles_america\u0027,\u0027mavi\u0027]",
+                                      "mavi-api store selection: header x-vs-store-code or query storeCode (api/src/lib/util.js:9-17) → multiStoreConfig picks magento2[\u0027api_\u0027+storeCode] (api/src/platform/magento2/util.js:8-22)",
+                                      "magento2-rest-client: URL = magento2.api.url + \u0027/V1\u0027 + route; OAuth 1.0a HMAC-SHA1 signature from those 4 keys, or \u0027Authorization: Bearer \u003ctoken\u003e\u0027 when a token is passed (api/node_modules/magento2-rest-client/lib/rest_client.js:13-37,107-109)"
+                                  ],
+                  "external":  [
+                                   "Hazten liveness: the iframe/popup URL comes from Magento\u0027s getRequestInfo response (liveness_link, ValidationHaztenData.vue:17,196-206); postMessage origin compared to config.mavi.hazten_url_liviness (missing)",
+                                   "Credilana mobile \u0027gestor\u0027 URL returned by /V1/credilana/gestorBoton, opened with window.open (Credilana.vue:353-372)",
+                                   "Google Tag Manager funnels \u0027Abre tu Crédito\u0027 (GTMAccountDispatcherMixin.ts:10-11) and Credilana/Viucash (GTMCredilanaDispatcherMixin.ts:13-16)",
+                                   "Magento native checkout via /vue/cart/sync and /onestepcheckout (external-checkout/router/beforeEach.ts:21-37; omnipro-vsf-silent-login/helpers/LogUserIn.ts:11)",
+                                   "Elasticsearch cms_page index for the /apertura-de-cuenta content"
+                               ],
+                  "findings":  [
+                                   "APERTURA starts at the CMS page /apertura-de-cuenta (mavi-theme/pages/static/AperturaDeCuenta.vue:32-47, identifier \u0027apertura-de-cuenta\u0027, loaded from the Elasticsearch cms_page index). The wizard is /credit/register (mavi-theme/router/index.js:127). No code links to /credit/register, so the \u0027Solicitar ahora\u0027 button is presumably CMS content. \u0027Credito Muebles America\u0027 does not appear anywhere in the repos; it is probably the CMS page title.",
+                                   "Muebles America (muebles-america-theme, theme.json parent=mavi-theme) has no CreditOpening folder. muebles-america-theme/webpack.replacement.js falls back to mavi-theme, so VIU, MAVI and Muebles America all render the same APERTURA components. Only uen (nipActions.ts:4-8) and the Magento instance (magento2.api_\u003cstore\u003e) differ.",
+                                   "The literal texts come from i18n CSVs, not templates: \u0027Verificar y continuar\u0027 = $t(\u0027Check and continue\u0027) (mavi-theme/resource/i18n/es-MX.csv:1124; muebles-america-theme/resource/i18n/es-MX.csv:908), used by the APERTURA and Credilana contact steps (CreditOpening/ContactInfoForm.vue:44; Credilana/ContactInfoForm.vue:42). \u0027Solicitar ahora\u0027 = $t(\u0027Apply now\u0027) (mavi csv:997; MA csv:1086) is used in code only for existing-customer Credilana buttons and the VIU loan pages.",
+                                   "APERTURA sends tipo=\u0027APERTURA\u0027 with articulo=\u0027\u0027 (RegisterAccount.ts:388-395; ContactInfoForm.vue:110). Magento forces AMER00100 (back-end doc §1.2). Credilana new client sends tipo=\u0027CREDITO\u0027 with the selected articulo (RegisterCredit.ts:674-681; Credilana/ContactInfoForm.vue:94), and VIU does the same (PersonalLoan/GuestCreditDetails.vue:806).",
+                                   "BUG/GAP: the State and City selects on the first screen (ContactInfoForm.vue:16-39) only update Vuex. bodyBuilderContact does not send them (RegisterAccount.ts:388-395; RegisterCredit.ts:674-681), and later steps send only zip_code and suburb (RegisterAccount.ts:426-443).",
+                                   "BUG: APERTURA sends the SMS NIP twice: at the contact step (ContactInfoForm.vue:116-120) and again together with setReference (ReferenceInfoForm.vue:144-150). The bureau screen then asks for the code twice (\u0027Código SMS\u0027 plus its confirmation), and both inputs are checked by validateNip (CreditHistory.vue:201-255). The Credilana MA flow sends the NIP only at the contact step.",
+                                   "DEAD/BROKEN: setFileAuthorization (userActions.ts:142-163) goes through /set-file-authorization (credilana/index.js:354-374) to /V1/credito/guest/saveAuthorization, which does not exist in MW/Mavi/CreditMigration/etc/webapi.xml. It is also unreachable: CreditAuthentication.handleStep (CreditOpening/CreditAuthentication.vue:128-134; same in the MA Credilana copy and PersonalLoan/GuestCreditAuth.vue:123) is not wired to any button. The bureau answers (have_card, card_digits, credit_hipoteca, credit_automotriz) actually travel inside sendRequest.solicitud (RegisterAccount.ts:479-482).",
+                                   "BROKEN: the CURP remote check calls processedUrl(\u0027validate_account_pending\u0027) (creditActions.ts:241), but that key is in no config. The URL becomes .../api/ext/omni/undefined, and the validator returns true on error (RegisterAccount.ts:169-177), so it does nothing.",
+                                   "BROKEN: config.mavi.hazten_url_liviness (ValidationHaztenData.vue:80) is in no config. The postMessage origin check (ValidationHaztenData.vue:217-223) never matches, so the liveness modal never auto-closes. getLivenessStatus only runs when the user closes the modal (closeModal, :311-318) or the popup (:209-215).",
+                                   "RACE: setData and setAddress go out in parallel with Promise.all for the same uuid (UserProfileForm.vue:314-318; same pattern in MA Credilana UserProfileForm.vue:313-319 and VIU GuestCreditDetails.vue:895-896). If Magento needs setData to finish first, the order is not guaranteed. A 409 from either opens the \u0027already made a request\u0027 modal (UserProfileForm.vue:321).",
+                                   "Correction to the back-end doc: getCreditAmounts, getGeoInfo, getColonias, getLeyendaDimas, getAtencionClientesInfo, getAntiguedadDomicilio, codigoPromocion and codigoRecomendado live under /V1/credito/ (not /V1/credito/guest/) (webapi.xml:5-43,112-122). The PWA never calls /V1/credito/guest/checkMail or /V1/credito/guest/sendRequestNoBiometric. The front always goes through Hazten plus sendRequest.",
+                                   "Naming swap: the front \u0027seller code\u0027 (postSellerCode) uses key post_promotion_code_endpoint → /validate-promotion-code → /V1/credito/codigoPromocion with opcion \u0027ValidarCupon\u0027 (creditActions.ts:129-151). The \u0027recommender code\u0027 (postRecommenderCode) uses post_seller_code_endpoint → /validate-seller-code → /V1/credito/codigoRecomendado (creditActions.ts:154-177; index.js:552-594).",
+                                   "The front sends no token on credit-opening calls. mavi-api always signs as the Magento integration (OAuth1), so guest routes rely on resource \u0027anonymous\u0027. The Credilana guest wizard still prefetches /V1/credito/client/seguros/getSeguros, which is resource \u0027self\u0027 (RegisterCredit.ts:162-164 → index.js:618-638; webapi.xml:173-176), and swallows any error.",
+                                   "save-life-insurance passes config.magento2.api.accessToken as a Bearer token (credilana/index.js:428). That is always the default (VIU) store\u0027s key, even when multiStoreConfig selected another store. Credilana existing-client flow only.",
+                                   "ProductosMX and the checkout credit payment are not in the PWA: nothing references /V1/productosmx or omnipro_pago_credito. /checkout is redirected to Magento (external-checkout/router/beforeEach.ts:22-27, registered at client.ts:96). The only credit-related checkout UI is the cart credit-total getters (omni-cart/store/index.ts:25-57) and the product-page CMS block \u0027credit-payment-conditions\u0027 (mavi-theme/components/core/blocks/Product/BottomSection/ProductBottomSection.vue:63).",
+                                   "APERTURA state is not persisted: CreditRegister.vue:80-83 reads sessionStorage \u0027credit-state\u0027, but nothing writes it (only removeItem at CreditRegister.vue:76 and PreAuthorized.vue:106). A reload restarts the wizard at step 0 with a new uuid. Credilana writes \u0027credilana-state\u0027 (Credilana.vue:385).",
+                                   "Dead or unused front code in the APERTURA folder: CreditOpening/CreditExtraDetails.vue, IdentificationImageUpload.vue, Modals/RequirementsModal.vue and Modals/SearchColonyModal.vue are not imported by CreditRegister. Store actions setUserValidation and fetchCustomerService are never dispatched (fetchCustomerService also uses GET while mavi-api exposes POST /customer-service, index.js:706). PreAuthorized\u0027s \u0027Congratulations / Continue\u0027 branch needs currentStep===3, but the component renders at steps 4 and 5 (PreAuthorized.vue:78-80; CreditRegister.vue:62-69).",
+                                   "i18n duplicates with different translations in muebles-america-theme/resource/i18n/es-MX.csv: \u0027Your order number is\u0027 at :971 (\u0027pedido\u0027) and :1114 (\u0027orden\u0027); \u0027A 6-digit SMS code has been sent...\u0027 at :924, :978 (typos) and :1029. The PreAuthorized wording depends on which duplicate wins."
+                               ],
+                  "open_questions":  [
+                                         "Content of the Magento CMS page \u0027apertura-de-cuenta\u0027 (in the Magento DB / Elasticsearch cms_page index, not in the repo): does its \u0027Solicitar ahora\u0027 button link to /credit/register, and is \u0027Credito Muebles America\u0027 its title? The user needs to check in the Magento admin (Content \u003e Pages) or in the index.",
+                                         "Does CredilanaManagement::validateNip accept the same NIP twice, and which NIP is valid after the second sendNip that APERTURA fires at the reference step (ReferenceInfoForm.vue:146)? Needs CMgmt validateNip/sendNip logic.",
+                                         "Should the state and municipality chosen on the contact screen reach the back end (coverage, suc 504/505)? Today only zip_code and suburb are sent.",
+                                         "Can routes with resource \u0027self\u0027 (/V1/credito/client/*, seguros/*) be called with the integration OAuth signature that mavi-api uses? If Magento rejects them, the existing-client Credilana flow and the guest getSeguros prefetch fail silently.",
+                                         "Is the Hazten liveness postMessage origin meant to come from a config key (mavi.hazten_url_liviness) that was dropped from the configs, or from liveness_link\u0027s origin?",
+                                         "What does the mobile credilana gestorBoton URL point to (an external app or WhatsApp manager)? It also opens in parallel with the desktop navigation (Credilana.vue:353-359)."
+                                     ]
+              }
+}
